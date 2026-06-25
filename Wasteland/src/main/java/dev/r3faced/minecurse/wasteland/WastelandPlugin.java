@@ -1,0 +1,177 @@
+package dev.r3faced.minecurse.wasteland;
+
+import dev.r3faced.minecurse.wasteland.commands.WastelandCommand;
+import dev.r3faced.minecurse.wasteland.config.ConfigManager;
+import dev.r3faced.minecurse.wasteland.data.DataManager;
+import dev.r3faced.minecurse.wasteland.data.mysql.MySQLDataManager;
+import dev.r3faced.minecurse.wasteland.data.yaml.YamlDataManager;
+import dev.r3faced.minecurse.wasteland.gui.GuiListener;
+import dev.r3faced.minecurse.wasteland.listeners.FishingListener;
+import dev.r3faced.minecurse.wasteland.listeners.HarvestListener;
+import dev.r3faced.minecurse.wasteland.listeners.MiningListener;
+import dev.r3faced.minecurse.wasteland.listeners.WoodcuttingListener;
+import dev.r3faced.minecurse.wasteland.listeners.WorldChangeListener;
+import dev.r3faced.minecurse.wasteland.managers.SkillManager;
+import dev.r3faced.minecurse.wasteland.managers.TierManager;
+import dev.r3faced.minecurse.wasteland.managers.ToolManager;
+import dev.r3faced.minecurse.wasteland.placeholders.WastelandExpansion;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
+
+/**
+ * Main entry point for the Wasteland plugin.
+ * Manages all sub-systems: data, skills, tiers, tools, GUIs.
+ */
+public final class WastelandPlugin extends JavaPlugin {
+
+    private static WastelandPlugin instance;
+
+    private ConfigManager configManager;
+    private DataManager dataManager;
+    private SkillManager skillManager;
+    private TierManager tierManager;
+    private ToolManager toolManager;
+    private dev.r3faced.minecurse.wasteland.managers.TeleportManager teleportManager;
+    private dev.r3faced.minecurse.wasteland.managers.PlaytimeTask playtimeTask;
+
+    @Override
+    public void onEnable() {
+        instance = this;
+
+        // Save default config files
+        saveDefaultConfig();
+        saveResource("messages.yml", false);
+        saveResource("skills.yml", false);
+        saveResource("tiers.yml", false);
+        saveResource("gui.yml", false);
+        saveResource("tools.yml", false);
+        saveResource("teleports.yml", false);
+
+        // Initialize config manager
+        configManager = new ConfigManager(this);
+        configManager.loadAll();
+
+        // Initialize data manager (YAML or MySQL)
+        String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
+        if (storageType.equals("MYSQL")) {
+            dataManager = new MySQLDataManager(this);
+        } else {
+            dataManager = new YamlDataManager(this);
+        }
+        dataManager.init();
+
+        // Initialize managers
+        skillManager = new SkillManager(this);
+        tierManager = new TierManager(this);
+        toolManager = new ToolManager(this);
+        teleportManager = new dev.r3faced.minecurse.wasteland.managers.TeleportManager(this);
+
+        // Register command
+        getCommand("wasteland").setExecutor(new WastelandCommand(this));
+        getCommand("wasteland").setTabCompleter(new WastelandCommand(this));
+
+        // Register listeners
+        Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new MiningListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new WoodcuttingListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new HarvestListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new FishingListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new WorldChangeListener(this), this);
+
+        // Start the periodic playtime tracker (every 60 seconds)
+        playtimeTask = new dev.r3faced.minecurse.wasteland.managers.PlaytimeTask(this);
+        playtimeTask.start();
+
+        // Register PlaceholderAPI expansion if available
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new WastelandExpansion(this).canRegister();
+            getLogger().info("Hooked into PlaceholderAPI.");
+        }
+
+        getLogger().info("Wasteland v" + getDescription().getVersion() + " has been enabled.");
+    }
+
+    @Override
+    public void onDisable() {
+        // Cancel the playtime tracker so it doesn't fire mid-shutdown.
+        if (playtimeTask != null) {
+            try { playtimeTask.cancel(); } catch (IllegalStateException ignored) {}
+        }
+
+        // Save all online player data SYNCHRONOUSLY on shutdown.
+        // We deliberately bypass the async scheduler path here because Bukkit
+        // throws IllegalPluginAccessException when a plugin attempts to register
+        // a new task while disabled. Going through savePlayerSync() guarantees
+        // every cached record is flushed to disk before the JVM exits, with
+        // zero chance of unsaved data or scheduler errors.
+        if (dataManager != null) {
+            try {
+                Bukkit.getOnlinePlayers().forEach(p -> dataManager.savePlayerSync(p.getUniqueId()));
+            } catch (Throwable t) {
+                getLogger().severe("Error during synchronous player data save: " + t.getMessage());
+            }
+            try {
+                dataManager.shutdown();
+            } catch (Throwable t) {
+                getLogger().severe("Error during data manager shutdown: " + t.getMessage());
+            }
+        }
+        getLogger().info("Wasteland has been disabled.");
+    }
+
+    /**
+     * Reloads all configuration files and re-initializes managers.
+     */
+    public void reload() {
+        // Save all online player data synchronously before reload.
+        // Using sync here avoids any race where the scheduler is unavailable
+        // mid-reload and also guarantees the file on disk matches the cache
+        // when managers are re-initialised below.
+        if (dataManager != null) {
+            Bukkit.getOnlinePlayers().forEach(p -> dataManager.savePlayerSync(p.getUniqueId()));
+        }
+
+        configManager.loadAll();
+        skillManager.reload();
+        tierManager.reload();
+        toolManager.reload();
+        if (teleportManager != null) {
+            teleportManager.reload();
+        }
+    }
+
+    /**
+     * Lazy-loaded teleport manager. Initialised on first access so that
+     * {@link #reload()} works even if the manager has not been created yet.
+     */
+    public dev.r3faced.minecurse.wasteland.managers.TeleportManager getTeleportManager() {
+        if (teleportManager == null) {
+            teleportManager = new dev.r3faced.minecurse.wasteland.managers.TeleportManager(this);
+        }
+        return teleportManager;
+    }
+
+    public static WastelandPlugin getInstance() {
+        return instance;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    public DataManager getDataManager() {
+        return dataManager;
+    }
+
+    public SkillManager getSkillManager() {
+        return skillManager;
+    }
+
+    public TierManager getTierManager() {
+        return tierManager;
+    }
+
+    public ToolManager getToolManager() {
+        return toolManager;
+    }
+}

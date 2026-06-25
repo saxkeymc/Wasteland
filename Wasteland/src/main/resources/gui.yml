@@ -1,0 +1,338 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — GUI Configuration (v1.2 — shared tier system)
+# ════════════════════════════════════════════════════════════════════════════
+# All GUI titles, item names, materials, lores, and slots are configurable here.
+# Placeholders ({mining_level}, {player}, {tier}, {playtime}, etc.) are
+# substituted at runtime.
+#
+# Design notes:
+#   • Skill buttons ONLY teleport the player. They do NOT open sub-menus.
+#   • The flavour text uses &7&o (gray italic) for a clean, polished look.
+#   • "Click to view..." lines have been removed entirely.
+#   • The tier system is SHARED across all skills — no per-skill tiers.
+#   • The profile head shows colored skill sections + Wasteland Playtime.
+#   • "Rewards Claimed" is no longer tracked or displayed anywhere.
+# ════════════════════════════════════════════════════════════════════════════
+
+main-menu:
+  title: "&7Wasteland"
+  size: 54
+  # Skill-icon click behaviour: TELEPORT (always teleport, no menu).
+  skill-click-behavior: TELEPORT
+
+  # Outer-border decorative panes
+  border-item:
+    material: STAINED_GLASS_PANE
+    data: 15
+    name: " "
+  # Inner-area filler panes
+  fill-item:
+    material: STAINED_GLASS_PANE
+    data: 7
+    name: " "
+
+  buttons:
+    mining:
+      slot: 20
+      material: DIAMOND_PICKAXE
+      data: 0
+      name: "&7&lMining"
+      lore:
+        - "&7&oThe deepest caves hide the greatest treasures."
+        - "&7&oEvery block broken brings you closer"
+        - "&7&oto rare ores and legendary rewards."
+        - ""
+        - "&fLevel: &7{mining_level}"
+
+    woodcutting:
+      slot: 21
+      material: DIAMOND_AXE
+      data: 0
+      name: "&6&lChopping"
+      lore:
+        - "&7&oThe forests are filled with opportunity."
+        - "&7&oChop towering trees, gather valuable"
+        - "&7&oresources, and become a true lumberjack."
+        - ""
+        - "&fLevel: &6{woodcutting_level}"
+
+    farming:
+      slot: 23
+      material: DIAMOND_HOE
+      data: 0
+      name: "&a&lFarming"
+      lore:
+        - "&7&oGreat harvests begin with patience."
+        - "&7&oGrow crops, tend your fields,"
+        - "&7&oand reap valuable rewards."
+        - ""
+        - "&fLevel: &a{farming_level}"
+
+    fishing:
+      slot: 24
+      material: FISHING_ROD
+      data: 0
+      name: "&b&lFishing"
+      lore:
+        - "&7&oThe waters conceal countless treasures."
+        - "&7&oCast your line into the unknown"
+        - "&7&oand discover rare catches waiting below."
+        - ""
+        - "&fLevel: &b{fishing_level}"
+
+    close:
+      slot: 49
+      material: BARRIER
+      data: 0
+      name: "&c&lClose"
+      lore:
+        - "&7Click to close this menu."
+
+    # Player profile head — bottom-right corner.
+    # Colored skill sections + Wasteland Playtime (no Rewards Claimed).
+    profile:
+      slot: 53
+      material: SKULL_ITEM
+      data: 3
+      name: "&2&l{player}"
+      lore:
+        - "&7Wasteland Statistics"
+        - ""
+        - "&7Mining Level:   &f{mining_level}"
+        - "&6Chopping Level: &f{woodcutting_level}"
+        - "&aFarming Level:  &f{farming_level}"
+        - "&bFishing Level:  &f{fishing_level}"
+        - ""
+        - "&fWasteland Playtime: &7{playtime}"
+
+# ── Skill Detail Menu (still accessible via /wasteland stats or other paths) ─
+skill-menu:
+  title: "&7Wasteland &8\u2022 &a{skill}"
+  size: 54
+  border-item:
+    material: STAINED_GLASS_PANE
+    data: 15
+    name: " "
+  fill-item:
+    material: STAINED_GLASS_PANE
+    data: 7
+    name: " "
+  slots:
+    level-display:
+      slot: 13
+      material: EXP_BOTTLE
+      data: 0
+      name: "&a&lSkill Level"
+      lore:
+        - "&fLevel: &a{level} &7/ &f{max_level}"
+        - "&fXP: &a{xp} &7/ &f{next_xp}"
+        - "&fTier: &a{tier}"
+    progress-bar:
+      slot: 22
+      material: PAPER
+      data: 0
+      name: "&7Progress"
+      lore:
+        - "{progress_bar}"
+        - "&7{xp} / {next_xp} XP"
+    back:
+      slot: 45
+      material: ARROW
+      data: 0
+      name: "&7\u00ab Back"
+      lore:
+        - "&7Return to main menu."
+    tiers:
+      slot: 49
+      material: NETHER_STAR
+      data: 0
+      name: "&e&lView Tiers"
+      lore:
+        - "&7View all tier rewards."
+
+# ── Tier Browser Menu (shared tiers, no skill) ───────────────────────────────
+tier-menu:
+  title: "&7Wasteland &8\u2022 &aTier Rewards"
+  size: 27
+  border-item:
+    material: STAINED_GLASS_PANE
+    data: 15
+    name: " "
+  fill-item:
+    material: STAINED_GLASS_PANE
+    data: 7
+    name: " "
+  tier-lore:
+    click-text: "&fClick to view rewards!"
+    unlocked:   "&aUnlocked!"
+    claimed:    "&a\u2714 Claimed"
+    locked:     "&cRequires Level {level}"
+  tier-slots:
+    1: 11
+    2: 12
+    3: 13
+    4: 14
+  back:
+    slot: 22
+    material: ARROW
+    data: 0
+    name: "&7\u00ab Back"
+    lore:
+      - "&7Return to main menu."
+
+# ── Reward Page Menu (shared tier, no skill prefix) ──────────────────────────
+reward-page-menu:
+  title: "&7Tier {tier} Rewards"
+  size: 54
+  # Status labels — never include command info anywhere in this menu.
+  status:
+    claimed:   "&a\u2714 Claimed"
+    unclaimed: "&e\u25cf Unclaimed"
+    locked:    "&c\u2718 Locked"
+  reward-slots:
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+  prev-page:
+    slot: 45
+    material: ARROW
+    data: 0
+    name: "&7\u00ab Previous Page"
+    lore:
+      - "&7Previous page."
+  next-page:
+    slot: 53
+    material: ARROW
+    data: 0
+    name: "&aNext Page &7\u00bb"
+    lore:
+      - "&7Next page."
+  back:
+    slot: 49
+    material: ARROW
+    data: 0
+    name: "&7\u00ab Back"
+    lore:
+      - "&7Return to tier browser."
+
+# ── Collect Rewards Menu ─────────────────────────────────────────────────────
+collect-menu:
+  title: "&d&7Collect Rewards"
+  size: 54
+  border-item:
+    material: STAINED_GLASS_PANE
+    data: 2
+    name: " "
+  fill-item:
+    material: STAINED_GLASS_PANE
+    data: 7
+    name: " "
+  reward-slots:
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+  prev-page:
+    slot: 45
+    material: ARROW
+    data: 0
+    name: "&7\u00ab Previous Page"
+  next-page:
+    slot: 53
+    material: ARROW
+    data: 0
+    name: "&aNext Page &7\u00bb"
+  close:
+    slot: 49
+    material: BARRIER
+    data: 0
+    name: "&c&lClose"
+    lore:
+      - "&7Return to main menu."
+
+# ── Statistics Menu ──────────────────────────────────────────────────────────
+stats-menu:
+  title: "&7Wasteland &8\u2022 &aStatistics"
+  size: 54
+  fill-item:
+    material: STAINED_GLASS_PANE
+    data: 7
+    name: " "
+  items:
+    mining:
+      slot: 20
+      material: DIAMOND_PICKAXE
+      data: 0
+      name: "&7&lMining"
+      lore:
+        - "&fLevel: &7{mining_level}"
+        - "&fXP:    &7{mining_xp}"
+    woodcutting:
+      slot: 21
+      material: DIAMOND_AXE
+      data: 0
+      name: "&6&lChopping"
+      lore:
+        - "&fLevel: &6{woodcutting_level}"
+        - "&fXP:    &6{woodcutting_xp}"
+    farming:
+      slot: 23
+      material: DIAMOND_HOE
+      data: 0
+      name: "&a&lFarming"
+      lore:
+        - "&fLevel: &a{farming_level}"
+        - "&fXP:    &a{farming_xp}"
+    fishing:
+      slot: 24
+      material: FISHING_ROD
+      data: 0
+      name: "&b&lFishing"
+      lore:
+        - "&fLevel: &b{fishing_level}"
+        - "&fXP:    &b{fishing_xp}"
+    total:
+      slot: 31
+      material: NETHER_STAR
+      data: 0
+      name: "&e&lTotal Stats"
+      lore:
+        - "&fTotal Level: &e{total_level}"
+        - "&fTotal XP:    &e{total_xp}"
+        - "&fTier:        &e{tier}"
+    close:
+      slot: 49
+      material: BARRIER
+      data: 0
+      name: "&c&lClose"
+
+# ── Progress Bar ─────────────────────────────────────────────────────────────
+progress-bar:
+  filled-char: "\u25a0"
+  empty-char: "\u25a1"
+  filled-color: "&a"
+  empty-color: "&7"
+  length: 20

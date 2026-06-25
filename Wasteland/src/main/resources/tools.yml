@@ -1,0 +1,79 @@
+tools:
+  mining:
+    material: DIAMOND_PICKAXE
+    name: "&2&lMining Pickaxe"
+    lore:
+      - "&7The legendary pickaxe of Wasteland."
+      - ""
+      - "&fSkill: &2Mining"
+      - "&fTier: &a{tier}"
+      - "&fLevel: &a{level}"
+      - ""
+      - "&7Mine ores to gain XP and level up!"
+    enchants:
+      DURABILITY: 10
+      DIG_SPEED: 5
+      LOOT_BONUS_BLOCKS: 3
+    glow: false
+    custom-model-data: -1
+    nbt-key: "wasteland_tool"
+    nbt-value: "mining"
+
+  woodcutting:
+    material: DIAMOND_AXE
+    name: "&6&lWoodcutting Axe"
+    lore:
+      - "&7The legendary axe of Wasteland."
+      - ""
+      - "&fSkill: &6Woodcutting"
+      - "&fTier: &e{tier}"
+      - "&fLevel: &e{level}"
+      - ""
+      - "&7Chop logs to gain XP and level up!"
+    enchants:
+      DURABILITY: 10
+      DIG_SPEED: 5
+      LOOT_BONUS_BLOCKS: 3
+    glow: false
+    custom-model-data: -1
+    nbt-key: "wasteland_tool"
+    nbt-value: "woodcutting"
+
+  farming:
+    material: DIAMOND_HOE
+    name: "&a&lFarming Hoe"
+    lore:
+      - "&7The legendary hoe of Wasteland."
+      - ""
+      - "&fSkill: &aFarming"
+      - "&fTier: &2{tier}"
+      - "&fLevel: &2{level}"
+      - ""
+      - "&7Harvest crops to gain XP and level up!"
+    enchants:
+      DURABILITY: 10
+      LOOT_BONUS_BLOCKS: 3
+    glow: false
+    custom-model-data: -1
+    nbt-key: "wasteland_tool"
+    nbt-value: "farming"
+
+  fishing:
+    material: FISHING_ROD
+    name: "&b&lFishing Rod"
+    lore:
+      - "&7The legendary rod of Wasteland."
+      - ""
+      - "&fSkill: &bFishing"
+      - "&fTier: &3{tier}"
+      - "&fLevel: &3{level}"
+      - ""
+      - "&7Catch fish to gain XP and level up!"
+    enchants:
+      DURABILITY: 10
+      LUCK: 3
+      LURE: 3
+    glow: false
+    custom-model-data: -1
+    nbt-key: "wasteland_tool"
+    nbt-value: "fishing"

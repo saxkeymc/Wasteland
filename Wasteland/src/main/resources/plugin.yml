@@ -1,0 +1,46 @@
+name: Wasteland
+version: "1.2.0"
+main: dev.r3faced.minecurse.wasteland.WastelandPlugin
+api-version: "1.8"
+author: r3faced
+description: Comprehensive skills plugin with mining, chopping, farming, and fishing progression plus a shared tier reward system.
+
+# Primary command reference:
+#   /wasteland                          — open main GUI
+#   /wasteland tiers                    — open the Tier Rewards menu (PRIMARY)
+#   /wasteland collect                  — open Collect Rewards GUI
+#   /wasteland claim                    — alias for collect
+#   /wasteland stats                    — open statistics GUI
+#   /wasteland reload                   — reload configs
+#   /wasteland give <p> <s>             — give omni tool
+#   /wasteland setlevel <p> <s> <l>     — set level
+#   /wasteland addxp <p> <s> <amt>      — add xp
+#   /wasteland removexp <p> <s> <amt>   — remove xp
+#   /wasteland settier <p> <t>          — set shared tier
+#   /wasteland reset <player>           — reset player
+#   /wasteland setteleportmining        — set mining teleport
+#   /wasteland setteleportchopping      — set chopping teleport
+#   /wasteland setteleportfarming       — set farming teleport
+#   /wasteland setteleportfishing       — set fishing teleport
+
+softdepend:
+  - PlaceholderAPI
+
+commands:
+  wasteland:
+    description: Main Wasteland command. /wasteland tiers opens the Tier Rewards menu.
+    usage: /wasteland
+
+permissions:
+  wasteland.use:
+    description: Allows using the /wasteland command and GUIs.
+    default: true
+  wasteland.admin:
+    description: Allows using admin commands (reload, give, setlevel, setteleport*, etc.).
+    default: op
+  wasteland.reload:
+    description: Allows reloading the plugin.
+    default: op
+  wasteland.setteleport:
+    description: Allows setting skill teleport destinations.
+    default: op

@@ -1,0 +1,83 @@
+mining:
+  level-cap: 50
+  display-name: "&7Mining"
+  icon: DIAMOND_PICKAXE
+  xp:
+    STONE: 5
+    COBBLESTONE: 3
+    COAL_ORE: 10
+    IRON_ORE: 15
+    GOLD_ORE: 20
+    LAPIS_ORE: 20
+    REDSTONE_ORE: 20
+    DIAMOND_ORE: 30
+    EMERALD_ORE: 35
+    QUARTZ_ORE: 12
+    OBSIDIAN: 8
+    SANDSTONE: 4
+    NETHERRACK: 3
+    SOUL_SAND: 4
+    GLOWSTONE: 10
+    NETHER_BRICK: 5
+    GRAVEL: 2
+    DIRT: 1
+    SAND: 1
+  xp-formula:
+    base: 100
+    multiplier: 1.15
+
+woodcutting:
+  level-cap: 50
+  display-name: "&6Chopping"
+  icon: IRON_AXE
+  xp:
+    LOG: 5
+    LOG_2: 5
+    HUGE_MUSHROOM_1: 4
+    HUGE_MUSHROOM_2: 4
+    CACTUS: 3
+    SUGAR_CANE_BLOCK: 3
+    VINE: 2
+    LEAVES: 1
+    LEAVES_2: 1
+  xp-formula:
+    base: 100
+    multiplier: 1.15
+
+farming:
+  level-cap: 50
+  display-name: "&aFarming"
+  icon: DIAMOND_HOE
+  xp:
+    WHEAT: 5
+    CARROT: 5
+    POTATO: 5
+    NETHER_WARTS: 8
+    COCOA: 6
+    MELON_BLOCK: 4
+    PUMPKIN: 4
+    BEETROOT_BLOCK: 6
+    CHORUS_FLOWER: 7
+  xp-formula:
+    base: 100
+    multiplier: 1.15
+
+fishing:
+  level-cap: 50
+  display-name: "&bFishing"
+  icon: FISHING_ROD
+  xp:
+    DEFAULT: 10
+    FISH: 10
+    SALMON: 12
+    CLOWNFISH: 15
+    PUFFERFISH: 8
+    ENCHANTED_BOOK: 50
+    BOW: 25
+    FISHING_ROD: 20
+    NAME_TAG: 30
+    SADDLE: 20
+    LILY_PAD: 5
+  xp-formula:
+    base: 100
+    multiplier: 1.15

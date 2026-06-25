@@ -1,0 +1,67 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — Messages Configuration
+# ════════════════════════════════════════════════════════════════════════════
+# All plugin messages are configurable here. Placeholders:
+#   {prefix}   — the prefix defined above
+#   {player}   — target player name
+#   {skill}    — skill name (mining, chopping, farming, fishing)
+#   {tier}     — tier number
+#   {level}    — level number
+#   {amount}   — xp amount
+#   {input}    — invalid input the user typed
+# ════════════════════════════════════════════════════════════════════════════
+
+prefix: "&2&lW&a&la&2&ls&a&lt&2&le&a&lL&2&la&a&ln&2&ld &8\u2022 &f"
+
+no-permission: "{prefix}&cYou do not have permission to do that."
+player-only: "{prefix}&cThis command can only be run by a player."
+player-not-found: "{prefix}&cPlayer &e{player} &cnot found."
+invalid-number: "{prefix}&cInvalid number: &e{input}&c."
+invalid-skill: "{prefix}&cInvalid skill. Valid skills: &emining, chopping, farming, fishing&c."
+invalid-tier: "{prefix}&cInvalid tier. Valid tiers: &e1-{max}&c."
+plugin-reloaded: "{prefix}&aPlugin reloaded successfully."
+
+skill:
+  level-up: "{prefix}&aYour &e{skill} &askill reached &2Level {level}&a!"
+  # Tier unlock is now SHARED across all skills (no {skill} placeholder).
+  tier-unlock: "{prefix}&aYou unlocked &2Tier {tier}&a! Use &2/wasteland collect &ato claim your reward."
+  xp-gained: "{prefix}&7+&a{xp} &7{skill} XP"
+  max-level: "{prefix}&cYou have already reached the maximum level for &e{skill}&c."
+
+tool:
+  received: "{prefix}&aYou received your &e{skill} Omni Tool&a!"
+  already-have: "{prefix}&cYou already have your Omni Tool."
+
+rewards:
+  # No {skill} placeholder — tiers are shared.
+  claimed: "{prefix}&aClaimed rewards for &2Tier {tier}&a!"
+  already-claimed: "{prefix}&cYou have already claimed this tier."
+  none-available: "{prefix}&cYou have no available rewards to claim."
+
+# ── Teleport messages ────────────────────────────────────────────────────────
+teleport:
+  teleported: "{prefix}&aTeleporting to the &e{skill} &aarea..."
+  not-configured: "{prefix}&cThis area has not been configured yet."
+
+# ── Admin messages ───────────────────────────────────────────────────────────
+admin:
+  gave-tool: "{prefix}&aGave &e{player} &athe &2{skill} &aOmni Tool."
+  set-level: "{prefix}&aSet &e{player}&a's &2{skill} &alevel to &e{level}&a."
+  added-xp: "{prefix}&aAdded &e{amount} &a{skill} XP to &e{player}&a."
+  removed-xp: "{prefix}&aRemoved &e{amount} &a{skill} XP from &e{player}&a."
+  # No {skill} placeholder — tier is shared.
+  set-tier: "{prefix}&aSet &e{player}&a's tier to &e{tier}&a."
+  reset-player: "{prefix}&aReset all Wasteland data for &e{player}&a."
+  set-teleport: "{prefix}&aSet the &e{skill} &askill teleport destination to your current location."
+
+# ── GUI labels ───────────────────────────────────────────────────────────────
+gui:
+  close: "&cClose"
+  back: "&7\u00ab Back"
+  next-page: "&aNext Page &7\u00bb"
+  prev-page: "&7\u00ab &aPrevious Page"
+  page-indicator: "&7Page &f{page} &7of &f{max}"
+  no-rewards: "&7No rewards available."
+  reward-claimed: "&a\u2714 Claimed"
+  reward-unclaimed: "&e\u25cf Unclaimed"
+  reward-locked: "&c\u2718 Locked"

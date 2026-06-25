@@ -1,0 +1,40 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — Main Configuration
+# ════════════════════════════════════════════════════════════════════════════
+
+storage:
+  type: YAML
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "wasteland"
+    username: "root"
+    password: "password"
+    pool-size: 10
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1800000
+
+worlds:
+  mining:
+    enabled: true
+    world: "wasteland_mining"
+  woodcutting:
+    enabled: true
+    world: "wasteland_woodcutting"
+  farming:
+    enabled: true
+    world: "wasteland_farming"
+  fishing:
+    enabled: true
+    world: "wasteland_fishing"
+
+# ── Playtime Tracking ────────────────────────────────────────────────────────
+# Tracks total time players spend in the Wasteland system.
+# Format tokens: {days}, {hours}, {minutes}, {seconds}, {total_hours}
+# strip-empty-parts removes leading "0d", "0h", etc. for compact display.
+playtime:
+  format: "{days}d {hours}h {minutes}m"
+  strip-empty-parts: true
+
+debug: false
