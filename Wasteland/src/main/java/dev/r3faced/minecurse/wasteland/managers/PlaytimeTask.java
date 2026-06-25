@@ -7,17 +7,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
- * Periodic task that ticks every minute to accumulate Wasteland playtime
- * for every online player.
+ * Periodic task that ticks every 30 seconds to accumulate Wasteland
+ * playtime for every online player.
  * <p>
  * Playtime is stored on the {@link PlayerData} record and persisted via
  * the data manager. A short tick interval keeps potential data loss on
- * server crash small (max ~1 minute of unsaved playtime).
+ * server crash small (max ~30 seconds of unsaved playtime).
+ * <p>
+ * Additional save points:
+ *   • PlayerQuitEvent — flushes the partial session since the last tick.
+ *   • onDisable()     — saves every online player synchronously.
  */
 public class PlaytimeTask extends BukkitRunnable {
 
-    /** Tick interval in server ticks (1200 = 60 seconds). */
-    public static final long INTERVAL_TICKS = 1200L;
+    /** Tick interval in server ticks (600 = 30 seconds). */
+    public static final long INTERVAL_TICKS = 600L;
     private static final long INTERVAL_SECONDS = INTERVAL_TICKS / 20L;
 
     private final WastelandPlugin plugin;

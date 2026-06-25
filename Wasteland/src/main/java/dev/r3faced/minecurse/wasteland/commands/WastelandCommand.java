@@ -2,12 +2,14 @@ package dev.r3faced.minecurse.wasteland.commands;
 
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.gui.menus.CollectMenuGui;
+import dev.r3faced.minecurse.wasteland.gui.menus.HelpMenuGui;
 import dev.r3faced.minecurse.wasteland.gui.menus.MainMenuGui;
 import dev.r3faced.minecurse.wasteland.gui.menus.StatsMenuGui;
 import dev.r3faced.minecurse.wasteland.gui.menus.TierMenuGui;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
+import dev.r3faced.minecurse.wasteland.utils.PlaytimeFormatter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,12 +30,14 @@ import java.util.List;
  * /wasteland claim                            — alias for collect        [wasteland.use]
  * /wasteland tiers                            — open tier browser        [wasteland.use]
  * /wasteland stats                            — open statistics GUI      [wasteland.use]
+ * /wasteland help                             — open help GUI            [wasteland.use]
+ * /wasteland playtime                         — view your playtime       [wasteland.use]
  * /wasteland reload                           — reload plugin            [wasteland.admin]
  * /wasteland give <player> <skill>            — give omni tool           [wasteland.admin]
  * /wasteland setlevel <p> <s> <l>             — set level                [wasteland.admin]
  * /wasteland addxp <p> <s> <amt>              — add xp                   [wasteland.admin]
  * /wasteland removexp <p> <s> <amt>           — remove xp                [wasteland.admin]
- * /wasteland settier <p> <s> <t>              — set tier                 [wasteland.admin]
+ * /wasteland settier <p> <t>                  — set tier                 [wasteland.admin]
  * /wasteland reset <player>                   — reset player             [wasteland.admin]
  * /wasteland setteleportmining                — set mining teleport      [wasteland.admin]
  * /wasteland setteleportchopping              — set chopping teleport    [wasteland.admin]
@@ -47,7 +51,7 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SKILLS = Arrays.asList("mining", "woodcutting", "farming", "fishing");
     private static final List<String> PLAYER_SUBCOMMANDS = Arrays.asList(
-            "collect", "claim", "tiers", "stats"
+            "collect", "claim", "tiers", "stats", "help", "playtime"
     );
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
             "reload", "give", "setlevel", "addxp", "removexp", "settier", "reset",
@@ -100,6 +104,25 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
                 if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
                 new StatsMenuGui(plugin, (Player) sender).open();
+                return true;
+            }
+
+            case "help": {
+                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
+                if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
+                new HelpMenuGui(plugin, (Player) sender).open();
+                return true;
+            }
+
+            case "playtime": {
+                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
+                if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
+                Player p = (Player) sender;
+                PlayerData data = plugin.getDataManager().getPlayerData(p.getUniqueId());
+                String formatted = PlaytimeFormatter.format(plugin, data.getPlaytimeSeconds());
+                String msg = MessageUtil.getMessage(plugin, "playtime.view")
+                        .replace("{playtime}", formatted);
+                p.sendMessage(msg);
                 return true;
             }
 

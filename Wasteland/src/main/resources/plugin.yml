@@ -1,5 +1,5 @@
 name: Wasteland
-version: "1.2.0"
+version: "1.3.0"
 main: dev.r3faced.minecurse.wasteland.WastelandPlugin
 api-version: "1.8"
 author: r3faced
@@ -11,6 +11,8 @@ description: Comprehensive skills plugin with mining, chopping, farming, and fis
 #   /wasteland collect                  — open Collect Rewards GUI
 #   /wasteland claim                    — alias for collect
 #   /wasteland stats                    — open statistics GUI
+#   /wasteland help                     — open Help GUI
+#   /wasteland playtime                 — view your Wasteland playtime
 #   /wasteland reload                   — reload configs
 #   /wasteland give <p> <s>             — give omni tool
 #   /wasteland setlevel <p> <s> <l>     — set level

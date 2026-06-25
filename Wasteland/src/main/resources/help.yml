@@ -1,0 +1,64 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — Help GUI Configuration
+# ════════════════════════════════════════════════════════════════════════════
+# Opened via /wasteland help. A 3-row (27-slot) inventory with a single
+# book item in the middle slot (slot 13). All text below is configurable.
+#
+# Placeholders (substituted at runtime):
+#   {player}     — the player's name
+#   {tier}       — the player's current shared tier
+#   {playtime}   — the player's formatted Wasteland playtime
+#   {total_level}— the player's total level across all 4 skills
+# ════════════════════════════════════════════════════════════════════════════
+
+help-menu:
+  title: "&7Wasteland &8\u2022 &aHelp"
+  size: 27
+
+  # Outer-border decorative panes
+  border-item:
+    material: STAINED_GLASS_PANE
+    data: 15
+    name: " "
+  # Inner-area filler panes
+  fill-item:
+    material: STAINED_GLASS_PANE
+    data: 7
+    name: " "
+
+  # The book item shown in the middle slot (slot 13).
+  book:
+    slot: 13
+    material: BOOK
+    data: 0
+    name: "&a&lWasteland Help"
+    lore:
+      - "&7Welcome to &fWasteland&7!"
+      - ""
+      - "&fGetting Started:"
+      - "&7\u2022 Use &f/wasteland &7to open the main menu."
+      - "&7\u2022 Click a skill icon to teleport to that area."
+      - "&7\u2022 Level up by mining, chopping, farming, or fishing."
+      - ""
+      - "&fCommands:"
+      - "&7\u2022 &f/wasteland &7- Open main menu"
+      - "&7\u2022 &f/wasteland tiers &7- Browse tier rewards"
+      - "&7\u2022 &f/wasteland collect &7- Claim unlocked rewards"
+      - "&7\u2022 &f/wasteland help &7- Show this menu"
+      - "&7\u2022 &f/wasteland playtime &7- View your playtime"
+      - ""
+      - "&fYour Stats:"
+      - "&7\u2022 Tier: &a{tier}"
+      - "&7\u2022 Total Level: &a{total_level}"
+      - "&7\u2022 Playtime: &a{playtime}"
+      - ""
+      - "&eGood luck out there, &f{player}&e!"
+
+  # Optional close button (slot 22, bottom-middle).
+  close:
+    slot: 22
+    material: BARRIER
+    data: 0
+    name: "&c&lClose"
+    lore:
+      - "&7Click to close this menu."

@@ -46,6 +46,7 @@ public final class WastelandPlugin extends JavaPlugin {
         saveResource("gui.yml", false);
         saveResource("tools.yml", false);
         saveResource("teleports.yml", false);
+        saveResource("help.yml", false);
 
         // Initialize config manager
         configManager = new ConfigManager(this);

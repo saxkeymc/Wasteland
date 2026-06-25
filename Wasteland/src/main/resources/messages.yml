@@ -43,6 +43,10 @@ teleport:
   teleported: "{prefix}&aTeleporting to the &e{skill} &aarea..."
   not-configured: "{prefix}&cThis area has not been configured yet."
 
+# ── Playtime messages ────────────────────────────────────────────────────────
+playtime:
+  view: "{prefix}&aYour Wasteland Playtime: &e{playtime}&a."
+
 # ── Admin messages ───────────────────────────────────────────────────────────
 admin:
   gave-tool: "{prefix}&aGave &e{player} &athe &2{skill} &aOmni Tool."
