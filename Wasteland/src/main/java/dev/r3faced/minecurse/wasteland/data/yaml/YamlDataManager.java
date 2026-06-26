@@ -3,14 +3,18 @@ package dev.r3faced.minecurse.wasteland.data.yaml;
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.data.DataManager;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
+import dev.r3faced.minecurse.wasteland.model.StoredReward;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -153,6 +157,33 @@ public class YamlDataManager implements DataManager {
         // Playtime (seconds)
         data.setPlaytimeSeconds(yaml.getLong("playtime-seconds", 0L));
 
+        // Stored rewards (virtual backpack)
+        if (yaml.isList("stored-rewards")) {
+            for (Map<?, ?> entry : yaml.getMapList("stored-rewards")) {
+                try {
+                    String matName = String.valueOf(entry.get("material"));
+                    Material mat;
+                    try { mat = Material.valueOf(matName.toUpperCase()); }
+                    catch (Exception ex) { mat = Material.CHEST; }
+                    short dataVal = ((Number) entry.get("data")).shortValue();
+                    String name = entry.get("name") != null ? String.valueOf(entry.get("name")) : "&fReward";
+                    List<String> lore = new ArrayList<>();
+                    Object loreRaw = entry.get("lore");
+                    if (loreRaw instanceof List) {
+                        for (Object o : (List<?>) loreRaw) lore.add(String.valueOf(o));
+                    }
+                    List<String> commands = new ArrayList<>();
+                    Object cmdRaw = entry.get("commands");
+                    if (cmdRaw instanceof List) {
+                        for (Object o : (List<?>) cmdRaw) commands.add(String.valueOf(o));
+                    }
+                    data.addStoredReward(new StoredReward(mat, dataVal, name, lore, commands));
+                } catch (Exception ignored) {
+                    // Skip malformed entries gracefully.
+                }
+            }
+        }
+
         return data;
     }
 
@@ -169,6 +200,19 @@ public class YamlDataManager implements DataManager {
         yaml.set("tier", data.getTier());
         yaml.set("claimed-tiers", Arrays.asList(data.getClaimedTiers().toArray(new String[0])));
         yaml.set("playtime-seconds", data.getPlaytimeSeconds());
+
+        // Stored rewards (virtual backpack) — serialize as a list of maps.
+        List<Map<String, Object>> rewardsOut = new ArrayList<>();
+        for (StoredReward r : data.getStoredRewards()) {
+            Map<String, Object> entry = new java.util.LinkedHashMap<>();
+            entry.put("material", r.getDisplayMaterial().name());
+            entry.put("data", (int) r.getDisplayData());
+            entry.put("name", r.getDisplayName());
+            entry.put("lore", r.getDisplayLore());
+            entry.put("commands", r.getCommands());
+            rewardsOut.add(entry);
+        }
+        yaml.set("stored-rewards", rewardsOut);
 
         try {
             yaml.save(file);

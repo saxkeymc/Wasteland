@@ -2,6 +2,7 @@ package dev.r3faced.minecurse.wasteland.model;
 
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +38,13 @@ public class PlayerData {
 
     /** Total time spent in the Wasteland system, in seconds. */
     private long playtimeSeconds = 0L;
+
+    /**
+     * Virtual reward backpack — rewards unlocked via tier progression
+     * that haven't been claimed yet. Each entry carries its own hidden
+     * commands; the GUI stacks entries with identical display items.
+     */
+    private final List<StoredReward> storedRewards = new java.util.ArrayList<>();
 
     /**
      * Transient (NOT persisted) — epoch-millis when the player most recently
@@ -153,6 +161,43 @@ public class PlayerData {
     /** Set the epoch-millis when the player entered a Wasteland world (0 = not in one). */
     public void setInWastelandSince(long millis) {
         this.inWastelandSince = millis;
+    }
+
+    // ── Stored Rewards (virtual backpack) ─────────────────────────────────────
+
+    /**
+     * Returns the list of rewards waiting to be claimed. This is the live
+     * list — mutations are visible immediately. The GUI reads from this
+     * list and removes entries as the player claims them.
+     */
+    public List<StoredReward> getStoredRewards() {
+        return storedRewards;
+    }
+
+    /** Add a single reward to the backpack. */
+    public void addStoredReward(StoredReward reward) {
+        if (reward != null) {
+            storedRewards.add(reward);
+        }
+    }
+
+    /** Add multiple rewards at once (e.g. when a tier unlocks). */
+    public void addStoredRewards(List<StoredReward> rewards) {
+        if (rewards != null) {
+            for (StoredReward r : rewards) {
+                if (r != null) storedRewards.add(r);
+            }
+        }
+    }
+
+    /** Remove a specific reward instance from the backpack. */
+    public void removeStoredReward(StoredReward reward) {
+        storedRewards.remove(reward);
+    }
+
+    /** Clear all stored rewards (used by /wasteland reset). */
+    public void clearStoredRewards() {
+        storedRewards.clear();
     }
 
     // ── Bulk access for serialization ─────────────────────────────────────────

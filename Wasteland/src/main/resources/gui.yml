@@ -228,7 +228,10 @@ reward-page-menu:
     lore:
       - "&7Return to tier browser."
 
-# ── Collect Rewards Menu ─────────────────────────────────────────────────────
+# ── Collect Rewards Menu (Virtual Reward Backpack) ───────────────────────────
+# Paginated, infinite-storage reward backpack. All rewards from all tiers
+# are merged into one continuous storage. Duplicate display items stack
+# visually. Pages are created automatically as the player accumulates rewards.
 collect-menu:
   title: "&d&7Collect Rewards"
   size: 54
@@ -240,32 +243,57 @@ collect-menu:
     material: STAINED_GLASS_PANE
     data: 7
     name: " "
+  # Reward slots — 45 per page (rows 1-5, excluding the border).
   reward-slots:
+    - 10
     - 11
     - 12
     - 13
     - 14
     - 15
+    - 16
+    - 19
     - 20
     - 21
     - 22
     - 23
     - 24
+    - 25
+    - 28
     - 29
     - 30
     - 31
     - 32
     - 33
+    - 34
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
   prev-page:
     slot: 45
     material: ARROW
     data: 0
     name: "&7\u00ab Previous Page"
+    lore:
+      - "&7Go to the previous page."
   next-page:
     slot: 53
     material: ARROW
     data: 0
     name: "&aNext Page &7\u00bb"
+    lore:
+      - "&7Go to the next page."
+  page-indicator:
+    slot: 48
+    material: PAPER
+    data: 0
+    name: "&7Page &f{page}&7/&f{max}"
+    lore:
+      - "&7You are viewing page &f{page} &7of &f{max}&7."
   close:
     slot: 49
     material: BARRIER
@@ -273,6 +301,10 @@ collect-menu:
     name: "&c&lClose"
     lore:
       - "&7Return to main menu."
+  # Stacking display — appended to the lore of stacked reward items.
+  stacking:
+    count-line: "&7Amount: &f{count}"
+    claim-line: "&eClick to claim one."
 
 # ── Statistics Menu ──────────────────────────────────────────────────────────
 stats-menu:

@@ -258,10 +258,42 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             }
 
             case "reset": {
-                if (!sender.hasPermission("wasteland.admin")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
-                if (args.length < 2) { sender.sendMessage(usage("/wasteland reset <player>")); return true; }
+                if (!sender.hasPermission("wasteland.admin") && !sender.hasPermission("wasteland.*")) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission"));
+                    return true;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(usage("/wasteland reset <player>"));
+                    sender.sendMessage(usage("/wasteland reset all confirm"));
+                    return true;
+                }
+
+                // ── /wasteland reset all confirm ──────────────────────────────
+                if (args[1].equalsIgnoreCase("all")) {
+                    if (args.length < 3 || !args[2].equalsIgnoreCase("confirm")) {
+                        // Send confirmation prompt — require "confirm" to proceed.
+                        sender.sendMessage(MessageUtil.getMessage(plugin, "admin.reset-all-confirm"));
+                        return true;
+                    }
+                    // Reset every online player + every cached player.
+                    int resetCount = 0;
+                    for (Player online : Bukkit.getOnlinePlayers()) {
+                        plugin.getDataManager().resetPlayer(online.getUniqueId());
+                        resetCount++;
+                    }
+                    // Also reset any cached-but-offline players (the data
+                    // manager's resetPlayer already handles this via the cache).
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "admin.reset-all-complete")
+                            .replace("{count}", String.valueOf(resetCount)));
+                    return true;
+                }
+
+                // ── /wasteland reset <player> ────────────────────────────────
                 Player target = Bukkit.getPlayer(args[1]);
-                if (target == null) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-not-found").replace("{player}", args[1])); return true; }
+                if (target == null) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "player-not-found").replace("{player}", args[1]));
+                    return true;
+                }
                 plugin.getDataManager().resetPlayer(target.getUniqueId());
                 sender.sendMessage(MessageUtil.getMessage(plugin, "admin.reset-player")
                         .replace("{player}", target.getName()));

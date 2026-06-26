@@ -2,6 +2,7 @@ package dev.r3faced.minecurse.wasteland.managers;
 
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
+import dev.r3faced.minecurse.wasteland.model.StoredReward;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
 import dev.r3faced.minecurse.wasteland.model.TierReward;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
@@ -142,7 +143,12 @@ public class TierManager {
     /**
      * Called after any skill levels up to check whether the player's
      * ALL-SKILLS requirement has been met for the next tier.
-     * Sends a notification message on unlock. Does NOT auto-dispatch rewards.
+     * <p>
+     * When a tier unlocks, the rewards are <strong>automatically rolled and
+     * added to the player's virtual reward backpack</strong> (PlayerData's
+     * storedRewards list). The player can then claim them at any time via
+     * /wasteland claim. Each reward's chance is rolled independently at
+     * unlock time; only successful rolls produce a StoredReward.
      */
     public void checkTierUnlock(Player player) {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
@@ -151,13 +157,72 @@ public class TierManager {
         for (int tier = currentTier + 1; tier <= TIER_COUNT; tier++) {
             if (meetsRequirements(data, tier)) {
                 data.setTier(tier);
+
+                // Roll each reward's chance and add successful ones to the
+                // player's virtual reward backpack.
+                List<TierReward> rewards = getRewards(tier);
+                int added = 0;
+                for (TierReward reward : rewards) {
+                    if (reward.rollSuccess()) {
+                        data.addStoredReward(new StoredReward(
+                                reward.getDisplayMaterial(),
+                                reward.getDisplayData(),
+                                reward.getDisplayName(),
+                                reward.getDisplayLore(),
+                                reward.getCommands()
+                        ));
+                        added++;
+                    }
+                }
+
+                // Persist the new stored rewards.
+                plugin.getDataManager().savePlayer(player.getUniqueId());
+
                 String msg = MessageUtil.getMessage(plugin, "skill.tier-unlock")
                         .replace("{tier}", String.valueOf(tier));
                 player.sendMessage(msg);
+
+                // Notify the player that rewards have been added to their backpack.
+                if (added > 0) {
+                    String rewardMsg = MessageUtil.getMessage(plugin, "rewards.added-to-storage")
+                            .replace("{count}", String.valueOf(added))
+                            .replace("{tier}", String.valueOf(tier));
+                    player.sendMessage(rewardMsg);
+                }
             } else {
                 break;
             }
         }
+    }
+
+    /**
+     * Claim a single stored reward: execute its hidden commands and remove
+     * it from the player's backpack. Returns true if the reward was found
+     * and claimed, false otherwise.
+     */
+    public boolean claimStoredReward(Player player, StoredReward reward) {
+        if (reward == null) return false;
+        PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
+        if (!data.getStoredRewards().contains(reward)) return false;
+
+        // Execute the hidden commands.
+        for (String raw : reward.getCommands()) {
+            if (raw == null || raw.trim().isEmpty()) continue;
+            String cmd = raw.replace("%player%", player.getName());
+            try {
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to dispatch reward command '" + cmd + "': " + e.getMessage());
+            }
+        }
+
+        // Remove from storage and persist.
+        data.removeStoredReward(reward);
+        plugin.getDataManager().savePlayer(player.getUniqueId());
+
+        String msg = MessageUtil.getMessage(plugin, "rewards.claimed-single");
+        player.sendMessage(msg);
+        return true;
     }
 
     /**

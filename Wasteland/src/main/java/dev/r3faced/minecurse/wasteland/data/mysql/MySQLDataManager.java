@@ -5,7 +5,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.data.DataManager;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
+import dev.r3faced.minecurse.wasteland.model.StoredReward;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -13,8 +15,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -78,7 +82,8 @@ public class MySQLDataManager implements DataManager {
                 + "fishing_xp BIGINT NOT NULL DEFAULT 0,"
                 + "tier INT NOT NULL DEFAULT 1,"
                 + "claimed_tiers TEXT,"
-                + "playtime_seconds BIGINT NOT NULL DEFAULT 0"
+                + "playtime_seconds BIGINT NOT NULL DEFAULT 0,"
+                + "stored_rewards TEXT"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
         try (Connection conn = dataSource.getConnection();
@@ -92,7 +97,8 @@ public class MySQLDataManager implements DataManager {
         String[] alters = {
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS tier INT NOT NULL DEFAULT 1",
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS claimed_tiers TEXT",
-            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS playtime_seconds BIGINT NOT NULL DEFAULT 0"
+            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS playtime_seconds BIGINT NOT NULL DEFAULT 0",
+            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS stored_rewards TEXT"
         };
         for (String alter : alters) {
             try (Connection conn = dataSource.getConnection();
@@ -208,6 +214,17 @@ public class MySQLDataManager implements DataManager {
                     data.setClaimedTiers(claimed);
                 }
                 try { data.setPlaytimeSeconds(rs.getLong("playtime_seconds")); } catch (SQLException ignored) {}
+
+                // Stored rewards (virtual backpack) — stored as a pipe-delimited
+                // string in the stored_rewards TEXT column. Format per entry:
+                //   MATERIAL|data|name|lore1;;lore2;;lore3|cmd1;;cmd2;;cmd3
+                // Entries are separated by "||". This avoids needing a JSON lib.
+                try {
+                    String rewardsRaw = rs.getString("stored_rewards");
+                    if (rewardsRaw != null && !rewardsRaw.isEmpty()) {
+                        deserializeRewards(data, rewardsRaw);
+                    }
+                } catch (SQLException ignored) {}
             }
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to load player data for " + uuid + ": " + e.getMessage());
@@ -227,14 +244,17 @@ public class MySQLDataManager implements DataManager {
                 + "woodcutting_level,woodcutting_xp,"
                 + "farming_level,farming_xp,"
                 + "fishing_level,fishing_xp,"
-                + "tier,claimed_tiers,playtime_seconds) "
-                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?) "
+                + "tier,claimed_tiers,playtime_seconds,stored_rewards) "
+                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
                 + "ON DUPLICATE KEY UPDATE "
                 + "mining_level=VALUES(mining_level),mining_xp=VALUES(mining_xp),"
                 + "woodcutting_level=VALUES(woodcutting_level),woodcutting_xp=VALUES(woodcutting_xp),"
                 + "farming_level=VALUES(farming_level),farming_xp=VALUES(farming_xp),"
                 + "fishing_level=VALUES(fishing_level),fishing_xp=VALUES(fishing_xp),"
-                + "tier=VALUES(tier),claimed_tiers=VALUES(claimed_tiers),playtime_seconds=VALUES(playtime_seconds)";
+                + "tier=VALUES(tier),claimed_tiers=VALUES(claimed_tiers),"
+                + "playtime_seconds=VALUES(playtime_seconds),stored_rewards=VALUES(stored_rewards)";
+
+        String rewardsSerialized = serializeRewards(data);
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -250,9 +270,79 @@ public class MySQLDataManager implements DataManager {
             stmt.setInt(10, data.getTier());
             stmt.setString(11, claimed.toString());
             stmt.setLong(12, data.getPlaytimeSeconds());
+            stmt.setString(13, rewardsSerialized);
             stmt.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to save player data for " + data.getUuid() + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * Serialize the player's stored rewards into a single TEXT-friendly string.
+     * Format per entry: MATERIAL|data|name|lore1;;lore2|cmd1;;cmd2
+     * Entries separated by "||". Pipe characters inside lore/commands are
+     * replaced with a Unicode lookalike to avoid breaking the format.
+     */
+    private String serializeRewards(PlayerData data) {
+        StringBuilder sb = new StringBuilder();
+        for (StoredReward r : data.getStoredRewards()) {
+            if (sb.length() > 0) sb.append("||");
+            sb.append(r.getDisplayMaterial().name()).append("|");
+            sb.append((int) r.getDisplayData()).append("|");
+            sb.append(escape(r.getDisplayName())).append("|");
+            sb.append(joinEscaped(r.getDisplayLore())).append("|");
+            sb.append(joinEscaped(r.getCommands()));
+        }
+        return sb.toString();
+    }
+
+    /** Deserialize the pipe-delimited reward string and populate the player's data. */
+    private void deserializeRewards(PlayerData data, String raw) {
+        if (raw == null || raw.isEmpty()) return;
+        String[] entries = raw.split("\\|\\|");
+        for (String entry : entries) {
+            if (entry.isEmpty()) continue;
+            String[] parts = entry.split("\\|", -1);
+            if (parts.length < 5) continue;
+            try {
+                Material mat;
+                try { mat = Material.valueOf(parts[0].toUpperCase()); }
+                catch (Exception ex) { mat = Material.CHEST; }
+                short dataVal = Short.parseShort(parts[1]);
+                String name = unescape(parts[2]);
+                List<String> lore = splitEscaped(parts[3]);
+                List<String> commands = splitEscaped(parts[4]);
+                data.addStoredReward(new StoredReward(mat, dataVal, name, lore, commands));
+            } catch (Exception ignored) {
+                // Skip malformed entries.
+            }
+        }
+    }
+
+    private String escape(String s) {
+        return s == null ? "" : s.replace("|", "\u2502").replace(";;", "\u2044\u2044");
+    }
+
+    private String unescape(String s) {
+        return s == null ? "" : s.replace("\u2502", "|").replace("\u2044\u2044", ";;");
+    }
+
+    private String joinEscaped(List<String> list) {
+        if (list == null || list.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (String s : list) {
+            if (sb.length() > 0) sb.append(";;");
+            sb.append(escape(s));
+        }
+        return sb.toString();
+    }
+
+    private List<String> splitEscaped(String s) {
+        List<String> out = new ArrayList<>();
+        if (s == null || s.isEmpty()) return out;
+        for (String part : s.split(";;", -1)) {
+            out.add(unescape(part));
+        }
+        return out;
     }
 }
