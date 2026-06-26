@@ -1,5 +1,5 @@
 name: Wasteland
-version: "1.5.0"
+version: "1.6.0"
 main: dev.r3faced.minecurse.wasteland.WastelandPlugin
 api-version: "1.8"
 author: r3faced
@@ -24,6 +24,7 @@ description: Comprehensive skills plugin with mining, chopping, farming, and fis
 #   /wasteland setteleportchopping      — set chopping teleport
 #   /wasteland setteleportfarming       — set farming teleport
 #   /wasteland setteleportfishing       — set fishing teleport
+#   /wasteland addpreviewreward <tier>  — open preview reward editor
 
 softdepend:
   - PlaceholderAPI

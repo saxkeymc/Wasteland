@@ -34,6 +34,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.managers.TeleportManager teleportManager;
     private dev.r3faced.minecurse.wasteland.managers.PlaytimeTask playtimeTask;
     private dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager wastelandWorldManager;
+    private dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor previewRewardEditor;
 
     @Override
     public void onEnable() {
@@ -80,6 +81,8 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new HarvestListener(this), this);
         Bukkit.getPluginManager().registerEvents(new FishingListener(this), this);
         Bukkit.getPluginManager().registerEvents(new WorldChangeListener(this), this);
+        previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
+        Bukkit.getPluginManager().registerEvents(previewRewardEditor, this);
 
         // Start the periodic playtime tracker (every 60 seconds)
         playtimeTask = new dev.r3faced.minecurse.wasteland.managers.PlaytimeTask(this);
@@ -164,6 +167,14 @@ public final class WastelandPlugin extends JavaPlugin {
             wastelandWorldManager = new dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager(this);
         }
         return wastelandWorldManager;
+    }
+
+    /** Returns the singleton PreviewRewardEditor instance. */
+    public dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor getPreviewRewardEditor() {
+        if (previewRewardEditor == null) {
+            previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
+        }
+        return previewRewardEditor;
     }
 
     public static WastelandPlugin getInstance() {

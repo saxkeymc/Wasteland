@@ -168,9 +168,9 @@ tier-menu:
     claimed:    "&a\u2714 Claimed"
     locked:     "&cRequires every skill at Level {level}"
   tier-slots:
-    1: 10
-    2: 11
-    3: 12
+    1: 11
+    2: 12
+    3: 13
     4: 14
     5: 15
   back:

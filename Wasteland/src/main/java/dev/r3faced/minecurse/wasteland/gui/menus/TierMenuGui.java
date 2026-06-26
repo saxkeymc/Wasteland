@@ -94,6 +94,8 @@ public class TierMenuGui extends WastelandGui {
 
         for (int tier = 1; tier <= TierManager.TIER_COUNT; tier++) {
             int tierSlot = cfg.getInt("tier-menu.tier-slots." + tier, 10 + tier);
+            // Both LEFT CLICK and RIGHT CLICK perform the same action:
+            // open that tier's reward preview GUI (if unlocked).
             if (slot == tierSlot) {
                 PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
                 if (plugin.getTierManager().meetsRequirements(data, tier)) {

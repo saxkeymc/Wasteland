@@ -138,6 +138,36 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             case "setteleportfishing":
                 return handleSetTeleport(sender, SkillType.FISHING);
 
+            case "addpreviewreward": {
+                if (!sender.hasPermission("wasteland.admin") && !sender.hasPermission("wasteland.*")) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission"));
+                    return true;
+                }
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "player-only"));
+                    return true;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(usage("/wasteland addpreviewreward <tier>"));
+                    return true;
+                }
+                int previewTier;
+                try {
+                    previewTier = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "invalid-number").replace("{input}", args[1]));
+                    return true;
+                }
+                if (previewTier < 1 || previewTier > dev.r3faced.minecurse.wasteland.managers.TierManager.TIER_COUNT) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "invalid-tier")
+                            .replace("{max}", String.valueOf(dev.r3faced.minecurse.wasteland.managers.TierManager.TIER_COUNT)));
+                    return true;
+                }
+                plugin.getPreviewRewardEditor().openEditor((Player) sender, previewTier);
+                sender.sendMessage(MessageUtil.colorize("&aOpening preview reward editor for Tier " + previewTier + "..."));
+                return true;
+            }
+
             // ── Admin commands ─────────────────────────────────────────────────
 
             case "reload": {

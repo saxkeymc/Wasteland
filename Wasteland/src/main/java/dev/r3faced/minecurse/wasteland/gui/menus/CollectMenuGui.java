@@ -18,37 +18,33 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Virtual reward backpack — a paginated GUI showing ALL of the player's
- * stored rewards from every tier, merged into one continuous storage.
+ * Virtual reward backpack — a dynamically-sized, paginated GUI showing
+ * ALL of the player's stored rewards from every tier, merged into one
+ * continuous storage.
  * <p>
  * Design (Adventure Backpack style):
  * <ul>
- *   <li>54-slot inventory per page.</li>
- *   <li>45 reward slots per page (rows 1-5, excluding the border).</li>
- *   <li>Rewards with identical display items (material + data + name)
- *       stack visually into a single slot with an item-count.</li>
- *   <li>Bottom row holds Prev-Page, Close, and Next-Page buttons.</li>
- *   <li>Pages are created automatically as the player accumulates rewards.</li>
- *   <li>The page the player was viewing is remembered via the page field.</li>
+ *   <li>Inventory size is dynamic: only as many rows as needed.</li>
+ *   <li>1–9 rewards → 1 row, 10–18 → 2 rows, ... up to 5 rows (45 slots).</li>
+ *   <li>If more than 45 rewards exist, pages are created automatically.</li>
+ *   <li>When multiple pages exist, a 6th row is added for navigation.</li>
+ *   <li>Rewards start in the top-left slot and fill left-to-right.</li>
+ *   <li>No filler glass between rewards — clean and compact.</li>
+ *   <li>Rewards with identical display items stack visually.</li>
+ *   <li>Navigation buttons only appear when another page exists.</li>
  * </ul>
  * <p>
- * Clicking a reward claims ONE unit from the stack (executes the hidden
- * commands for that one reward and decrements the visual stack). The
- * actual commands execute individually even when stacked.
- * <p>
- * The "Close" button returns the player to the Main Wasteland GUI.
+ * Clicking a reward claims ONE unit from the stack.
  */
 public class CollectMenuGui extends WastelandGui {
 
     private int page;
 
-    /**
-     * Snapshot of the stacked rewards displayed on the current page.
-     * Built in build() and read in handleClick(). Each entry is a
-     * (display-item, list-of-underlying-stored-rewards) pair so that
-     * clicking can claim exactly one reward from the stack.
-     */
+    /** Snapshot of stacked rewards on the current page. */
     private final List<StackedEntry> pageEntries = new ArrayList<>();
+
+    /** Max rewards per page (5 rows × 9 cols = 45). */
+    private static final int MAX_PER_PAGE = 45;
 
     public CollectMenuGui(WastelandPlugin plugin, Player player) {
         this(plugin, player, 0);
@@ -64,94 +60,91 @@ public class CollectMenuGui extends WastelandGui {
         FileConfiguration cfg = plugin.getConfigManager().getGui();
         String title = MessageUtil.colorize(cfg.getString("collect-menu.title",
                 "&d&7Collect Rewards"));
-        createInventory(title, 54);
 
-        // Border + filler
-        ItemStack border = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
-        ItemStack filler = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 7).name(" ").build();
-        fill(filler);
-        drawBorder(border);
-
-        // Build the stacked view of ALL stored rewards (every tier merged).
+        // Build the stacked view of ALL stored rewards.
         List<StackedEntry> allStacked = buildStackedView();
+        int totalRewards = allStacked.size();
 
-        // Pagination — 45 slots per page (rows 1-5, slots 10-44 excluding border).
-        List<Integer> rewardSlots = cfg.getIntegerList("collect-menu.reward-slots");
-        if (rewardSlots.isEmpty()) {
-            for (int i = 10; i <= 44; i++) {
-                if (i % 9 != 0 && i % 9 != 8) rewardSlots.add(i);
-            }
-        }
-        int perPage = rewardSlots.size();
-        int totalPages = Math.max(1, (int) Math.ceil((double) allStacked.size() / perPage));
+        // Calculate pagination.
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalRewards / MAX_PER_PAGE));
         if (page >= totalPages) page = totalPages - 1;
         if (page < 0) page = 0;
 
-        int start = page * perPage;
+        boolean hasMultiplePages = totalPages > 1;
+
+        // Determine how many rewards are on THIS page.
+        int start = page * MAX_PER_PAGE;
+        int rewardsThisPage = Math.min(MAX_PER_PAGE, totalRewards - start);
+
+        // Calculate dynamic inventory size:
+        // - Single page: rows = ceil(rewardsThisPage / 9), min 1.
+        // - Multiple pages: 6 rows (5 reward rows + 1 nav row).
+        int rows;
+        if (hasMultiplePages) {
+            rows = 6; // 5 reward rows (45 slots) + 1 nav row
+        } else {
+            rows = Math.max(1, (int) Math.ceil(rewardsThisPage / 9.0));
+            // Cap at 6 rows max.
+            rows = Math.min(rows, 6);
+        }
+        int size = rows * 9;
+
+        // Create inventory with dynamic size.
+        createInventory(title, size);
+
+        // Fill reward slots — no filler glass, just rewards starting top-left.
         pageEntries.clear();
-        for (int i = 0; i < perPage && (start + i) < allStacked.size(); i++) {
+        for (int i = 0; i < rewardsThisPage && (start + i) < allStacked.size(); i++) {
             StackedEntry entry = allStacked.get(start + i);
             pageEntries.add(entry);
-            setItem(rewardSlots.get(i), entry.toItemStack(cfg));
+            setItem(i, entry.toItemStack(cfg));
         }
 
         // Empty-state message
-        if (allStacked.isEmpty()) {
-            int emptySlot = 22;
+        if (totalRewards == 0) {
             FileConfiguration msgs = plugin.getConfigManager().getMessages();
             String emptyName = MessageUtil.colorize(msgs.getString("gui.no-rewards", "&7No rewards available."));
-            setItem(emptySlot, new ItemBuilder(Material.BARRIER).name(emptyName).build());
+            setItem(0, new ItemBuilder(Material.BARRIER).name(emptyName).build());
         }
 
-        // ── Navigation buttons (bottom row) ──────────────────────────────────
-        int prevSlot = cfg.getInt("collect-menu.prev-page.slot", 45);
-        int nextSlot = cfg.getInt("collect-menu.next-page.slot", 53);
-        int closeSlot = cfg.getInt("collect-menu.close.slot", 49);
-        int pageIndicatorSlot = cfg.getInt("collect-menu.page-indicator.slot", 48);
+        // ── Navigation buttons (only if multiple pages) ─────────────────────
+        if (hasMultiplePages) {
+            int navRow = 5; // 6th row (0-indexed: row 5, slots 45-53)
+            int prevSlot = navRow * 9 + 0;       // slot 45
+            int nextSlot = navRow * 9 + 8;       // slot 53
+            int closeSlot = navRow * 9 + 4;      // slot 49
+            int pageIndicatorSlot = navRow * 9 + 3; // slot 48
 
-        if (page > 0) {
-            Material prevMat = parseMaterial(cfg.getString("collect-menu.prev-page.material", "ARROW"), Material.ARROW);
-            int prevData = cfg.getInt("collect-menu.prev-page.data", 0);
-            String prevName = cfg.getString("collect-menu.prev-page.name", "&7\u00ab Previous Page");
-            List<String> prevLore = MessageUtil.colorizeList(cfg.getStringList("collect-menu.prev-page.lore"));
-            setItem(prevSlot, new ItemBuilder(prevMat, 1, (short) prevData).name(prevName).lore(prevLore).build());
+            // Previous page (only if not on first page)
+            if (page > 0) {
+                setItem(prevSlot, new ItemBuilder(Material.ARROW)
+                        .name(MessageUtil.colorize(cfg.getString("collect-menu.prev-page.name", "&7\u00ab Previous Page")))
+                        .build());
+            }
+
+            // Next page (only if not on last page)
+            if (page < totalPages - 1) {
+                setItem(nextSlot, new ItemBuilder(Material.ARROW)
+                        .name(MessageUtil.colorize(cfg.getString("collect-menu.next-page.name", "&aNext Page &7\u00bb")))
+                        .build());
+            }
+
+            // Page indicator
+            String indicatorName = MessageUtil.colorize(
+                    cfg.getString("collect-menu.page-indicator.name", "&7Page &f{page}&7/&f{max}")
+                            .replace("{page}", String.valueOf(page + 1))
+                            .replace("{max}", String.valueOf(totalPages)));
+            setItem(pageIndicatorSlot, new ItemBuilder(Material.PAPER).name(indicatorName).build());
+
+            // Close button
+            setItem(closeSlot, new ItemBuilder(Material.BARRIER)
+                    .name(MessageUtil.colorize(cfg.getString("collect-menu.close.name", "&c&lClose")))
+                    .build());
         }
-
-        if (page < totalPages - 1) {
-            Material nextMat = parseMaterial(cfg.getString("collect-menu.next-page.material", "ARROW"), Material.ARROW);
-            int nextData = cfg.getInt("collect-menu.next-page.data", 0);
-            String nextName = cfg.getString("collect-menu.next-page.name", "&aNext Page &7\u00bb");
-            List<String> nextLore = MessageUtil.colorizeList(cfg.getStringList("collect-menu.next-page.lore"));
-            setItem(nextSlot, new ItemBuilder(nextMat, 1, (short) nextData).name(nextName).lore(nextLore).build());
-        }
-
-        // Page indicator (e.g. "Page 1/3")
-        Material indicatorMat = parseMaterial(cfg.getString("collect-menu.page-indicator.material", "PAPER"), Material.PAPER);
-        int indicatorData = cfg.getInt("collect-menu.page-indicator.data", 0);
-        String indicatorName = cfg.getString("collect-menu.page-indicator.name", "&7Page &f{page}&7/&f{max}");
-        indicatorName = MessageUtil.colorize(indicatorName
-                .replace("{page}", String.valueOf(page + 1))
-                .replace("{max}", String.valueOf(totalPages)));
-        List<String> indicatorLore = MessageUtil.colorizeList(cfg.getStringList("collect-menu.page-indicator.lore"));
-        setItem(pageIndicatorSlot, new ItemBuilder(indicatorMat, 1, (short) indicatorData).name(indicatorName).lore(indicatorLore).build());
-
-        // Close button — returns to Main Wasteland GUI.
-        Material closeMat = parseMaterial(cfg.getString("collect-menu.close.material", "BARRIER"), Material.BARRIER);
-        int closeData = cfg.getInt("collect-menu.close.data", 0);
-        String closeName = cfg.getString("collect-menu.close.name", "&c&lClose");
-        List<String> closeLore = MessageUtil.colorizeList(cfg.getStringList("collect-menu.close.lore"));
-        setItem(closeSlot, new ItemBuilder(closeMat, 1, (short) closeData).name(closeName).lore(closeLore).build());
     }
 
-    /**
-     * Build the stacked view of all stored rewards. Rewards with the same
-     * display identity (material + data + name) are merged into a single
-     * StackedEntry. The underlying StoredReward instances are preserved so
-     * clicking can claim them one at a time.
-     */
     private List<StackedEntry> buildStackedView() {
         List<StoredReward> rewards = plugin.getDataManager().getPlayerData(player.getUniqueId()).getStoredRewards();
-        // Use LinkedHashMap to preserve insertion order while deduplicating.
         Map<String, StackedEntry> bucket = new LinkedHashMap<>();
         for (StoredReward r : rewards) {
             String key = stackKey(r);
@@ -166,7 +159,6 @@ public class CollectMenuGui extends WastelandGui {
         return new ArrayList<>(bucket.values());
     }
 
-    /** Build a stable key for stacking: material + ":" + data + ":" + name. */
     private String stackKey(StoredReward r) {
         return r.getDisplayMaterial().name() + ":" + r.getDisplayData() + ":" + (r.getDisplayName() == null ? "" : r.getDisplayName());
     }
@@ -177,78 +169,43 @@ public class CollectMenuGui extends WastelandGui {
         FileConfiguration cfg = plugin.getConfigManager().getGui();
         int slot = event.getSlot();
 
-        int closeSlot = cfg.getInt("collect-menu.close.slot", 49);
-        int prevSlot  = cfg.getInt("collect-menu.prev-page.slot", 45);
-        int nextSlot  = cfg.getInt("collect-menu.next-page.slot", 53);
+        int totalRewards = plugin.getDataManager().getPlayerData(player.getUniqueId()).getStoredRewards().size();
+        int totalPages = Math.max(1, (int) Math.ceil(totalRewards / 45.0));
+        boolean hasMultiplePages = totalPages > 1;
 
-        // Close → return to Main Wasteland GUI
-        if (slot == closeSlot) {
-            new MainMenuGui(plugin, player).open();
-            return;
-        }
-        // Previous page
-        if (slot == prevSlot) {
-            if (page > 0) new CollectMenuGui(plugin, player, page - 1).open();
-            return;
-        }
-        // Next page
-        if (slot == nextSlot) {
-            new CollectMenuGui(plugin, player, page + 1).open();
-            return;
+        if (hasMultiplePages) {
+            int navRow = 5;
+            int prevSlot = navRow * 9 + 0;
+            int nextSlot = navRow * 9 + 8;
+            int closeSlot = navRow * 9 + 4;
+
+            if (slot == closeSlot) {
+                new MainMenuGui(plugin, player).open();
+                return;
+            }
+            if (slot == prevSlot && page > 0) {
+                new CollectMenuGui(plugin, player, page - 1).open();
+                return;
+            }
+            if (slot == nextSlot && page < totalPages - 1) {
+                new CollectMenuGui(plugin, player, page + 1).open();
+                return;
+            }
         }
 
         // Reward slots — claim one unit from the clicked stack.
-        List<Integer> rewardSlots = cfg.getIntegerList("collect-menu.reward-slots");
-        if (rewardSlots.isEmpty()) {
-            for (int i = 10; i <= 44; i++) {
-                if (i % 9 != 0 && i % 9 != 8) rewardSlots.add(i);
-            }
-        }
-        int localIndex = rewardSlots.indexOf(slot);
-        if (localIndex >= 0 && localIndex < pageEntries.size()) {
-            StackedEntry entry = pageEntries.get(localIndex);
+        if (slot < pageEntries.size()) {
+            StackedEntry entry = pageEntries.get(slot);
             if (entry != null && !entry.getRewards().isEmpty()) {
-                // Claim ONE reward from the stack.
                 StoredReward toClaim = entry.getRewards().get(0);
                 plugin.getTierManager().claimStoredReward(player, toClaim);
-                // Refresh the menu to reflect the new state.
                 new CollectMenuGui(plugin, player, page).open();
             }
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Stacked Entry ─────────────────────────────────────────────────────────
 
-    private Material parseMaterial(String name, Material fallback) {
-        if (name == null) return fallback;
-        try { return Material.valueOf(name.toUpperCase()); }
-        catch (Exception e) { return fallback; }
-    }
-
-    private void drawBorder(ItemStack border) {
-        int size = inventory.getSize();
-        int cols = 9;
-        int rows = size / cols;
-        for (int col = 0; col < cols; col++) {
-            int top = col;
-            int bottom = (rows - 1) * cols + col;
-            if (inventory.getItem(top) == null)    inventory.setItem(top, border);
-            if (inventory.getItem(bottom) == null) inventory.setItem(bottom, border);
-        }
-        for (int row = 0; row < rows; row++) {
-            int left  = row * cols;
-            int right = row * cols + (cols - 1);
-            if (inventory.getItem(left) == null)  inventory.setItem(left, border);
-            if (inventory.getItem(right) == null) inventory.setItem(right, border);
-        }
-    }
-
-    /**
-     * A stacked entry in the GUI — one or more StoredRewards that share the
-     * same display identity. Renders as a single ItemStack with an item-count
-     * equal to the number of underlying rewards. Clicking claims ONE reward
-     * from the stack (executes its commands, removes it from storage).
-     */
     private static class StackedEntry {
         private final List<StoredReward> rewards = new ArrayList<>();
         private final StoredReward template;
@@ -258,13 +215,8 @@ public class CollectMenuGui extends WastelandGui {
             this.rewards.add(first);
         }
 
-        void add(StoredReward r) {
-            rewards.add(r);
-        }
-
-        List<StoredReward> getRewards() {
-            return rewards;
-        }
+        void add(StoredReward r) { rewards.add(r); }
+        List<StoredReward> getRewards() { return rewards; }
 
         ItemStack toItemStack(FileConfiguration cfg) {
             int count = Math.min(rewards.size(), 64);
@@ -273,11 +225,9 @@ public class CollectMenuGui extends WastelandGui {
                     .lore(template.getDisplayLore())
                     .build();
 
-            // Append stacking info to the lore if configured.
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 List<String> lore = meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<String>();
-                // Add a blank line + count line + click-to-claim line.
                 String countLine = MessageUtil.colorize(
                         cfg.getString("collect-menu.stacking.count-line", "&7Amount: &f{count}")
                                 .replace("{count}", String.valueOf(rewards.size())));

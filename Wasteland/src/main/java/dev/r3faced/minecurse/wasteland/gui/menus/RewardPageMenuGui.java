@@ -8,12 +8,15 @@ import dev.r3faced.minecurse.wasteland.utils.ItemBuilder;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Paginated reward browser for a specific tier.
@@ -89,6 +92,31 @@ public class RewardPageMenuGui extends WastelandGui {
                     .name(reward.getDisplayName())
                     .lore(lore)
                     .build();
+
+            // Apply enchantments and item flags from the reward config.
+            ItemMeta meta = rewardItem.getItemMeta();
+            if (meta != null) {
+                // Enchants
+                if (reward.getDisplayEnchants() != null) {
+                    for (Map.Entry<String, Integer> ench : reward.getDisplayEnchants().entrySet()) {
+                        try {
+                            Enchantment enchant = Enchantment.getByName(ench.getKey());
+                            if (enchant != null) {
+                                meta.addEnchant(enchant, ench.getValue(), true);
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                }
+                // Item flags
+                if (reward.getDisplayItemFlags() != null) {
+                    for (String flagName : reward.getDisplayItemFlags()) {
+                        try {
+                            meta.addItemFlags(org.bukkit.inventory.ItemFlag.valueOf(flagName));
+                        } catch (Exception ignored) {}
+                    }
+                }
+                rewardItem.setItemMeta(meta);
+            }
             setItem(slot, rewardItem);
         }
 

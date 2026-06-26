@@ -95,9 +95,24 @@ public class TierManager {
             String name  = MessageUtil.colorize(cfg.getString(rewardPath + ".display-item.name", "&fReward"));
             List<String> lore = MessageUtil.colorizeList(cfg.getStringList(rewardPath + ".display-item.lore"));
 
+            // Parse enchants (map: enchantment-name → level)
+            Map<String, Integer> enchants = new HashMap<>();
+            if (cfg.isConfigurationSection(rewardPath + ".display-item.enchants")) {
+                ConfigurationSection enchSec = cfg.getConfigurationSection(rewardPath + ".display-item.enchants");
+                for (String enchName : enchSec.getKeys(false)) {
+                    enchants.put(enchName.toUpperCase(), enchSec.getInt(enchName, 1));
+                }
+            }
+
+            // Parse item-flags (list of flag names)
+            List<String> itemFlags = new ArrayList<>();
+            for (String flagName : cfg.getStringList(rewardPath + ".display-item.item-flags")) {
+                itemFlags.add(flagName.toUpperCase());
+            }
+
             List<String> commands = cfg.getStringList(rewardPath + ".commands");
 
-            out.add(new TierReward(chance, mat, data, name, lore, commands));
+            out.add(new TierReward(chance, mat, data, name, lore, enchants, itemFlags, commands));
         }
         return out;
     }
@@ -325,5 +340,101 @@ public class TierManager {
             plugin.getLogger().warning("Unknown material '" + name + "', using " + fallback.name());
             return fallback;
         }
+    }
+
+    /**
+     * Save a list of preview rewards for a specific tier to tiers.yml.
+     * This replaces all existing rewards for that tier.
+     * <p>
+     * Used by the in-game PreviewRewardEditor after the admin finishes
+     * placing items and entering commands.
+     *
+     * @param tier    the tier number (1-5)
+     * @param rewards the list of reward entries to save
+     */
+    public void savePreviewRewards(int tier, List<PreviewRewardEntry> rewards) {
+        FileConfiguration cfg = plugin.getConfigManager().getTiers();
+        String basePath = "tiers." + tier + ".rewards";
+
+        // Clear existing rewards for this tier.
+        cfg.set(basePath, null);
+
+        // Write each reward entry.
+        for (int i = 0; i < rewards.size(); i++) {
+            PreviewRewardEntry entry = rewards.get(i);
+            String rewardPath = basePath + ".reward_" + (i + 1);
+
+            cfg.set(rewardPath + ".chance", entry.getChance());
+
+            // Display item
+            cfg.set(rewardPath + ".display-item.material", entry.getMaterial().name());
+            cfg.set(rewardPath + ".display-item.data", (int) entry.getData());
+            cfg.set(rewardPath + ".display-item.name", entry.getName());
+            cfg.set(rewardPath + ".display-item.lore", entry.getLore());
+
+            // Enchants
+            if (entry.getEnchants() != null && !entry.getEnchants().isEmpty()) {
+                for (Map.Entry<String, Integer> ench : entry.getEnchants().entrySet()) {
+                    cfg.set(rewardPath + ".display-item.enchants." + ench.getKey(), ench.getValue());
+                }
+            }
+
+            // Item flags
+            if (entry.getItemFlags() != null && !entry.getItemFlags().isEmpty()) {
+                cfg.set(rewardPath + ".display-item.item-flags", entry.getItemFlags());
+            }
+
+            // Commands
+            if (entry.getCommands() != null && !entry.getCommands().isEmpty()) {
+                cfg.set(rewardPath + ".commands", entry.getCommands());
+            }
+        }
+
+        // Save the config file to disk.
+        try {
+            cfg.save(new java.io.File(plugin.getDataFolder(), "tiers.yml"));
+        } catch (java.io.IOException e) {
+            plugin.getLogger().severe("Could not save tiers.yml: " + e.getMessage());
+        }
+
+        // Reload the tier cache so the new rewards take effect immediately.
+        reload();
+    }
+
+    /**
+     * Simple data holder used by PreviewRewardEditor to pass reward data
+     * to TierManager.savePreviewRewards().
+     */
+    public static class PreviewRewardEntry {
+        private final Material material;
+        private final short data;
+        private final String name;
+        private final List<String> lore;
+        private final Map<String, Integer> enchants;
+        private final List<String> itemFlags;
+        private final double chance;
+        private final List<String> commands;
+
+        public PreviewRewardEntry(Material material, short data, String name, List<String> lore,
+                                   Map<String, Integer> enchants, List<String> itemFlags,
+                                   double chance, List<String> commands) {
+            this.material = material;
+            this.data = data;
+            this.name = name;
+            this.lore = lore;
+            this.enchants = enchants;
+            this.itemFlags = itemFlags;
+            this.chance = chance;
+            this.commands = commands;
+        }
+
+        public Material getMaterial() { return material; }
+        public short getData() { return data; }
+        public String getName() { return name; }
+        public List<String> getLore() { return lore; }
+        public Map<String, Integer> getEnchants() { return enchants; }
+        public List<String> getItemFlags() { return itemFlags; }
+        public double getChance() { return chance; }
+        public List<String> getCommands() { return commands; }
     }
 }
