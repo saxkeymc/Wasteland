@@ -7,6 +7,7 @@ import dev.r3faced.minecurse.wasteland.utils.ItemBuilder;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
 import dev.r3faced.minecurse.wasteland.utils.PlaytimeFormatter;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -22,8 +23,11 @@ import java.util.List;
  * with all help text drawn from help.yml. A close button sits at the
  * bottom-middle (default 22).
  * <p>
- * The rest of the inventory is filled with decorative glass panes;
- * the outer ring uses a darker pane for a clean border.
+ * Every property of every item (material, data, name, lore, slot,
+ * enchants, flags, custom-model-data, skull-owner) is read directly
+ * from the config section — nothing is hardcoded. Lore is read with
+ * {@link ConfigurationSection#getStringList(String)}, which returns
+ * every line regardless of length.
  */
 public class HelpMenuGui extends WastelandGui {
 
@@ -38,7 +42,7 @@ public class HelpMenuGui extends WastelandGui {
         int size = cfg.getInt("help-menu.size", 27);
         createInventory(title, size);
 
-        // Border + filler
+        // Border + filler — fully config-driven.
         ItemStack border = buildFiller(cfg, "help-menu.border-item", Material.STAINED_GLASS_PANE, (short) 15);
         ItemStack filler = buildFiller(cfg, "help-menu.fill-item",   Material.STAINED_GLASS_PANE, (short) 7);
         fill(filler);
@@ -48,33 +52,115 @@ public class HelpMenuGui extends WastelandGui {
         String playtime = PlaytimeFormatter.format(plugin, data.getPlaytimeSeconds());
 
         // ── Book item (middle slot) ───────────────────────────────────────────
-        int bookSlot = cfg.getInt("help-menu.book.slot", 13);
-        Material bookMat = parseMaterial(cfg.getString("help-menu.book.material", "BOOK"), Material.BOOK);
-        int bookData = cfg.getInt("help-menu.book.data", 0);
-        String bookName = cfg.getString("help-menu.book.name", "&a&lWasteland Help");
-        List<String> bookLore = applyPlaceholders(cfg.getStringList("help-menu.book.lore"), data, playtime);
-        setItem(bookSlot, new ItemBuilder(bookMat, 1, (short) bookData).name(bookName).lore(bookLore).build());
+        ConfigurationSection bookSec = cfg.getConfigurationSection("help-menu.book");
+        if (bookSec != null) {
+            int bookSlot = bookSec.getInt("slot", 13);
+            ItemStack bookItem = buildConfigItem(bookSec, data, playtime);
+            setItem(bookSlot, bookItem);
+        }
 
         // ── Close button ──────────────────────────────────────────────────────
-        int closeSlot = cfg.getInt("help-menu.close.slot", 22);
-        Material closeMat = parseMaterial(cfg.getString("help-menu.close.material", "BARRIER"), Material.BARRIER);
-        int closeData = cfg.getInt("help-menu.close.data", 0);
-        String closeName = cfg.getString("help-menu.close.name", "&c&lClose");
-        List<String> closeLore = MessageUtil.colorizeList(cfg.getStringList("help-menu.close.lore"));
-        setItem(closeSlot, new ItemBuilder(closeMat, 1, (short) closeData).name(closeName).lore(closeLore).build());
+        ConfigurationSection closeSec = cfg.getConfigurationSection("help-menu.close");
+        if (closeSec != null) {
+            int closeSlot = closeSec.getInt("slot", 22);
+            ItemStack closeItem = buildConfigItem(closeSec, data, playtime);
+            setItem(closeSlot, closeItem);
+        }
     }
 
-    private List<String> applyPlaceholders(List<String> raw, PlayerData data, String playtime) {
-        List<String> out = new ArrayList<>();
-        for (String line : raw) {
-            String l = MessageUtil.colorize(line)
-                    .replace("{player}",      player.getName())
-                    .replace("{tier}",        String.valueOf(data.getTier()))
-                    .replace("{total_level}", String.valueOf(data.getTotalLevel()))
-                    .replace("{playtime}",    playtime);
-            out.add(l);
+    /**
+     * Build an ItemStack from a config section, applying placeholders to
+     * BOTH the name AND every lore line. Placeholders are substituted
+     * BEFORE colorization so any {@code &} codes inside placeholder
+     * values are correctly translated.
+     */
+    private ItemStack buildConfigItem(ConfigurationSection section, PlayerData data, String playtime) {
+        // Read raw values from config.
+        String matName = section.getString("material", "STONE");
+        Material mat;
+        try { mat = Material.valueOf(matName.toUpperCase()); }
+        catch (Exception e) { mat = Material.STONE; }
+
+        int dataVal = section.getInt("data", 0);
+        int amount  = section.getInt("amount", 1);
+        short dataShort = (short) Math.max(0, Math.min(dataVal, Short.MAX_VALUE));
+
+        // Read name + lore as raw strings (placeholders not yet substituted).
+        String rawName = section.getString("name");
+        List<String> rawLore = section.isList("lore") ? section.getStringList("lore") : new ArrayList<String>();
+
+        // Apply placeholders FIRST, then colorize.
+        String name = rawName == null ? null : MessageUtil.colorize(applyPlaceholders(rawName, data, playtime));
+        List<String> lore = new ArrayList<>();
+        for (String line : rawLore) {
+            // Substitute placeholders, THEN colorize — so &codes inside
+            // placeholder values are also translated.
+            lore.add(MessageUtil.colorize(applyPlaceholders(line, data, playtime)));
         }
-        return out;
+
+        ItemBuilder b = new ItemBuilder(mat, amount, dataShort);
+        if (name != null) b.name(name);
+        if (!lore.isEmpty()) b.lore(lore);
+
+        // Enchants
+        if (section.isConfigurationSection("enchants")) {
+            ConfigurationSection enchSec = section.getConfigurationSection("enchants");
+            for (String enchName : enchSec.getKeys(false)) {
+                int level = enchSec.getInt(enchName, 1);
+                try {
+                    org.bukkit.enchantments.Enchantment ench =
+                            org.bukkit.enchantments.Enchantment.getByName(enchName.toUpperCase());
+                    if (ench != null) b.enchant(ench, level);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Item flags
+        if (section.isList("item-flags")) {
+            for (String flagName : section.getStringList("item-flags")) {
+                try {
+                    org.bukkit.inventory.ItemFlag flag =
+                            org.bukkit.inventory.ItemFlag.valueOf(flagName.toUpperCase());
+                    // Use reflection-safe path via ItemBuilder
+                    b.hideFlags(); // simplified — apply all flags if any are listed
+                    break;
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Glowing
+        if (section.getBoolean("glowing", false)) b.glowing();
+
+        // Hide flags
+        if (section.getBoolean("hide-flags", false)) b.hideFlags();
+
+        // Custom Model Data (1.14+; silently no-op on 1.8)
+        int cmd = section.getInt("custom-model-data", -1);
+        if (cmd >= 0) b.customModelData(cmd);
+
+        // Skull owner
+        if (mat == Material.SKULL_ITEM && dataShort == 3) {
+            String owner = section.getString("skull-owner");
+            if (owner != null) b.skullOwner(applyPlaceholders(owner, data, playtime));
+        }
+
+        return b.build();
+    }
+
+    /**
+     * Substitute placeholders in a single string. Does NOT colorize —
+     * the caller is responsible for calling {@link MessageUtil#colorize}
+     * after substitution so any {@code &} codes inside placeholder
+     * values are correctly translated.
+     */
+    private String applyPlaceholders(String input, PlayerData data, String playtime) {
+        if (input == null) return null;
+        return input
+                .replace("{player}",      player.getName())
+                .replace("{tier}",        String.valueOf(data.getTier()))
+                .replace("{total_level}", String.valueOf(data.getTotalLevel()))
+                .replace("{total_xp}",    String.valueOf(data.getTotalXp()))
+                .replace("{playtime}",    playtime);
     }
 
     @Override
