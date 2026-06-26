@@ -2,6 +2,7 @@ package dev.r3faced.minecurse.wasteland.managers;
 
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
+import dev.r3faced.minecurse.wasteland.model.SkillType;
 import dev.r3faced.minecurse.wasteland.model.TierReward;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
 import org.bukkit.Bukkit;
@@ -18,17 +19,16 @@ import java.util.Map;
 /**
  * Manages the SHARED tier system.
  * <p>
- * There is only ONE tier progression per player — every skill contributes
- * toward unlocking the same tiers. There are no "Mining Tier", "Fishing
- * Tier", etc. Each tier has a single shared reward pool.
- * <p>
- * Tier unlock is based on the player's TOTAL level across all four skills.
+ * There is only ONE tier progression per player. To unlock the next tier,
+ * <strong>EVERY skill</strong> (Mining, Chopping, Farming, Fishing) must
+ * reach that tier's required level. Rushing a single skill will NOT unlock
+ * the next tier — players are encouraged to level all four skills equally.
  * <p>
  * Reward config format (tiers.yml):
  * <pre>
  * tiers:
  *   1:
- *     required-level: 0
+ *     required-level: 10
  *     display-name: "&aTier 1"
  *     glass-color: STAINED_GLASS_PANE
  *     glass-data: 5
@@ -51,9 +51,9 @@ public class TierManager {
     private final WastelandPlugin plugin;
 
     /** Total number of tiers. */
-    public static final int TIER_COUNT = 4;
+    public static final int TIER_COUNT = 5;
 
-    /** Level required to unlock each tier (based on total level). */
+    /** Level required to unlock each tier — must be reached by EVERY skill. */
     private final Map<Integer, Integer> tierRequirements = new HashMap<>();
 
     /** Rewards per tier (shared across all skills). */
@@ -72,15 +72,11 @@ public class TierManager {
 
         for (int tier = 1; tier <= TIER_COUNT; tier++) {
             String path = "tiers." + tier;
-            tierRequirements.put(tier, cfg.getInt(path + ".required-level", (tier - 1) * 10));
+            tierRequirements.put(tier, cfg.getInt(path + ".required-level", tier * 10));
             tierRewards.put(tier, parseRewards(cfg, path + ".rewards"));
         }
     }
 
-    /**
-     * Parse the reward-format configuration block into a list of TierReward objects.
-     * Falls back gracefully: missing sections produce an empty list.
-     */
     private List<TierReward> parseRewards(FileConfiguration cfg, String basePath) {
         List<TierReward> out = new ArrayList<>();
         if (!cfg.isConfigurationSection(basePath)) return out;
@@ -91,7 +87,6 @@ public class TierManager {
 
             double chance = cfg.getDouble(rewardPath + ".chance", 100.0);
 
-            // Parse display-item
             String matName = cfg.getString(rewardPath + ".display-item.material", "CHEST");
             Material mat = parseMaterial(matName, Material.CHEST);
             int dataInt  = cfg.getInt(rewardPath + ".display-item.data", 0);
@@ -99,7 +94,6 @@ public class TierManager {
             String name  = MessageUtil.colorize(cfg.getString(rewardPath + ".display-item.name", "&fReward"));
             List<String> lore = MessageUtil.colorizeList(cfg.getStringList(rewardPath + ".display-item.lore"));
 
-            // Parse hidden commands
             List<String> commands = cfg.getStringList(rewardPath + ".commands");
 
             out.add(new TierReward(chance, mat, data, name, lore, commands));
@@ -107,7 +101,7 @@ public class TierManager {
         return out;
     }
 
-    /** Level required to reach the specified tier (total level across all skills). */
+    /** Level required to reach the specified tier (each skill must reach this). */
     public int getRequiredLevel(int tier) {
         return tierRequirements.getOrDefault(tier, 0);
     }
@@ -119,17 +113,43 @@ public class TierManager {
     }
 
     /**
-     * Called after any skill levels up to check whether the player's total
-     * level has unlocked any new shared tiers.
-     * Sends a notification message but does NOT auto-dispatch rewards.
+     * Returns true if EVERY skill has reached the required level for the
+     * given tier.
+     */
+    public boolean meetsRequirements(PlayerData data, int tier) {
+        int required = getRequiredLevel(tier);
+        for (SkillType skill : SkillType.values()) {
+            if (data.getLevel(skill) < required) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the list of skills that have NOT yet reached the required
+     * level for the given tier. Empty list if all skills meet the req.
+     */
+    public List<SkillType> getMissingSkills(PlayerData data, int tier) {
+        int required = getRequiredLevel(tier);
+        List<SkillType> missing = new ArrayList<>();
+        for (SkillType skill : SkillType.values()) {
+            if (data.getLevel(skill) < required) {
+                missing.add(skill);
+            }
+        }
+        return missing;
+    }
+
+    /**
+     * Called after any skill levels up to check whether the player's
+     * ALL-SKILLS requirement has been met for the next tier.
+     * Sends a notification message on unlock. Does NOT auto-dispatch rewards.
      */
     public void checkTierUnlock(Player player) {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
-        int totalLevel = data.getTotalLevel();
         int currentTier = data.getTier();
 
         for (int tier = currentTier + 1; tier <= TIER_COUNT; tier++) {
-            if (totalLevel >= getRequiredLevel(tier)) {
+            if (meetsRequirements(data, tier)) {
                 data.setTier(tier);
                 String msg = MessageUtil.getMessage(plugin, "skill.tier-unlock")
                         .replace("{tier}", String.valueOf(tier));
@@ -141,19 +161,66 @@ public class TierManager {
     }
 
     /**
+     * Send the player a configurable message listing which skills still
+     * need to be leveled up to unlock the given tier.
+     */
+    public void sendUnlockFailedMessage(Player player, int tier) {
+        PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
+        int required = getRequiredLevel(tier);
+        FileConfiguration msgs = plugin.getConfigManager().getMessages();
+
+        String metTemplate     = msgs.getString("tier.requirement-met", "&a\u2714 Level {current}");
+        String notMetTemplate  = msgs.getString("tier.requirement-not-met", "&c\u2718 Level {current}/{required}");
+
+        // Per-skill status strings (e.g. "&a✔ Level 10" or "&c✘ Level 8/10")
+        Map<String, String> statuses = new HashMap<>();
+        for (SkillType skill : SkillType.values()) {
+            int current = data.getLevel(skill);
+            String status;
+            if (current >= required) {
+                status = MessageUtil.colorize(metTemplate
+                        .replace("{current}",  String.valueOf(current))
+                        .replace("{required}", String.valueOf(required)));
+            } else {
+                status = MessageUtil.colorize(notMetTemplate
+                        .replace("{current}",  String.valueOf(current))
+                        .replace("{required}", String.valueOf(required)));
+            }
+            statuses.put(skill.getKey() + "_status", status);
+        }
+
+        // Build the multi-line message
+        List<String> lines = msgs.getStringList("tier.unlock-failed");
+        if (lines.isEmpty()) {
+            // Fallback if config missing
+            player.sendMessage(MessageUtil.colorize("&cYou have not unlocked this tier yet!"));
+            return;
+        }
+        for (String raw : lines) {
+            String line = raw;
+            for (Map.Entry<String, String> e : statuses.entrySet()) {
+                line = line.replace("{" + e.getKey() + "}", e.getValue());
+            }
+            line = line.replace("{tier}",     String.valueOf(tier));
+            line = line.replace("{required}", String.valueOf(required));
+            player.sendMessage(MessageUtil.colorize(line));
+        }
+    }
+
+    /**
      * Dispatch all rewards for a specific tier to a player.
      * Each reward is rolled independently based on its {@code chance}.
      * Marks the tier as claimed and persists the data.
-     *
-     * @param player the player claiming the reward
-     * @param tier   the tier number
-     * @return true if rewards were dispatched, false if already claimed or not unlocked
      */
     public boolean dispatchRewards(Player player, int tier) {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
 
         if (data.hasClaimedTier(tier)) return false;
-        if (data.getTier() < tier)      return false;
+        if (data.getTier() < tier) {
+            // Not unlocked yet — send the requirements message.
+            sendUnlockFailedMessage(player, tier);
+            return false;
+        }
 
         data.claimTier(tier);
 
@@ -173,7 +240,6 @@ public class TierManager {
         return true;
     }
 
-    /** Execute all hidden console commands for a single TierReward. */
     private void executeCommands(Player player, TierReward reward) {
         for (String raw : reward.getCommands()) {
             if (raw == null || raw.trim().isEmpty()) continue;

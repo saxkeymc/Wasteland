@@ -38,6 +38,31 @@ rewards:
   already-claimed: "{prefix}&cYou have already claimed this tier."
   none-available: "{prefix}&cYou have no available rewards to claim."
 
+# ── Tier Requirement Messages ────────────────────────────────────────────────
+# Sent when a player tries to view/claim a tier they haven't unlocked yet.
+# Placeholders:
+#   {tier}                — the tier number
+#   {required}            — the required level for each skill
+#   {mining_status}       — formatted status line for Mining
+#   {woodcutting_status}  — formatted status line for Chopping
+#   {farming_status}      — formatted status line for Farming
+#   {fishing_status}      — formatted status line for Fishing
+#   {current}             — current skill level (used in the status templates)
+tier:
+  unlock-failed:
+    - "{prefix}&cYou have not unlocked &4Tier {tier} &cyet!"
+    - ""
+    - "&7Required Level for every skill: &f{required}"
+    - ""
+    - "&7\u2022 &7Mining: {mining_status}"
+    - "&7\u2022 &6Chopping: {woodcutting_status}"
+    - "&7\u2022 &aFarming: {farming_status}"
+    - "&7\u2022 &bFishing: {fishing_status}"
+    - ""
+    - "&7Level up &fevery skill &7to advance to the next tier."
+  requirement-met: "&a\u2714 Level {current}"
+  requirement-not-met: "&c\u2718 Level {current}/{required}"
+
 # ── Teleport messages ────────────────────────────────────────────────────────
 teleport:
   teleported: "{prefix}&aTeleporting to the &e{skill} &aarea..."

@@ -33,6 +33,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private ToolManager toolManager;
     private dev.r3faced.minecurse.wasteland.managers.TeleportManager teleportManager;
     private dev.r3faced.minecurse.wasteland.managers.PlaytimeTask playtimeTask;
+    private dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager wastelandWorldManager;
 
     @Override
     public void onEnable() {
@@ -66,6 +67,7 @@ public final class WastelandPlugin extends JavaPlugin {
         tierManager = new TierManager(this);
         toolManager = new ToolManager(this);
         teleportManager = new dev.r3faced.minecurse.wasteland.managers.TeleportManager(this);
+        wastelandWorldManager = new dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager(this);
 
         // Register command
         getCommand("wasteland").setExecutor(new WastelandCommand(this));
@@ -125,9 +127,6 @@ public final class WastelandPlugin extends JavaPlugin {
      */
     public void reload() {
         // Save all online player data synchronously before reload.
-        // Using sync here avoids any race where the scheduler is unavailable
-        // mid-reload and also guarantees the file on disk matches the cache
-        // when managers are re-initialised below.
         if (dataManager != null) {
             Bukkit.getOnlinePlayers().forEach(p -> dataManager.savePlayerSync(p.getUniqueId()));
         }
@@ -138,6 +137,9 @@ public final class WastelandPlugin extends JavaPlugin {
         toolManager.reload();
         if (teleportManager != null) {
             teleportManager.reload();
+        }
+        if (wastelandWorldManager != null) {
+            wastelandWorldManager.reload();
         }
     }
 
@@ -150,6 +152,18 @@ public final class WastelandPlugin extends JavaPlugin {
             teleportManager = new dev.r3faced.minecurse.wasteland.managers.TeleportManager(this);
         }
         return teleportManager;
+    }
+
+    /**
+     * Lazy-loaded Wasteland-world manager. Used by PlaytimeTask and
+     * WorldChangeListener to decide whether a player is currently
+     * accumulating playtime.
+     */
+    public dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager getWastelandWorldManager() {
+        if (wastelandWorldManager == null) {
+            wastelandWorldManager = new dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager(this);
+        }
+        return wastelandWorldManager;
     }
 
     public static WastelandPlugin getInstance() {

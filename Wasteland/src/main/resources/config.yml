@@ -29,6 +29,17 @@ worlds:
     enabled: true
     world: "wasteland_fishing"
 
+# ── Wasteland Worlds ─────────────────────────────────────────────────────────
+# Players only accumulate Wasteland Playtime while inside one of these worlds.
+# Time spent in spawn, hub, survival, or any other world does NOT count.
+# If this list is empty, the plugin falls back to all worlds configured in the
+# 'worlds' section above.
+wasteland-worlds:
+  - wasteland_mining
+  - wasteland_woodcutting
+  - wasteland_farming
+  - wasteland_fishing
+
 # ── Playtime Tracking ────────────────────────────────────────────────────────
 # Tracks total time players spend in the Wasteland system.
 # Format tokens: {days}, {hours}, {minutes}, {seconds}, {total_hours}

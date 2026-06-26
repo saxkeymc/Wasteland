@@ -38,6 +38,14 @@ public class PlayerData {
     /** Total time spent in the Wasteland system, in seconds. */
     private long playtimeSeconds = 0L;
 
+    /**
+     * Transient (NOT persisted) — epoch-millis when the player most recently
+     * entered a Wasteland world, or 0 if they are not currently in one.
+     * Used by PlaytimeTask and WorldChangeListener to compute partial
+     * sessions on world change / quit / shutdown.
+     */
+    private transient long inWastelandSince = 0L;
+
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
         for (SkillType skill : SkillType.values()) {
@@ -135,6 +143,16 @@ public class PlayerData {
 
     public void addPlaytimeSeconds(long seconds) {
         this.playtimeSeconds += seconds;
+    }
+
+    /** Returns epoch-millis when the player entered a Wasteland world, or 0 if not in one. */
+    public long getInWastelandSince() {
+        return inWastelandSince;
+    }
+
+    /** Set the epoch-millis when the player entered a Wasteland world (0 = not in one). */
+    public void setInWastelandSince(long millis) {
+        this.inWastelandSince = millis;
     }
 
     // ── Bulk access for serialization ─────────────────────────────────────────

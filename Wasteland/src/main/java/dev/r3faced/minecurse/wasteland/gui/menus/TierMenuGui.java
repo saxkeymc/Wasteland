@@ -13,11 +13,13 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Tier browser menu showing all tiers as colored glass panes.
+ * Tier browser menu showing all 5 tiers as colored glass panes.
  * <p>
  * There is only ONE shared tier progression per player, so this menu
  * does not take a SkillType parameter. Clicking a tier opens the reward
- * list for that tier.
+ * list for that tier if the player has unlocked it; otherwise a
+ * configurable unlock-failed message is sent listing which skills
+ * still need leveling.
  * <p>
  * Opened primarily via /wasteland tiers.
  */
@@ -61,7 +63,8 @@ public class TierMenuGui extends WastelandGui {
         String material = tiersCfg.getString("tiers." + tier + ".glass-color", "STAINED_GLASS_PANE");
         int glassData = tiersCfg.getInt("tiers." + tier + ".glass-data", 0);
         int required = plugin.getTierManager().getRequiredLevel(tier);
-        boolean unlocked = data.getTotalLevel() >= required;
+        // Tier is "unlocked" only if EVERY skill has reached the required level.
+        boolean unlocked = plugin.getTierManager().meetsRequirements(data, tier);
         boolean claimed  = data.hasClaimedTier(tier);
 
         FileConfiguration guiCfg = plugin.getConfigManager().getGui();
@@ -73,7 +76,7 @@ public class TierMenuGui extends WastelandGui {
         } else if (unlocked) {
             statusLine = MessageUtil.colorize(guiCfg.getString("tier-menu.tier-lore.unlocked", "&aUnlocked!"));
         } else {
-            String tmpl = guiCfg.getString("tier-menu.tier-lore.locked", "&cRequires Level {level}");
+            String tmpl = guiCfg.getString("tier-menu.tier-lore.locked", "&cRequires every skill at Level {level}");
             statusLine = MessageUtil.colorize(tmpl.replace("{level}", String.valueOf(required)));
         }
 
@@ -92,7 +95,15 @@ public class TierMenuGui extends WastelandGui {
         for (int tier = 1; tier <= TierManager.TIER_COUNT; tier++) {
             int tierSlot = cfg.getInt("tier-menu.tier-slots." + tier, 10 + tier);
             if (slot == tierSlot) {
-                new RewardPageMenuGui(plugin, player, tier, 0).open();
+                PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
+                if (plugin.getTierManager().meetsRequirements(data, tier)) {
+                    new RewardPageMenuGui(plugin, player, tier, 0).open();
+                } else {
+                    // Lock the inventory by closing it and sending the
+                    // configurable unlock-failed message.
+                    player.closeInventory();
+                    plugin.getTierManager().sendUnlockFailedMessage(player, tier);
+                }
                 return;
             }
         }

@@ -1,14 +1,13 @@
 # ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Tier & Reward Configuration (SHARED TIER SYSTEM)
+# Wasteland — Tier & Reward Configuration (SHARED TIER SYSTEM, v1.4)
 # ════════════════════════════════════════════════════════════════════════════
-# There is only ONE shared tier progression per player. Every skill
-# contributes toward unlocking the same tiers. There are no per-skill
-# tiers. Each tier contains a single shared reward pool.
-#
-# Tier unlock is based on the player's TOTAL level across all skills.
+# There is only ONE shared tier progression per player. To unlock the next
+# tier, EVERY skill (Mining, Chopping, Farming, Fishing) must reach the
+# tier's required level. Rushing a single skill will NOT unlock the next
+# tier — players are encouraged to level all four skills equally.
 #
 # Tier entry:
-#   required-level  — total level required to unlock this tier.
+#   required-level  — level that EVERY skill must reach to unlock this tier.
 #   display-name    — coloured name shown in the tier browser GUI.
 #   glass-color     — Material used for the tier glass pane.
 #   glass-data      — Data/durability value (stained-glass colour).
@@ -29,7 +28,7 @@
 
 tiers:
   1:
-    required-level: 0
+    required-level: 10
     display-name: "&aTier 1"
     glass-color: STAINED_GLASS_PANE
     glass-data: 5
@@ -47,7 +46,7 @@ tiers:
           - "eco give %player% 1000"
 
   2:
-    required-level: 10
+    required-level: 20
     display-name: "&eTier 2"
     glass-color: STAINED_GLASS_PANE
     glass-data: 4
@@ -65,7 +64,7 @@ tiers:
           - "crate key give %player% Rare 1"
 
   3:
-    required-level: 20
+    required-level: 30
     display-name: "&6Tier 3"
     glass-color: STAINED_GLASS_PANE
     glass-data: 1
@@ -75,16 +74,46 @@ tiers:
         display-item:
           material: GOLD_INGOT
           data: 0
-          name: "&65000 Coins"
+          name: "&610000 Coins"
           lore:
             - "&7A hefty sum of money"
             - "&7to fund your adventures."
         commands:
-          - "eco give %player% 5000"
+          - "eco give %player% 10000"
 
   4:
+    # Note: same required level as Tier 3 per spec. Edit if you want a higher value.
+    required-level: 30
+    display-name: "&dTier 4"
+    glass-color: STAINED_GLASS_PANE
+    glass-data: 10
+    rewards:
+      reward_1:
+        chance: 100
+        display-item:
+          material: PAPER
+          data: 0
+          name: "&dRank Voucher"
+          lore:
+            - "&7Redeem for a special"
+            - "&7server rank upgrade."
+        commands:
+          - "voucher give %player% Rank"
+      reward_2:
+        chance: 50
+        display-item:
+          material: TRIPWIRE_HOOK
+          data: 0
+          name: "&eEpic Crate Key"
+          lore:
+            - "&7An epic key that opens"
+            - "&7an epic treasure crate."
+        commands:
+          - "crate key give %player% Epic 1"
+
+  5:
     required-level: 40
-    display-name: "&cTier 4"
+    display-name: "&cTier 5"
     glass-color: STAINED_GLASS_PANE
     glass-data: 14
     rewards:

@@ -1,5 +1,5 @@
 name: Wasteland
-version: "1.3.0"
+version: "1.4.0"
 main: dev.r3faced.minecurse.wasteland.WastelandPlugin
 api-version: "1.8"
 author: r3faced
