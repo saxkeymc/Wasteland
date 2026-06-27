@@ -205,6 +205,16 @@ public class MainMenuGui extends WastelandGui {
                 String msg = MessageUtil.getMessage(plugin, "teleport.teleported")
                         .replace("{skill}", skill.getKey());
                 player.sendMessage(msg);
+
+                // Give the omni tool immediately after teleporting. We
+                // schedule it 1 tick later to ensure the world change has
+                // fully registered (cross-world teleports can have a slight
+                // delay before PlayerChangedWorldEvent fires).
+                final Player p = player;
+                final SkillType s = skill;
+                org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    plugin.getToolManager().giveOmniTool(p, s);
+                }, 2L); // 2 ticks = 0.1 seconds
             } else {
                 player.sendMessage(MessageUtil.getMessage(plugin, "teleport.not-configured")
                         .replace("{skill}", skill.getKey()));

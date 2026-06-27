@@ -55,7 +55,8 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
     );
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
             "reload", "give", "setlevel", "addxp", "removexp", "settier", "reset",
-            "setteleportmining", "setteleportchopping", "setteleportfarming", "setteleportfishing"
+            "setteleportmining", "setteleportchopping", "setteleportfarming", "setteleportfishing",
+            "addpreviewreward"
     );
 
     public WastelandCommand(WastelandPlugin plugin) {

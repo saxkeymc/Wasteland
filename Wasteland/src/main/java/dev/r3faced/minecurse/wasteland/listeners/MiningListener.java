@@ -69,6 +69,14 @@ public class MiningListener implements Listener {
     /**
      * Tier-lock check — runs at HIGHEST priority so it can cancel the break
      * before the MONITOR handler awards XP.
+     * <p>
+     * If the player doesn't have the required tier:
+     * <ul>
+     *   <li>Cancel the break event (no XP, no drops).</li>
+     *   <li>Set the block to BEDROCK so it can't be broken again.</li>
+     *   <li>Schedule a task to restore the original ore after 6 seconds.</li>
+     *   <li>Send a configurable message to the player.</li>
+     * </ul>
      */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onOreBreak(BlockBreakEvent event) {
@@ -80,19 +88,35 @@ public class MiningListener implements Listener {
         if (worldSkill != SkillType.MINING) return;
 
         Block block = event.getBlock();
-        Material blockType = block.getType();
+        final Material originalType = block.getType();
 
         // Is this ore tier-locked?
-        Integer requiredTier = tierLockedOres.get(blockType);
+        Integer requiredTier = tierLockedOres.get(originalType);
         if (requiredTier == null) return; // not a locked ore
 
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
         int playerTier = data.getTier();
 
         if (playerTier < requiredTier) {
-            // Cancel the break and send a configurable message.
+            // Cancel the break — no XP, no drops.
             event.setCancelled(true);
-            String oreName = prettifyMaterialName(blockType);
+
+            // Turn the block to BEDROCK so it can't be broken again while
+            // the cooldown is active. Store the original material for restore.
+            block.setType(Material.BEDROCK);
+
+            // Schedule restoration after 6 seconds (120 ticks).
+            final Block blockToRestore = block;
+            org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                // Only restore if it's still bedrock (don't overwrite player
+                // changes if they somehow modified it).
+                if (blockToRestore.getType() == Material.BEDROCK) {
+                    blockToRestore.setType(originalType);
+                }
+            }, 120L); // 6 seconds = 120 ticks
+
+            // Send the configurable message.
+            String oreName = prettifyMaterialName(originalType);
             String msg = MessageUtil.getMessage(plugin, "mining.tier-locked")
                     .replace("{ore}",         oreName)
                     .replace("{tier}",        String.valueOf(requiredTier))
