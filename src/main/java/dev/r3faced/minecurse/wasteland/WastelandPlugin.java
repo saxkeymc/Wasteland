@@ -40,6 +40,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager wastelandWorldManager;
     private dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor previewRewardEditor;
     private dev.r3faced.minecurse.wasteland.listeners.MiningListener miningListener;
+    private dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener commandWhitelistListener;
     private WastelandApi api;
 
     @Override
@@ -55,6 +56,7 @@ public final class WastelandPlugin extends JavaPlugin {
         saveResource("tools.yml", false);
         saveResource("teleports.yml", false);
         saveResource("help.yml", false);
+        saveResource("commands.yml", false);
 
         // Initialize config manager
         configManager = new ConfigManager(this);
@@ -95,6 +97,8 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new WorldChangeListener(this), this);
         previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
         Bukkit.getPluginManager().registerEvents(previewRewardEditor, this);
+        commandWhitelistListener = new dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener(this);
+        Bukkit.getPluginManager().registerEvents(commandWhitelistListener, this);
 
         // Start the periodic playtime tracker (every 60 seconds)
         playtimeTask = new dev.r3faced.minecurse.wasteland.managers.PlaytimeTask(this);
@@ -163,6 +167,9 @@ public final class WastelandPlugin extends JavaPlugin {
         }
         if (miningListener != null) {
             miningListener.reloadTierLockedOres();
+        }
+        if (commandWhitelistListener != null) {
+            commandWhitelistListener.reload();
         }
     }
 

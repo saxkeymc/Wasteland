@@ -329,7 +329,8 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** Handle /wasteland setteleport<skill> — saves the player's current location. */
+    /** Handle /wasteland setteleport<skill> — saves the player's current location
+     *  AND updates the skill's world in config.yml to the player's current world. */
     private boolean handleSetTeleport(CommandSender sender, SkillType skill) {
         if (!sender.hasPermission("wasteland.admin")) {
             sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission"));
@@ -340,10 +341,32 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         Player player = (Player) sender;
+        // Save the teleport location.
         plugin.getTeleportManager().setTeleport(skill, player.getLocation());
+
+        // Also update the skill's world in config.yml to the player's current world.
+        // This ensures the MiningListener, WorldChangeListener, WastelandWorldManager,
+        // etc. all recognise the new world as the skill's wasteland world.
+        String currentWorldName = player.getWorld().getName();
+        org.bukkit.configuration.file.FileConfiguration mainCfg = plugin.getConfig();
+        mainCfg.set("worlds." + skill.getKey() + ".world", currentWorldName);
+        plugin.saveConfig();
+
+        // Also update the wasteland-worlds list if the new world isn't already in it.
+        java.util.List<String> wlWorlds = mainCfg.getStringList("wasteland-worlds");
+        if (!wlWorlds.contains(currentWorldName)) {
+            wlWorlds.add(currentWorldName);
+            mainCfg.set("wasteland-worlds", wlWorlds);
+            plugin.saveConfig();
+        }
+
+        // Reload configs so the new world takes effect immediately.
+        plugin.reload();
+
         String msg = MessageUtil.getMessage(plugin, "admin.set-teleport")
                 .replace("{skill}", skill.getKey());
         player.sendMessage(msg);
+        player.sendMessage(MessageUtil.colorize("&7Skill world set to: &a" + currentWorldName));
         return true;
     }
 

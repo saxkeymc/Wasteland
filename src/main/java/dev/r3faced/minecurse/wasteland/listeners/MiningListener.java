@@ -1,8 +1,6 @@
 package dev.r3faced.minecurse.wasteland.listeners;
 
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
-import dev.r3faced.minecurse.wasteland.api.WastelandXpCause;
-import dev.r3faced.minecurse.wasteland.api.event.WastelandTierLockedOreBreakEvent;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
@@ -26,23 +24,25 @@ import java.util.Map;
  * <ol>
  *   <li><strong>Tier-locked ores</strong> — certain ores (Coal, Iron, Gold,
  *       Emerald, Diamond) require the player to have reached a specific
- *       shared tier before they can be broken. If the player's tier is too
- *       low, the break is cancelled and a configurable message is sent.
- *       This check runs at HIGHEST priority (before MONITOR) so it can
- *       cancel the event before XP is awarded.</li>
+ *       shared tier before they can be broken.
+ *       <ul>
+ *         <li>If the player HAS the tier: the break is cancelled, the block
+ *             turns to BEDROCK, the player gets the XP and drops manually,
+ *             and the block regenerates after 6 seconds.</li>
+ *         <li>If the player DOESN'T have the tier: the break is cancelled,
+ *             a message is sent, but the block is NOT turned to bedrock —
+ *             it stays as the original ore so the player can try again
+ *             once they reach the required tier. No XP, no drops.</li>
+ *       </ul>
+ *   </li>
  *   <li><strong>XP awarding</strong> — when the player holds the Mining Omni
- *       Tool and breaks a block that yields XP, XP is awarded via the
- *       SkillManager.</li>
+ *       Tool and breaks a non-locked block that yields XP, XP is awarded
+ *       via the SkillManager.</li>
  * </ol>
- * <p>
- * The tier lock is configurable in config.yml under {@code tier-locked-ores}.
- * Each entry maps a Bukkit Material name to the minimum shared tier required.
  */
 public class MiningListener implements Listener {
 
     private final WastelandPlugin plugin;
-
-    /** Cached ore → required-tier map, loaded from config on enable/reload. */
     private final Map<Material, Integer> tierLockedOres = new HashMap<>();
 
     public MiningListener(WastelandPlugin plugin) {
@@ -50,14 +50,13 @@ public class MiningListener implements Listener {
         reloadTierLockedOres();
     }
 
-    /** (Re)load the tier-locked-ores map from config.yml. */
     public void reloadTierLockedOres() {
         tierLockedOres.clear();
         FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
         if (cfg.isConfigurationSection("tier-locked-ores")) {
             for (String key : cfg.getConfigurationSection("tier-locked-ores").getKeys(false)) {
                 int requiredTier = cfg.getInt("tier-locked-ores." + key, 0);
-                if (requiredTier <= 0) continue; // disabled
+                if (requiredTier <= 0) continue;
                 try {
                     Material mat = Material.valueOf(key.toUpperCase());
                     tierLockedOres.put(mat, requiredTier);
@@ -69,16 +68,7 @@ public class MiningListener implements Listener {
     }
 
     /**
-     * Tier-lock check — runs at HIGHEST priority so it can cancel the break
-     * before the MONITOR handler awards XP.
-     * <p>
-     * If the player doesn't have the required tier:
-     * <ul>
-     *   <li>Cancel the break event (no XP, no drops).</li>
-     *   <li>Set the block to BEDROCK so it can't be broken again.</li>
-     *   <li>Schedule a task to restore the original ore after 6 seconds.</li>
-     *   <li>Send a configurable message to the player.</li>
-     * </ul>
+     * Tier-lock + ore-regeneration check — runs at HIGHEST priority.
      */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onOreBreak(BlockBreakEvent event) {
@@ -94,79 +84,97 @@ public class MiningListener implements Listener {
 
         // Is this ore tier-locked?
         Integer requiredTier = tierLockedOres.get(originalType);
-        if (requiredTier == null) return; // not a locked ore
+        if (requiredTier == null) return; // not a locked ore — let normal break proceed
 
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
         int playerTier = data.getTier();
 
         if (playerTier < requiredTier) {
-            WastelandTierLockedOreBreakEvent lockEvent = new WastelandTierLockedOreBreakEvent(
-                    player, block, originalType, requiredTier, playerTier);
-            org.bukkit.Bukkit.getPluginManager().callEvent(lockEvent);
-            if (lockEvent.isCancelled()) {
-                return;
-            }
-            requiredTier = lockEvent.getRequiredTier();
-            if (playerTier >= requiredTier) {
-                return;
-            }
-
-            // Cancel the break — no XP, no drops.
+            // ── Player DOESN'T have the tier ───────────────────────────────
+            // Cancel the break, send message, but do NOT turn to bedrock.
+            // The block stays as the original ore so the player can try
+            // again once they reach the required tier.
             event.setCancelled(true);
-
-            // Turn the block to BEDROCK so it can't be broken again while
-            // the cooldown is active. Store the original material for restore.
-            block.setType(Material.BEDROCK);
-
-            // Schedule restoration after 6 seconds (120 ticks).
-            final Block blockToRestore = block;
-            org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                // Only restore if it's still bedrock (don't overwrite player
-                // changes if they somehow modified it).
-                if (blockToRestore.getType() == Material.BEDROCK) {
-                    blockToRestore.setType(originalType);
-                }
-            }, 120L); // 6 seconds = 120 ticks
-
-            // Send the configurable message.
             String oreName = prettifyMaterialName(originalType);
             String msg = MessageUtil.getMessage(plugin, "mining.tier-locked")
                     .replace("{ore}",         oreName)
                     .replace("{tier}",        String.valueOf(requiredTier))
                     .replace("{player_tier}", String.valueOf(playerTier));
             player.sendMessage(msg);
+        } else {
+            // ── Player HAS the tier ────────────────────────────────────────
+            // Cancel the break (so the block doesn't disappear normally),
+            // turn the block to BEDROCK, give the player XP + drops manually,
+            // and schedule regeneration after 6 seconds.
+            event.setCancelled(true);
+
+            // Award XP (the MONITOR handler won't fire because we cancelled).
+            String blockType = originalType.name();
+            int xp = plugin.getSkillManager().getXpForBlock(SkillType.MINING, blockType);
+            if (xp > 0) {
+                plugin.getSkillManager().awardXp(player, SkillType.MINING, xp);
+            }
+
+            // Give the player the ore drop manually.
+            // For most ores in 1.8, the drop is the ore item itself.
+            // We use what the block would naturally drop.
+            try {
+                // Use the block's natural drops.
+                java.util.Collection<ItemStack> drops = block.getDrops(player.getItemInHand());
+                if (drops != null && !drops.isEmpty()) {
+                    for (ItemStack drop : drops) {
+                        if (drop != null && drop.getType() != Material.AIR) {
+                            player.getInventory().addItem(drop).values()
+                                .forEach(leftover -> player.getWorld().dropItemNaturally(block.getLocation(), leftover));
+                        }
+                    }
+                } else {
+                    // Fallback: drop the ore block item itself.
+                    player.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(originalType));
+                }
+            } catch (Exception ignored) {
+                // If drop logic fails, just drop the ore item.
+                player.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(originalType));
+            }
+
+            // Turn the block to BEDROCK so it can't be broken again while
+            // the cooldown is active.
+            block.setType(Material.BEDROCK);
+
+            // Schedule restoration after 6 seconds (120 ticks).
+            final Block blockToRestore = block;
+            org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (blockToRestore.getType() == Material.BEDROCK) {
+                    blockToRestore.setType(originalType);
+                }
+            }, 120L); // 6 seconds
         }
     }
 
     /**
-     * XP awarding — runs at MONITOR priority, only if the break was not
-     * cancelled (e.g. by the tier-lock check above).
+     * XP awarding for non-locked blocks — runs at MONITOR priority.
+     * Only fires if the break was NOT cancelled (e.g. by the tier-lock check).
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
 
-        // Verify the player is in a wasteland mining world
         String worldName = player.getWorld().getName();
         SkillType worldSkill = plugin.getToolManager().getSkillForWorld(worldName);
         if (worldSkill != SkillType.MINING) return;
 
-        // Verify the player holds the Mining Omni Tool
         ItemStack hand = player.getItemInHand();
         if (!plugin.getToolManager().isOmniTool(hand, SkillType.MINING)) return;
 
-        // Get XP for this block type
         String blockType = event.getBlock().getType().name();
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.MINING, blockType);
         if (xp <= 0) return;
 
-        plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
+        plugin.getSkillManager().awardXp(player, SkillType.MINING, xp);
     }
 
-    /** Convert "DIAMOND_ORE" → "Diamond Ore" for display in messages. */
     private String prettifyMaterialName(Material mat) {
         String name = mat.name().toLowerCase().replace('_', ' ');
-        // Capitalize first letter of each word.
         StringBuilder out = new StringBuilder();
         boolean capitalize = true;
         for (char c : name.toCharArray()) {

@@ -21,6 +21,7 @@ public class ConfigManager {
     private FileConfiguration guiConfig;
     private FileConfiguration toolsConfig;
     private FileConfiguration helpConfig;
+    private FileConfiguration commandsConfig;
 
     public ConfigManager(WastelandPlugin plugin) {
         this.plugin = plugin;
@@ -39,6 +40,7 @@ public class ConfigManager {
         guiConfig      = loadConfig("gui.yml");
         toolsConfig    = loadConfig("tools.yml");
         helpConfig     = loadConfig("help.yml");
+        commandsConfig = loadConfig("commands.yml");
     }
 
     /**
@@ -78,5 +80,9 @@ public class ConfigManager {
 
     public FileConfiguration getHelp() {
         return helpConfig;
+    }
+
+    public FileConfiguration getCommandsConfig() {
+        return commandsConfig;
     }
 }

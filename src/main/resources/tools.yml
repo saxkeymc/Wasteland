@@ -1,11 +1,11 @@
 tools:
   mining:
     material: DIAMOND_PICKAXE
-    name: "&2&lMining Pickaxe"
+    name: "&7&lMining Pickaxe"
     lore:
       - "&7The legendary pickaxe of Wasteland."
       - ""
-      - "&fSkill: &2Mining"
+      - "&fSkill: &7Mining"
       - "&fTier: &a{tier}"
       - "&fLevel: &a{level}"
       - ""

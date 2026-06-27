@@ -127,13 +127,17 @@ public class WorldChangeListener implements Listener {
             // last tick and stop the clock.
             flushSession(data, now);
             plugin.getDataManager().savePlayer(player.getUniqueId());
+
+            // Remove ALL omni tools from the player's inventory — they only
+            // get to keep the tool while inside a wasteland world.
+            removeAllOmniTools(player);
         } else if (!wasInWl && nowInWl) {
             // Entering a Wasteland world — start the clock.
             data.setInWastelandSince(now);
         }
         // If both were WL worlds, the timestamp stays as-is (continuous session).
 
-        // Re-equip the appropriate Omni Tool for the new world.
+        // Re-equip the appropriate Omni Tool for the new world (if in one).
         checkAndGiveTool(player);
     }
 
@@ -174,5 +178,26 @@ public class WorldChangeListener implements Listener {
         if (skill != null) {
             plugin.getToolManager().giveOmniTool(player, skill);
         }
+    }
+
+    /**
+     * Remove ALL omni tools (for any skill) from the player's inventory.
+     * Called when the player leaves a wasteland world — they only get to
+     * keep the tool while inside a wasteland world.
+     */
+    private void removeAllOmniTools(Player player) {
+        org.bukkit.inventory.PlayerInventory inv = player.getInventory();
+        for (int i = 0; i < inv.getSize(); i++) {
+            org.bukkit.inventory.ItemStack item = inv.getItem(i);
+            if (item == null || item.getType() == org.bukkit.Material.AIR) continue;
+            // Check if this item is an omni tool for ANY skill.
+            for (SkillType skill : SkillType.values()) {
+                if (plugin.getToolManager().isOmniTool(item, skill)) {
+                    inv.setItem(i, null);
+                    break;
+                }
+            }
+        }
+        player.updateInventory();
     }
 }
