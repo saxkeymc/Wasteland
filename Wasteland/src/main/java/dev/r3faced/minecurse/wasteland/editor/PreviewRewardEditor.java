@@ -138,10 +138,18 @@ public class PreviewRewardEditor implements Listener {
         PromptState state = promptStates.get(uuid);
 
         if (state.stage == 0) {
-            // Parse chance
+            // Parse chance — must be between 0.001 and 100 (inclusive).
+            // Reject anything outside this range and re-prompt.
             try {
                 double chance = Double.parseDouble(message);
-                chance = Math.max(0, Math.min(100, chance));
+                if (chance < 0.001 || chance > 100.0) {
+                    player.sendMessage(MessageUtil.colorize(
+                            "&cChance must be between &40.001% &cand &4100%&c! You entered &4" + chance + "%&c."));
+                    player.sendMessage(MessageUtil.colorize("&7Please enter a valid chance (0.001 - 100):"));
+                    return;
+                }
+                // Round to 3 decimal places to keep the config clean.
+                chance = Math.round(chance * 1000.0) / 1000.0;
                 state.chances.add(chance);
                 state.stage = 1;
 
@@ -152,7 +160,8 @@ public class PreviewRewardEditor implements Listener {
                 player.sendMessage(MessageUtil.colorize("&7Type the command to execute when this reward is won:"));
                 player.sendMessage(MessageUtil.colorize("&7Use &f%player% &7for the player name. Example: &fgive %player% diamond 64"));
             } catch (NumberFormatException e) {
-                player.sendMessage(MessageUtil.colorize("&cInvalid number. Please enter a chance between 0 and 100:"));
+                player.sendMessage(MessageUtil.colorize(
+                        "&cInvalid number '&4" + message + "&c'. Please enter a chance between &40.001 &cand &4100&c:"));
             }
         } else if (state.stage == 1) {
             state.commands.add(message);
@@ -178,7 +187,7 @@ public class PreviewRewardEditor implements Listener {
 
         player.sendMessage(MessageUtil.colorize(
                 "&aReward " + (state.index + 1) + "/" + state.items.size() + " &7\u00bb &f" + itemName));
-        player.sendMessage(MessageUtil.colorize("&7Enter the chance (0-100) for this reward:"));
+        player.sendMessage(MessageUtil.colorize("&7Enter the chance &f(0.001 - 100) &7for this reward:"));
     }
 
     private void saveRewards(Player player, PromptState state) {
