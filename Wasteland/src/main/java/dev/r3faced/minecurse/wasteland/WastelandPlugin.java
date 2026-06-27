@@ -35,6 +35,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.managers.PlaytimeTask playtimeTask;
     private dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager wastelandWorldManager;
     private dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor previewRewardEditor;
+    private dev.r3faced.minecurse.wasteland.listeners.MiningListener miningListener;
 
     @Override
     public void onEnable() {
@@ -76,7 +77,8 @@ public final class WastelandPlugin extends JavaPlugin {
 
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new MiningListener(this), this);
+        miningListener = new MiningListener(this);
+        Bukkit.getPluginManager().registerEvents(miningListener, this);
         Bukkit.getPluginManager().registerEvents(new WoodcuttingListener(this), this);
         Bukkit.getPluginManager().registerEvents(new HarvestListener(this), this);
         Bukkit.getPluginManager().registerEvents(new FishingListener(this), this);
@@ -143,6 +145,9 @@ public final class WastelandPlugin extends JavaPlugin {
         }
         if (wastelandWorldManager != null) {
             wastelandWorldManager.reload();
+        }
+        if (miningListener != null) {
+            miningListener.reloadTierLockedOres();
         }
     }
 
