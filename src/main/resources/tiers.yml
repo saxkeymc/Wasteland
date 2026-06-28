@@ -1,34 +1,15 @@
 # ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Tier & Reward Configuration (SHARED TIER SYSTEM, v1.4)
+# Wasteland — Tier & Reward Configuration
 # ════════════════════════════════════════════════════════════════════════════
-# There is only ONE shared tier progression per player. To unlock the next
-# tier, EVERY skill (Mining, Chopping, Farming, Fishing) must reach the
-# tier's required level. Rushing a single skill will NOT unlock the next
-# tier — players are encouraged to level all four skills equally.
+# TEST CONFIG — every tier gives a Diamond reward.
+# When claimed, executes: give %player% diamond 1
 #
-# Tier entry:
-#   required-level  — level that EVERY skill must reach to unlock this tier.
-#   display-name    — coloured name shown in the tier browser GUI.
-#   glass-color     — Material used for the tier glass pane.
-#   glass-data      — Data/durability value (stained-glass colour).
-#   rewards         — single shared pool of rewards for this tier.
-#
-# Reward entry format:
-#   <reward_id>:
-#     chance: 100                # Probability (0-100) of being awarded when claimed.
-#     display-item:              # What the GUI shows. Commands are NEVER shown.
-#       material: CHEST
-#       data: 0
-#       name: "&fTier Reward"
-#       lore:
-#         - "&7A reward."
-#     commands:                  # Hidden console commands executed on success.
-#       - "eco give %player% 1000"
+# The reward display item is just a Diamond — no tier labels, no tier info.
 # ════════════════════════════════════════════════════════════════════════════
 
 tiers:
   1:
-    required-level: 10
+    required-level: 0
     display-name: "&aTier 1"
     glass-color: STAINED_GLASS_PANE
     glass-data: 5
@@ -36,14 +17,14 @@ tiers:
       reward_1:
         chance: 100
         display-item:
-          material: CHEST
+          material: DIAMOND
           data: 0
-          name: "&fTier 1 Reward"
+          name: "&bDiamond"
           lore:
-            - "&7A starter reward."
-            - "&7Contains a small economy bonus."
+            - "&7A precious gem."
+            - "&7Click to claim!"
         commands:
-          - "eco give %player% 1000"
+          - "give %player% diamond 1"
 
   2:
     required-level: 20
@@ -54,14 +35,14 @@ tiers:
       reward_1:
         chance: 100
         display-item:
-          material: TRIPWIRE_HOOK
+          material: DIAMOND
           data: 0
-          name: "&eRare Crate Key"
+          name: "&bDiamond"
           lore:
-            - "&7A shiny key that opens"
-            - "&7a rare treasure crate."
+            - "&7A precious gem."
+            - "&7Click to claim!"
         commands:
-          - "crate key give %player% Rare 1"
+          - "give %player% diamond 1"
 
   3:
     required-level: 30
@@ -72,17 +53,16 @@ tiers:
       reward_1:
         chance: 100
         display-item:
-          material: GOLD_INGOT
+          material: DIAMOND
           data: 0
-          name: "&610000 Coins"
+          name: "&bDiamond"
           lore:
-            - "&7A hefty sum of money"
-            - "&7to fund your adventures."
+            - "&7A precious gem."
+            - "&7Click to claim!"
         commands:
-          - "eco give %player% 10000"
+          - "give %player% diamond 1"
 
   4:
-    # Note: same required level as Tier 3 per spec. Edit if you want a higher value.
     required-level: 30
     display-name: "&dTier 4"
     glass-color: STAINED_GLASS_PANE
@@ -91,25 +71,14 @@ tiers:
       reward_1:
         chance: 100
         display-item:
-          material: PAPER
+          material: DIAMOND
           data: 0
-          name: "&dRank Voucher"
+          name: "&bDiamond"
           lore:
-            - "&7Redeem for a special"
-            - "&7server rank upgrade."
+            - "&7A precious gem."
+            - "&7Click to claim!"
         commands:
-          - "voucher give %player% Rank"
-      reward_2:
-        chance: 50
-        display-item:
-          material: TRIPWIRE_HOOK
-          data: 0
-          name: "&eEpic Crate Key"
-          lore:
-            - "&7An epic key that opens"
-            - "&7an epic treasure crate."
-        commands:
-          - "crate key give %player% Epic 1"
+          - "give %player% diamond 1"
 
   5:
     required-level: 40
@@ -118,24 +87,13 @@ tiers:
     glass-data: 14
     rewards:
       reward_1:
-        chance: 50
+        chance: 100
         display-item:
           material: DIAMOND
           data: 0
-          name: "&bLegendary Crate Key"
+          name: "&bDiamond"
           lore:
-            - "&7A radiant key that opens"
-            - "&7a legendary treasure crate."
+            - "&7A precious gem."
+            - "&7Click to claim!"
         commands:
-          - "crate key give %player% Legendary 3"
-      reward_2:
-        chance: 10
-        display-item:
-          material: NETHER_STAR
-          data: 0
-          name: "&6\u2605 Bonus Reward"
-          lore:
-            - "&7A rare bonus reward"
-            - "&7for the most dedicated players."
-        commands:
-          - "eco give %player% 25000"
+          - "give %player% diamond 1"

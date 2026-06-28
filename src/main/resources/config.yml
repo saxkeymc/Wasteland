@@ -78,4 +78,16 @@ tier-locked-blocks:
   # Fishing world — (no blocks to lock, but kept for consistency)
   fishing: {}
 
+# ── Random Money Drops (Mining World) ────────────────────────────────────────
+# When mining blocks in the mining world, there's a random chance to receive
+# money directly. The amount is random between min and max (inclusive).
+# The money is given via console command: eco give %player% <amount>
+mining-money-drops:
+  enabled: true
+  chance: 5.0          # % chance per block break (0-100)
+  min-amount: 5000     # Minimum money to give
+  max-amount: 7000     # Maximum money to give
+  command: "eco give %player% {amount}"
+  message: "{prefix}&aYou found &2${amount} &awhile mining!"
+
 debug: false
