@@ -22,10 +22,12 @@ invalid-tier: "{prefix}&cInvalid tier. Valid tiers: &e1-{max}&c."
 plugin-reloaded: "{prefix}&aPlugin reloaded successfully."
 
 skill:
+  # Sent when a skill levels up. Placeholders: {skill}, {level}
   level-up: "{prefix}&aYour &e{skill} &askill reached &2Level {level}&a!"
   # Tier unlock is now SHARED across all skills (no {skill} placeholder).
   tier-unlock: "{prefix}&aYou unlocked &2Tier {tier}&a! New rewards have been added to your storage. Use &2/wasteland claim &ato claim them."
-  xp-gained: "{prefix}&7+&a{xp} &7{skill} XP"
+  # XP-gained message — set to empty ("") to disable the spammy per-block message.
+  xp-gained: ""
   max-level: "{prefix}&cYou have already reached the maximum level for &e{skill}&c."
 
 # ── Tier-Locked Block Messages ───────────────────────────────────────────────

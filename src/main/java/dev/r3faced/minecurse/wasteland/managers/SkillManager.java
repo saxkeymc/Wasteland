@@ -156,11 +156,14 @@ public class SkillManager {
 
         data.addXp(skill, finalAmount);
 
-        // Notify the player
+        // Notify the player — only send if the message is non-empty.
+        // Setting skill.xp-gained to "" in messages.yml disables the spam.
         String xpMsg = MessageUtil.getMessage(plugin, "skill.xp-gained")
                 .replace("{xp}", String.valueOf(finalAmount))
                 .replace("{skill}", skill.getKey());
-        player.sendMessage(xpMsg);
+        if (!xpMsg.isEmpty()) {
+            player.sendMessage(xpMsg);
+        }
 
         // Check for level ups (may be multiple at once with large XP gains)
         boolean levelled = false;
