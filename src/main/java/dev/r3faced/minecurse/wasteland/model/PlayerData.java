@@ -39,6 +39,20 @@ public class PlayerData {
     /** Total time spent in the Wasteland system, in seconds. */
     private long playtimeSeconds = 0L;
 
+    // ── Player Settings (persisted) ──────────────────────────────────────────
+    /** Whether to see other players in Wasteland worlds. */
+    private boolean settingSeePlayers = true;
+    /** Whether to hear XP orb sounds when using tools. */
+    private boolean settingXpNoises = true;
+    /** Whether to show Wasteland level on the XP bar. */
+    private boolean settingXpBarDisplay = true;
+
+    // ── Transient (NOT persisted) ─────────────────────────────────────────────
+    /** Saved vanilla XP level — restored when leaving a Wasteland world. */
+    private transient int savedVanillaLevel = 0;
+    /** Saved vanilla XP float — restored when leaving a Wasteland world. */
+    private transient float savedVanillaXp = 0f;
+
     /**
      * Virtual reward backpack — rewards unlocked via tier progression
      * that haven't been claimed yet. Each entry carries its own hidden
@@ -209,4 +223,23 @@ public class PlayerData {
     public Map<SkillType, Long> getXpMap() {
         return xp;
     }
+
+    // ── Player Settings ───────────────────────────────────────────────────────
+
+    public boolean isSettingSeePlayers() { return settingSeePlayers; }
+    public void setSettingSeePlayers(boolean v) { this.settingSeePlayers = v; }
+
+    public boolean isSettingXpNoises() { return settingXpNoises; }
+    public void setSettingXpNoises(boolean v) { this.settingXpNoises = v; }
+
+    public boolean isSettingXpBarDisplay() { return settingXpBarDisplay; }
+    public void setSettingXpBarDisplay(boolean v) { this.settingXpBarDisplay = v; }
+
+    // ── Saved vanilla XP (transient) ──────────────────────────────────────────
+
+    public int getSavedVanillaLevel() { return savedVanillaLevel; }
+    public void setSavedVanillaLevel(int v) { this.savedVanillaLevel = v; }
+
+    public float getSavedVanillaXp() { return savedVanillaXp; }
+    public void setSavedVanillaXp(float v) { this.savedVanillaXp = v; }
 }

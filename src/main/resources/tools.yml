@@ -1,40 +1,48 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — Tools Configuration
+# ════════════════════════════════════════════════════════════════════════════
+# Omni tools are given automatically when entering a Wasteland world.
+# They are removed when leaving. All enchants are HIDDEN (ItemFlag.HIDE_ENCHANTS).
+# Lore uses themed quotes for each skill — no level/XP display.
+# ════════════════════════════════════════════════════════════════════════════
+
 tools:
   mining:
     material: DIAMOND_PICKAXE
     name: "&7&lMining Pickaxe"
     lore:
-      - "&7The legendary pickaxe of Wasteland."
+      - "&7&o\"The deepest caves hide the greatest treasures,"
+      - "&7&obut only the brave dare to descend.\""
       - ""
-      - "&fSkill: &7Mining"
-      - "&fTier: &a{tier}"
-      - "&fLevel: &a{level}"
+      - "  &8— Unknown Miner"
       - ""
-      - "&7Mine ores to gain XP and level up!"
+      - "&8&oWasteland Omni Tool"
     enchants:
       DURABILITY: 10
       DIG_SPEED: 5
       LOOT_BONUS_BLOCKS: 3
     glow: false
+    hide-flags: true
     custom-model-data: -1
     nbt-key: "wasteland_tool"
     nbt-value: "mining"
 
   woodcutting:
     material: DIAMOND_AXE
-    name: "&6&lWoodcutting Axe"
+    name: "&6&lChopping Axe"
     lore:
-      - "&7The legendary axe of Wasteland."
+      - "&7&o\"A sharp axe and a steady hand"
+      - "&7&ocan fell the mightiest of trees.\""
       - ""
-      - "&fSkill: &6Woodcutting"
-      - "&fTier: &e{tier}"
-      - "&fLevel: &e{level}"
+      - "  &8— Forest Wanderer"
       - ""
-      - "&7Chop logs to gain XP and level up!"
+      - "&8&oWasteland Omni Tool"
     enchants:
       DURABILITY: 10
       DIG_SPEED: 5
       LOOT_BONUS_BLOCKS: 3
     glow: false
+    hide-flags: true
     custom-model-data: -1
     nbt-key: "wasteland_tool"
     nbt-value: "woodcutting"
@@ -43,17 +51,17 @@ tools:
     material: DIAMOND_HOE
     name: "&a&lFarming Hoe"
     lore:
-      - "&7The legendary hoe of Wasteland."
+      - "&7&o\"From a single seed, an empire grows."
+      - "&7&oPatience is the farmer's greatest tool.\""
       - ""
-      - "&fSkill: &aFarming"
-      - "&fTier: &2{tier}"
-      - "&fLevel: &2{level}"
+      - "  &8— Old Farmer's Proverb"
       - ""
-      - "&7Harvest crops to gain XP and level up!"
+      - "&8&oWasteland Omni Tool"
     enchants:
       DURABILITY: 10
       LOOT_BONUS_BLOCKS: 3
     glow: false
+    hide-flags: true
     custom-model-data: -1
     nbt-key: "wasteland_tool"
     nbt-value: "farming"
@@ -62,18 +70,18 @@ tools:
     material: FISHING_ROD
     name: "&b&lFishing Rod"
     lore:
-      - "&7The legendary rod of Wasteland."
+      - "&7&o\"The waters are full of hidden rewards."
+      - "&7&oCast your line and let fate decide.\""
       - ""
-      - "&fSkill: &bFishing"
-      - "&fTier: &3{tier}"
-      - "&fLevel: &3{level}"
+      - "  &8— Legendary Angler"
       - ""
-      - "&7Catch fish to gain XP and level up!"
+      - "&8&oWasteland Omni Tool"
     enchants:
       DURABILITY: 10
       LUCK: 3
       LURE: 3
     glow: false
+    hide-flags: true
     custom-model-data: -1
     nbt-key: "wasteland_tool"
     nbt-value: "fishing"

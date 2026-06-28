@@ -156,8 +156,20 @@ public class SkillManager {
 
         data.addXp(skill, finalAmount);
 
+        // Play an XP orb sound if the player has the setting enabled.
+        if (data.isSettingXpNoises()) {
+            try {
+                org.bukkit.Sound xpSound = org.bukkit.Sound.valueOf("ORB_PICKUP");
+                player.playSound(player.getLocation(), xpSound, 0.3f, 1.2f);
+            } catch (Exception ignored) {
+                // Fallback for servers that don't have ORB_PICKUP.
+                try {
+                    player.playSound(player.getLocation(), org.bukkit.Sound.LEVEL_UP, 0.3f, 1.5f);
+                } catch (Exception ignored2) {}
+            }
+        }
+
         // Notify the player — only send if the message is non-empty.
-        // Setting skill.xp-gained to "" in messages.yml disables the spam.
         String xpMsg = MessageUtil.getMessage(plugin, "skill.xp-gained")
                 .replace("{xp}", String.valueOf(finalAmount))
                 .replace("{skill}", skill.getKey());

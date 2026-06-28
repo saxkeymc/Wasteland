@@ -157,6 +157,11 @@ public class YamlDataManager implements DataManager {
         // Playtime (seconds)
         data.setPlaytimeSeconds(yaml.getLong("playtime-seconds", 0L));
 
+        // Player settings
+        data.setSettingSeePlayers(yaml.getBoolean("settings.see-players", true));
+        data.setSettingXpNoises(yaml.getBoolean("settings.xp-noises", true));
+        data.setSettingXpBarDisplay(yaml.getBoolean("settings.xp-bar-display", true));
+
         // Stored rewards (virtual backpack)
         if (yaml.isList("stored-rewards")) {
             for (Map<?, ?> entry : yaml.getMapList("stored-rewards")) {
@@ -200,6 +205,11 @@ public class YamlDataManager implements DataManager {
         yaml.set("tier", data.getTier());
         yaml.set("claimed-tiers", Arrays.asList(data.getClaimedTiers().toArray(new String[0])));
         yaml.set("playtime-seconds", data.getPlaytimeSeconds());
+
+        // Player settings
+        yaml.set("settings.see-players", data.isSettingSeePlayers());
+        yaml.set("settings.xp-noises", data.isSettingXpNoises());
+        yaml.set("settings.xp-bar-display", data.isSettingXpBarDisplay());
 
         // Stored rewards (virtual backpack) — serialize as a list of maps.
         List<Map<String, Object>> rewardsOut = new ArrayList<>();

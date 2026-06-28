@@ -83,7 +83,10 @@ public class MySQLDataManager implements DataManager {
                 + "tier INT NOT NULL DEFAULT 1,"
                 + "claimed_tiers TEXT,"
                 + "playtime_seconds BIGINT NOT NULL DEFAULT 0,"
-                + "stored_rewards TEXT"
+                + "stored_rewards TEXT,"
+                + "settings_see_players BOOLEAN NOT NULL DEFAULT TRUE,"
+                + "settings_xp_noises BOOLEAN NOT NULL DEFAULT TRUE,"
+                + "settings_xp_bar_display BOOLEAN NOT NULL DEFAULT TRUE"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
         try (Connection conn = dataSource.getConnection();
@@ -98,7 +101,10 @@ public class MySQLDataManager implements DataManager {
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS tier INT NOT NULL DEFAULT 1",
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS claimed_tiers TEXT",
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS playtime_seconds BIGINT NOT NULL DEFAULT 0",
-            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS stored_rewards TEXT"
+            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS stored_rewards TEXT",
+            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS settings_see_players BOOLEAN NOT NULL DEFAULT TRUE",
+            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS settings_xp_noises BOOLEAN NOT NULL DEFAULT TRUE",
+            "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS settings_xp_bar_display BOOLEAN NOT NULL DEFAULT TRUE"
         };
         for (String alter : alters) {
             try (Connection conn = dataSource.getConnection();
@@ -215,6 +221,11 @@ public class MySQLDataManager implements DataManager {
                 }
                 try { data.setPlaytimeSeconds(rs.getLong("playtime_seconds")); } catch (SQLException ignored) {}
 
+                // Player settings
+                try { data.setSettingSeePlayers(rs.getBoolean("settings_see_players")); } catch (SQLException ignored) {}
+                try { data.setSettingXpNoises(rs.getBoolean("settings_xp_noises")); } catch (SQLException ignored) {}
+                try { data.setSettingXpBarDisplay(rs.getBoolean("settings_xp_bar_display")); } catch (SQLException ignored) {}
+
                 // Stored rewards (virtual backpack) — stored as a pipe-delimited
                 // string in the stored_rewards TEXT column. Format per entry:
                 //   MATERIAL|data|name|lore1;;lore2;;lore3|cmd1;;cmd2;;cmd3
@@ -244,15 +255,19 @@ public class MySQLDataManager implements DataManager {
                 + "woodcutting_level,woodcutting_xp,"
                 + "farming_level,farming_xp,"
                 + "fishing_level,fishing_xp,"
-                + "tier,claimed_tiers,playtime_seconds,stored_rewards) "
-                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                + "tier,claimed_tiers,playtime_seconds,stored_rewards,"
+                + "settings_see_players,settings_xp_noises,settings_xp_bar_display) "
+                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                 + "ON DUPLICATE KEY UPDATE "
                 + "mining_level=VALUES(mining_level),mining_xp=VALUES(mining_xp),"
                 + "woodcutting_level=VALUES(woodcutting_level),woodcutting_xp=VALUES(woodcutting_xp),"
                 + "farming_level=VALUES(farming_level),farming_xp=VALUES(farming_xp),"
                 + "fishing_level=VALUES(fishing_level),fishing_xp=VALUES(fishing_xp),"
                 + "tier=VALUES(tier),claimed_tiers=VALUES(claimed_tiers),"
-                + "playtime_seconds=VALUES(playtime_seconds),stored_rewards=VALUES(stored_rewards)";
+                + "playtime_seconds=VALUES(playtime_seconds),stored_rewards=VALUES(stored_rewards),"
+                + "settings_see_players=VALUES(settings_see_players),"
+                + "settings_xp_noises=VALUES(settings_xp_noises),"
+                + "settings_xp_bar_display=VALUES(settings_xp_bar_display)";
 
         String rewardsSerialized = serializeRewards(data);
 
@@ -271,6 +286,9 @@ public class MySQLDataManager implements DataManager {
             stmt.setString(11, claimed.toString());
             stmt.setLong(12, data.getPlaytimeSeconds());
             stmt.setString(13, rewardsSerialized);
+            stmt.setBoolean(14, data.isSettingSeePlayers());
+            stmt.setBoolean(15, data.isSettingXpNoises());
+            stmt.setBoolean(16, data.isSettingXpBarDisplay());
             stmt.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().severe("Failed to save player data for " + data.getUuid() + ": " + e.getMessage());

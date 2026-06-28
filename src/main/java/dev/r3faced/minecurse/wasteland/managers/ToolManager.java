@@ -83,6 +83,15 @@ public class ToolManager {
             }
         }
 
+        // Hide all item flags (including enchants) if configured.
+        // This makes the tool look clean — no enchantment glow text,
+        // no durability bar, no attribute modifiers visible.
+        if (cfg.getBoolean(path + ".hide-flags", false)) {
+            try {
+                meta.addItemFlags(org.bukkit.inventory.ItemFlag.values());
+            } catch (Exception ignored) {}
+        }
+
         // Custom Model Data (1.14+; silently skipped on 1.8)
         int customModelData = cfg.getInt(path + ".custom-model-data", -1);
         if (customModelData > 0) {

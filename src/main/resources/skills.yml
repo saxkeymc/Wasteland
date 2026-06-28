@@ -1,27 +1,40 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — Skills Configuration
+# ════════════════════════════════════════════════════════════════════════════
+# XP hierarchy (most → least):
+#   1. Fishing  (most XP per action)
+#   2. Mining   (2nd best)
+#   3. Chopping (3rd best)
+#   4. Farming  (least XP)
+#
+# XP formula: base × (multiplier ^ level)
+# Higher multiplier = steeper curve (each level needs much more XP).
+# ════════════════════════════════════════════════════════════════════════════
+
 mining:
   level-cap: 50
   display-name: "&7Mining"
   icon: DIAMOND_PICKAXE
   xp:
-    STONE: 5
-    COBBLESTONE: 3
-    COAL_ORE: 10
-    IRON_ORE: 15
-    GOLD_ORE: 20
-    LAPIS_ORE: 20
-    REDSTONE_ORE: 20
-    DIAMOND_ORE: 30
-    EMERALD_ORE: 35
-    QUARTZ_ORE: 12
-    OBSIDIAN: 8
-    SANDSTONE: 4
-    NETHERRACK: 3
-    SOUL_SAND: 4
-    GLOWSTONE: 10
-    NETHER_BRICK: 5
-    GRAVEL: 2
-    DIRT: 1
-    SAND: 1
+    STONE: 8
+    COBBLESTONE: 5
+    COAL_ORE: 15
+    IRON_ORE: 25
+    GOLD_ORE: 35
+    LAPIS_ORE: 30
+    REDSTONE_ORE: 30
+    DIAMOND_ORE: 50
+    EMERALD_ORE: 55
+    QUARTZ_ORE: 20
+    OBSIDIAN: 15
+    SANDSTONE: 6
+    NETHERRACK: 5
+    SOUL_SAND: 6
+    GLOWSTONE: 15
+    NETHER_BRICK: 8
+    GRAVEL: 3
+    DIRT: 2
+    SAND: 2
   xp-formula:
     base: 100
     multiplier: 1.35
@@ -31,15 +44,15 @@ woodcutting:
   display-name: "&6Chopping"
   icon: IRON_AXE
   xp:
-    LOG: 5
-    LOG_2: 5
-    HUGE_MUSHROOM_1: 4
-    HUGE_MUSHROOM_2: 4
-    CACTUS: 3
-    SUGAR_CANE_BLOCK: 3
-    VINE: 2
-    LEAVES: 1
-    LEAVES_2: 1
+    LOG: 6
+    LOG_2: 6
+    HUGE_MUSHROOM_1: 5
+    HUGE_MUSHROOM_2: 5
+    CACTUS: 4
+    SUGAR_CANE_BLOCK: 4
+    VINE: 3
+    LEAVES: 2
+    LEAVES_2: 2
   xp-formula:
     base: 100
     multiplier: 1.35
@@ -49,15 +62,15 @@ farming:
   display-name: "&aFarming"
   icon: DIAMOND_HOE
   xp:
-    WHEAT: 5
-    CARROT: 5
-    POTATO: 5
-    NETHER_WARTS: 8
-    COCOA: 6
-    MELON_BLOCK: 4
-    PUMPKIN: 4
-    BEETROOT_BLOCK: 6
-    CHORUS_FLOWER: 7
+    WHEAT: 3
+    CARROT: 3
+    POTATO: 3
+    NETHER_WARTS: 5
+    COCOA: 4
+    MELON_BLOCK: 3
+    PUMPKIN: 3
+    BEETROOT_BLOCK: 4
+    CHORUS_FLOWER: 5
   xp-formula:
     base: 100
     multiplier: 1.35
@@ -67,17 +80,17 @@ fishing:
   display-name: "&bFishing"
   icon: FISHING_ROD
   xp:
-    DEFAULT: 10
-    FISH: 10
-    SALMON: 12
-    CLOWNFISH: 15
-    PUFFERFISH: 8
-    ENCHANTED_BOOK: 50
-    BOW: 25
-    FISHING_ROD: 20
-    NAME_TAG: 30
-    SADDLE: 20
-    LILY_PAD: 5
+    DEFAULT: 25
+    FISH: 25
+    SALMON: 30
+    CLOWNFISH: 40
+    PUFFERFISH: 20
+    ENCHANTED_BOOK: 100
+    BOW: 50
+    FISHING_ROD: 40
+    NAME_TAG: 60
+    SADDLE: 40
+    LILY_PAD: 15
   xp-formula:
     base: 100
     multiplier: 1.35

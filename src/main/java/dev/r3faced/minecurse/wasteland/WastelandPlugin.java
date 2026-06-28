@@ -98,6 +98,7 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new WoodcuttingListener(this), this);
         Bukkit.getPluginManager().registerEvents(new HarvestListener(this), this);
         Bukkit.getPluginManager().registerEvents(new FishingListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.FishingMinigameListener(this), this);
         Bukkit.getPluginManager().registerEvents(new WorldChangeListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.WastelandWorldProtectionListener(this), this);
         previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
@@ -108,6 +109,9 @@ public final class WastelandPlugin extends JavaPlugin {
         // Start the periodic playtime tracker (every 60 seconds)
         playtimeTask = new dev.r3faced.minecurse.wasteland.managers.PlaytimeTask(this);
         playtimeTask.start();
+
+        // Start the XP bar display task (every 0.5 seconds)
+        new dev.r3faced.minecurse.wasteland.managers.XpBarTask(this).start();
 
         // Register PlaceholderAPI expansion if available
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {

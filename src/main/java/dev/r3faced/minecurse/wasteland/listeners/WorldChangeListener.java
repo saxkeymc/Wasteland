@@ -131,9 +131,18 @@ public class WorldChangeListener implements Listener {
             // Remove ALL omni tools from the player's inventory — they only
             // get to keep the tool while inside a wasteland world.
             removeAllOmniTools(player);
+
+            // Restore the player's vanilla XP level and XP bar.
+            player.setLevel(data.getSavedVanillaLevel());
+            player.setExp(data.getSavedVanillaXp());
+            player.setTotalExperience(data.getSavedVanillaLevel());
         } else if (!wasInWl && nowInWl) {
             // Entering a Wasteland world — start the clock.
             data.setInWastelandSince(now);
+
+            // Save the player's vanilla XP so it can be restored on leave.
+            data.setSavedVanillaLevel(player.getLevel());
+            data.setSavedVanillaXp(player.getExp());
         }
         // If both were WL worlds, the timestamp stays as-is (continuous session).
 

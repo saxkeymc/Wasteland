@@ -53,7 +53,7 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SKILLS = Arrays.asList("mining", "woodcutting", "farming", "fishing");
     private static final List<String> PLAYER_SUBCOMMANDS = Arrays.asList(
-            "collect", "claim", "tiers", "stats", "help", "playtime"
+            "collect", "claim", "tiers", "stats", "help", "playtime", "settings"
     );
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
             "reload", "give", "setlevel", "addxp", "removexp", "settier", "reset",
@@ -126,6 +126,13 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 String msg = MessageUtil.getMessage(plugin, "playtime.view")
                         .replace("{playtime}", formatted);
                 p.sendMessage(msg);
+                return true;
+            }
+
+            case "settings": {
+                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
+                if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
+                new dev.r3faced.minecurse.wasteland.gui.menus.SettingsMenuGui(plugin, (Player) sender).open();
                 return true;
             }
 
