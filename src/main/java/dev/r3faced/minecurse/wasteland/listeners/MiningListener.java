@@ -57,7 +57,8 @@ public class MiningListener implements Listener {
      * the break was not cancelled.
      * <p>
      * Also cancels block drops so the player only gets XP, not the block
-     * items. Blocks in wasteland worlds are only for getting XP.
+     * items. Only ORES give XP — non-ore blocks (stone, dirt, etc.) are
+     * cancelled entirely.
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
@@ -72,22 +73,42 @@ public class MiningListener implements Listener {
 
         String blockType = event.getBlock().getType().name();
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.MINING, blockType);
-        if (xp > 0) {
-            plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
+
+        // Only allow mining ORES — cancel non-ore blocks entirely.
+        if (xp <= 0 || !isOre(event.getBlock().getType())) {
+            event.setCancelled(true);
+            return;
         }
 
-        // ── Cancel block drops — blocks are only for XP, not items ──────────
-        // We set the block to AIR so it doesn't drop anything. The player
-        // already got XP above. This applies to ALL blocks broken with the
-        // omni tool in the mining world (not just tier-locked ones).
+        plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
+
+        // Set the block to AIR so it doesn't drop anything.
         event.getBlock().setType(Material.AIR);
 
-        // ── Award Dust ───────────────────────────────────────────────────────
+        // Award Dust.
         int dustAmount = plugin.getDustManager().getDefaultDustPerAction(SkillType.MINING);
         plugin.getDustManager().awardDust(player, dustAmount);
 
-        // ── Random money drop ───────────────────────────────────────────────
+        // Random money drop.
         tryRollMoneyDrop(player);
+    }
+
+    /** Check if a material is an ore. */
+    private boolean isOre(Material mat) {
+        switch (mat) {
+            case COAL_ORE:
+            case IRON_ORE:
+            case GOLD_ORE:
+            case DIAMOND_ORE:
+            case EMERALD_ORE:
+            case LAPIS_ORE:
+            case REDSTONE_ORE:
+            case QUARTZ_ORE:
+            case GLOWSTONE:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**

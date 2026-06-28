@@ -49,6 +49,12 @@ public class XpBarTask extends BukkitRunnable {
                 }
             }
 
+            // If all skills are at the same level, use the first skill.
+            // This prevents the XP bar from being stuck when all skills are 0.
+            if (lowestSkill == null) {
+                lowestSkill = SkillType.MINING;
+            }
+
             if (lowestSkill == null) continue;
 
             int currentLevel = data.getLevel(lowestSkill);
@@ -61,14 +67,16 @@ public class XpBarTask extends BukkitRunnable {
             if (currentLevel >= cap) {
                 player.setExp(1.0f); // Maxed out
             } else {
-                long currentLevelXp = plugin.getSkillManager().xpRequiredForLevel(lowestSkill, currentLevel);
-                long nextLevelXp = plugin.getSkillManager().xpRequiredForLevel(lowestSkill, currentLevel + 1);
-                long xpThisLevel = nextLevelXp - currentLevelXp;
-                if (xpThisLevel <= 0) {
+                // XP needed to go from current level to next level.
+                long xpToNext = plugin.getSkillManager().xpToNextLevel(lowestSkill, currentLevel);
+                if (xpToNext <= 0) {
                     player.setExp(0f);
                 } else {
-                    long xpIntoLevel = data.getXp(lowestSkill) - currentLevelXp;
-                    float progress = (float) xpIntoLevel / (float) xpThisLevel;
+                    // XP accumulated since reaching the current level.
+                    long xpForCurrentLevel = plugin.getSkillManager().xpRequiredForLevel(lowestSkill, currentLevel);
+                    long xpIntoLevel = data.getXp(lowestSkill) - xpForCurrentLevel;
+                    if (xpIntoLevel < 0) xpIntoLevel = 0;
+                    float progress = (float) xpIntoLevel / (float) xpToNext;
                     if (progress < 0f) progress = 0f;
                     if (progress > 1f) progress = 1f;
                     player.setExp(progress);

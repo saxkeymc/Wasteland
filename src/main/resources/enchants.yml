@@ -1,0 +1,170 @@
+# ════════════════════════════════════════════════════════════════════════════
+# Wasteland — Enchants Configuration
+# ════════════════════════════════════════════════════════════════════════════
+# Custom enchants available in the /wasteland armorsets GUI.
+# Players can drag these enchant "books" onto their armor pieces.
+#
+# Enchant types:
+#   VANILLA    — Standard Bukkit enchantment (e.g. PROTECTION_ENVIRONMENTAL)
+#   CUSTOM     — CurseEnchants/EnchantmentAPI enchantment (requires those plugins)
+#
+# All items are automatically white-scrolled (won't break on enchant failure).
+#
+# Format:
+# enchants:
+#   <enchant_id>:
+#     name: "&bAbyss IV"
+#     type: VANILLA  # or CUSTOM
+#     vanilla-enchant: DAMAGE_ALL  # only for VANILLA type
+#     custom-enchant: "Abyss"      # only for CUSTOM type
+#     level: 4
+#     material: ENCHANTED_BOOK
+#     lore:
+#       - "&7Applies Abyss IV to your armor."
+#     max-level: 4
+# ════════════════════════════════════════════════════════════════════════════
+
+enchants:
+  # ── Vanilla Enchants ──────────────────────────────────────────────────────
+  protection:
+    name: "&bProtection IV"
+    type: VANILLA
+    vanilla-enchant: PROTECTION_ENVIRONMENTAL
+    level: 4
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Applies Protection IV to your armor."
+    max-level: 4
+
+  unbreaking:
+    name: "&bUnbreaking III"
+    type: VANILLA
+    vanilla-enchant: DURABILITY
+    level: 3
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Applies Unbreaking III to your armor."
+    max-level: 3
+
+  sharpness:
+    name: "&bSharpness V"
+    type: VANILLA
+    vanilla-enchant: DAMAGE_ALL
+    level: 5
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Applies Sharpness V to your sword."
+    max-level: 5
+
+  fire_aspect:
+    name: "&bFire Aspect II"
+    type: VANILLA
+    vanilla-enchant: FIRE_ASPECT
+    level: 2
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Applies Fire Aspect II to your sword."
+    max-level: 2
+
+  # ── Custom Enchants (require CurseEnchants/EnchantmentAPI) ────────────────
+  # These will only work if CurseEnchants and EnchantmentAPI plugins are
+  # installed on the server. If they're not installed, the enchant books
+  # will still appear in the GUI but won't apply the custom enchant.
+  abyss:
+    name: "&5Abyss IV"
+    type: CUSTOM
+    custom-enchant: "Abyss"
+    level: 4
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7A dark enchantment from the depths."
+      - "&7Applies Abyss IV to your armor."
+    max-level: 4
+
+  anti_life:
+    name: "&5Anti Life"
+    type: CUSTOM
+    custom-enchant: "Anti Life"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Drains life from your enemies."
+    max-level: 1
+
+  cursed_mark:
+    name: "&5Cursed Mark"
+    type: CUSTOM
+    custom-enchant: "Cursed Mark"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Marks your enemies with a curse."
+    max-level: 1
+
+  fat:
+    name: "&5Fat"
+    type: CUSTOM
+    custom-enchant: "Fat"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Increases your size and resistance."
+    max-level: 1
+
+  equalizer:
+    name: "&5Equalizer"
+    type: CUSTOM
+    custom-enchant: "Equalizer"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Balances the playing field."
+    max-level: 1
+
+  lucky:
+    name: "&5Lucky"
+    type: CUSTOM
+    custom-enchant: "Lucky"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Increases your luck."
+    max-level: 1
+
+  mirror:
+    name: "&5Mirror"
+    type: CUSTOM
+    custom-enchant: "Mirror"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Reflects damage back to attackers."
+    max-level: 1
+
+  spectral:
+    name: "&5Spectral"
+    type: CUSTOM
+    custom-enchant: "Spectral"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Become partially ethereal."
+    max-level: 1
+
+  rot_and_decay:
+    name: "&5Rot and Decay"
+    type: CUSTOM
+    custom-enchant: "Rot and Decay"
+    level: 1
+    material: ENCHANTED_BOOK
+    lore:
+      - "&7Causes enemies to wither."
+      - "&cOnly affects targets in PvP zones."
+    max-level: 1
+    pvp-only: true  # This enchant only works in PvP zones
+
+# ── Settings ────────────────────────────────────────────────────────────────
+settings:
+  # All items are automatically white-scrolled (protected from breaking
+  # on enchant failure).
+  auto-white-scroll: true
