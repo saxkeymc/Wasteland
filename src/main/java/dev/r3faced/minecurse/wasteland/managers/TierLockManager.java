@@ -136,23 +136,25 @@ public class TierLockManager {
             }
 
             // Send a FAKE bedrock block change ONLY to the player who broke it.
-            // DELAYED by 1 tick — on Spigot 1.8.8, the server sends a block-update
-            // packet when the event is cancelled, which would overwrite an immediate
-            // sendBlockChange. Waiting 1 tick ensures our fake packet is sent AFTER.
+            // DELAYED by 1 tick to avoid being overwritten by the server's
+            // block-update packet on event cancellation.
             final Block blockToRestore = block;
             final Player playerToRestore = player;
             final Material origType = originalType;
+            final org.bukkit.Location blockLoc = block.getLocation();
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                playerToRestore.sendBlockChange(blockToRestore.getLocation(), Material.BEDROCK, (byte) 0);
-            }, 1L); // 1 tick delay
+                playerToRestore.sendBlockChange(blockLoc, Material.BEDROCK, (byte) 0);
+                // Register with FakeBlockManager so interactions re-send bedrock.
+                plugin.getFakeBlockManager().addFakeBlock(playerToRestore, blockLoc, origType);
+            }, 1L);
 
-            // Schedule restoration after 6 seconds — send the original ore
-            // block change back to just this player.
+            // Schedule restoration after 6 seconds.
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (blockToRestore.getType() == origType) {
-                    playerToRestore.sendBlockChange(blockToRestore.getLocation(), origType, (byte) 0);
+                    playerToRestore.sendBlockChange(blockLoc, origType, (byte) 0);
                 }
-            }, 121L); // 6 seconds + 1 tick (to account for the 1-tick delay above)
+                plugin.getFakeBlockManager().removeFakeBlock(playerToRestore, blockLoc);
+            }, 121L);
             return true;
         }
     }

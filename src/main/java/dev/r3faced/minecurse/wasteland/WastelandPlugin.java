@@ -45,6 +45,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager armorManager;
     private dev.r3faced.minecurse.wasteland.managers.StartDateManager startDateManager;
     private dev.r3faced.minecurse.wasteland.managers.DustManager dustManager;
+    private dev.r3faced.minecurse.wasteland.managers.FakeBlockManager fakeBlockManager;
     private WastelandApi api;
 
     @Override
@@ -71,6 +72,7 @@ public final class WastelandPlugin extends JavaPlugin {
         armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
         startDateManager = new dev.r3faced.minecurse.wasteland.managers.StartDateManager(this);
         dustManager = new dev.r3faced.minecurse.wasteland.managers.DustManager(this);
+        fakeBlockManager = new dev.r3faced.minecurse.wasteland.managers.FakeBlockManager();
 
         // Initialize data manager (YAML or MySQL)
         String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
@@ -117,6 +119,7 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.WastelandWorldProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.ItemDropListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.ToolRightClickListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.FakeBlockListener(this), this);
         previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
         Bukkit.getPluginManager().registerEvents(previewRewardEditor, this);
         commandWhitelistListener = new dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener(this);
@@ -259,6 +262,14 @@ public final class WastelandPlugin extends JavaPlugin {
             dustManager = new dev.r3faced.minecurse.wasteland.managers.DustManager(this);
         }
         return dustManager;
+    }
+
+    /** Returns the fake block manager (tracks per-player bedrock visuals). */
+    public dev.r3faced.minecurse.wasteland.managers.FakeBlockManager getFakeBlockManager() {
+        if (fakeBlockManager == null) {
+            fakeBlockManager = new dev.r3faced.minecurse.wasteland.managers.FakeBlockManager();
+        }
+        return fakeBlockManager;
     }
 
     public static WastelandPlugin getInstance() {

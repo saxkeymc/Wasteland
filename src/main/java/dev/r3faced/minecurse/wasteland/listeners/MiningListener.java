@@ -96,22 +96,23 @@ public class MiningListener implements Listener {
         tryRollMoneyDrop(player);
 
         // Send a FAKE BEDROCK block change ONLY to the player who broke it.
-        // DELAYED by 1 tick — on Spigot 1.8.8, the server sends a block-update
-        // packet when the event is cancelled, which overwrites an immediate
-        // sendBlockChange. Waiting 1 tick ensures our fake packet is sent AFTER.
+        // DELAYED by 1 tick to avoid being overwritten by the server's
+        // block-update packet on event cancellation.
         final org.bukkit.Location blockLoc = event.getBlock().getLocation();
         final Player p = player;
         final Material origMat = event.getBlock().getType();
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
             p.sendBlockChange(blockLoc, Material.BEDROCK, (byte) 0);
-        }, 1L); // 1 tick delay
+            plugin.getFakeBlockManager().addFakeBlock(p, blockLoc, origMat);
+        }, 1L);
 
         // After 6 seconds, restore the visual for this player.
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (p.isOnline()) {
                 p.sendBlockChange(blockLoc, origMat, (byte) 0);
             }
-        }, 121L); // 6 seconds + 1 tick
+            plugin.getFakeBlockManager().removeFakeBlock(p, blockLoc);
+        }, 121L);
     }
 
     /** Check if a material is an ore. */

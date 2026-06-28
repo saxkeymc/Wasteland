@@ -3,7 +3,7 @@
 # ════════════════════════════════════════════════════════════════════════════
 # Omni tools are given automatically when entering a Wasteland world.
 # They are removed when leaving. All enchants are HIDDEN.
-# Lore uses quotes from real historical miners/fishers/farmers/lumberjacks.
+# Lore uses quotes from real historical figures.
 # ════════════════════════════════════════════════════════════════════════════
 
 tools:
@@ -14,7 +14,7 @@ tools:
       - "&7&o\"A mine is a hole in the ground"
       - "&7&owith a liar standing beside it.\""
       - ""
-      - "  &8— Mark Twain"
+      - "&7- Mark Twain"
     enchants:
       DURABILITY: 10
       DIG_SPEED: 5
@@ -32,7 +32,7 @@ tools:
       - "&7&o\"He who plants a tree"
       - "&7&oplants a hope.\""
       - ""
-      - "  &8— Lucy Larcom"
+      - "&7- Lucy Larcom"
     enchants:
       DURABILITY: 10
       DIG_SPEED: 5
@@ -47,11 +47,12 @@ tools:
     material: DIAMOND_HOE
     name: "&a&lFarming Hoe"
     lore:
-      - "&7&o\"Farming looks mighty easy when your plow"
-      - "&7&ois a pencil, and you're a thousand miles"
-      - "&7&ofrom the corn field.\""
+      - "&7&o\"Farming looks mighty easy when"
+      - "&7&oyour plow is a pencil, and"
+      - "&7&oyou're a thousand miles from"
+      - "&7&othe corn field.\""
       - ""
-      - "  &8— Dwight D. Eisenhower"
+      - "&7- Dwight D. Eisenhower"
     enchants:
       DURABILITY: 10
       LOOT_BONUS_BLOCKS: 3
@@ -65,11 +66,12 @@ tools:
     material: FISHING_ROD
     name: "&b&lFishing Rod"
     lore:
-      - "&7&o\"Many men go fishing all of their lives"
-      - "&7&owithout knowing that it is not fish"
-      - "&7&othey are after.\""
+      - "&7&o\"Many men go fishing all of"
+      - "&7&otheir lives without knowing"
+      - "&7&othat it is not fish they"
+      - "&7&oare after.\""
       - ""
-      - "  &8— Henry David Thoreau"
+      - "&7- Henry David Thoreau"
     enchants:
       DURABILITY: 10
       LUCK: 3
