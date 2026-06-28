@@ -126,7 +126,8 @@ public class ArmorSetsMenuGui extends WastelandGui {
                              cfg.isSet(basePath + ".chestplate") ||
                              cfg.isSet(basePath + ".leggings") ||
                              cfg.isSet(basePath + ".boots") ||
-                             cfg.isSet(basePath + ".sword");
+                             cfg.isSet(basePath + ".sword") ||
+                             cfg.isSet(basePath + ".enchants");
 
         if (!hasLoadout) {
             // First time — create defaults.
@@ -165,6 +166,11 @@ public class ArmorSetsMenuGui extends WastelandGui {
     private void loadSlot(int slot, String path) {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         if (cfg.isSet(path)) {
+            Object val = cfg.get(path);
+            if (val instanceof String && "NONE".equals(val)) {
+                // Player removed this piece — slot stays as glass (empty).
+                return;
+            }
             ItemStack item = cfg.getItemStack(path);
             if (item != null && item.getType() != Material.AIR) {
                 // Overwrite the glass with the saved item.
@@ -172,6 +178,7 @@ public class ArmorSetsMenuGui extends WastelandGui {
             }
             // If null/AIR, the slot stays as glass (empty).
         }
+        // If path doesn't exist at all, slot stays as glass (first time = will get defaults).
     }
 
     private void saveLoadout() {
@@ -206,9 +213,10 @@ public class ArmorSetsMenuGui extends WastelandGui {
             item.getType() != Material.SIGN) {
             cfg.set(path, item);
         } else {
-            // Slot is empty (glass, barrier, sign, or air) — save as null
-            // so the armor manager knows the player removed this piece.
-            cfg.set(path, null);
+            // Slot is empty — save "NONE" as a marker string.
+            // Bukkit removes the key entirely when you set null, so we
+            // use "NONE" to persist the "player removed this piece" state.
+            cfg.set(path, "NONE");
         }
     }
 

@@ -98,7 +98,11 @@ public class WastelandArmorManager {
                                  Material mat, String name) {
         // Check if the player has a saved loadout entry for this slot.
         if (cfg.isSet(path)) {
-            // The path exists — it could be a saved item or null (removed).
+            Object val = cfg.get(path);
+            // Check for "NONE" marker — player explicitly removed this piece.
+            if (val instanceof String && "NONE".equals(val)) {
+                return null; // Player removed this piece — don't give it.
+            }
             ItemStack item = cfg.getItemStack(path);
             if (item != null && item.getType() != Material.AIR) {
                 // Tag it as Wasteland armor so it can be removed on leave.
