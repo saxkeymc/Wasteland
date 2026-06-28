@@ -84,25 +84,9 @@ public class MiningListener implements Listener {
         }
 
         // CANCEL the event so the actual block isn't destroyed server-side.
-        // We give XP + dust + fake visual instead.
         event.setCancelled(true);
 
         plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
-
-        // Send a FAKE BEDROCK block change ONLY to the player who broke it.
-        // The actual world block stays as the ore, but the player sees bedrock.
-        // Other players still see the original ore and can mine it.
-        player.sendBlockChange(event.getBlock().getLocation(), Material.BEDROCK, (byte) 0);
-
-        // After 6 seconds, restore the visual for this player.
-        final org.bukkit.Location blockLoc = event.getBlock().getLocation();
-        final Player p = player;
-        final Material origMat = event.getBlock().getType();
-        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (p.isOnline()) {
-                p.sendBlockChange(blockLoc, origMat, (byte) 0);
-            }
-        }, 120L); // 6 seconds
 
         // Award Dust.
         int dustAmount = plugin.getDustManager().getDefaultDustPerAction(SkillType.MINING);
@@ -110,6 +94,24 @@ public class MiningListener implements Listener {
 
         // Random money drop.
         tryRollMoneyDrop(player);
+
+        // Send a FAKE BEDROCK block change ONLY to the player who broke it.
+        // DELAYED by 1 tick — on Spigot 1.8.8, the server sends a block-update
+        // packet when the event is cancelled, which overwrites an immediate
+        // sendBlockChange. Waiting 1 tick ensures our fake packet is sent AFTER.
+        final org.bukkit.Location blockLoc = event.getBlock().getLocation();
+        final Player p = player;
+        final Material origMat = event.getBlock().getType();
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            p.sendBlockChange(blockLoc, Material.BEDROCK, (byte) 0);
+        }, 1L); // 1 tick delay
+
+        // After 6 seconds, restore the visual for this player.
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (p.isOnline()) {
+                p.sendBlockChange(blockLoc, origMat, (byte) 0);
+            }
+        }, 121L); // 6 seconds + 1 tick
     }
 
     /** Check if a material is an ore. */

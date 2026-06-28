@@ -114,32 +114,45 @@ public class TierLockManager {
             return true;
         } else {
             // ── Player HAS the tier ────────────────────────────────────────
-            // Cancel the break, turn to BEDROCK, give XP only (NO drops),
-            // regen after 6s. Blocks are only for getting XP — no item drops.
+            // Cancel the break, turn to BEDROCK (fake, per-player), give XP +
+            // dust, regen after 6s. Blocks are only for getting XP — no drops.
             event.setCancelled(true);
 
-            // Award XP only — no drops.
+            // Award XP.
             String blockType = originalType.name();
             int xp = plugin.getSkillManager().getXpForBlock(skill, blockType);
             if (xp > 0) {
                 plugin.getSkillManager().awardXp(player, skill, xp);
             }
 
+            // Award Dust (was missing — MONITOR handler never fires because
+            // the event is cancelled here at HIGHEST).
+            plugin.getDustManager().awardDust(player,
+                    plugin.getDustManager().getDefaultDustPerAction(skill));
+
+            // Random money drop (mining only).
+            if (skill == SkillType.MINING) {
+                tryRollMoneyDrop(player);
+            }
+
             // Send a FAKE bedrock block change ONLY to the player who broke it.
-            // Other players still see the original ore and can mine it.
-            player.sendBlockChange(block.getLocation(), Material.BEDROCK, (byte) 0);
+            // DELAYED by 1 tick — on Spigot 1.8.8, the server sends a block-update
+            // packet when the event is cancelled, which would overwrite an immediate
+            // sendBlockChange. Waiting 1 tick ensures our fake packet is sent AFTER.
+            final Block blockToRestore = block;
+            final Player playerToRestore = player;
+            final Material origType = originalType;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                playerToRestore.sendBlockChange(blockToRestore.getLocation(), Material.BEDROCK, (byte) 0);
+            }, 1L); // 1 tick delay
 
             // Schedule restoration after 6 seconds — send the original ore
             // block change back to just this player.
-            final Block blockToRestore = block;
-            final Player playerToRestore = player;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                // Only restore if the actual world block is still the original
-                // (it might have been changed by another mechanic).
-                if (blockToRestore.getType() == originalType) {
-                    playerToRestore.sendBlockChange(blockToRestore.getLocation(), originalType, (byte) 0);
+                if (blockToRestore.getType() == origType) {
+                    playerToRestore.sendBlockChange(blockToRestore.getLocation(), origType, (byte) 0);
                 }
-            }, 120L); // 6 seconds
+            }, 121L); // 6 seconds + 1 tick (to account for the 1-tick delay above)
             return true;
         }
     }
@@ -158,5 +171,37 @@ public class TierLockManager {
             capitalize = (c == ' ');
         }
         return out.toString();
+    }
+
+    /** Random money drop — same logic as MiningListener. */
+    private void tryRollMoneyDrop(Player player) {
+        org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
+        if (!cfg.getBoolean("mining-money-drops.enabled", true)) return;
+
+        double chance = cfg.getDouble("mining-money-drops.chance", 5.0);
+        if (java.util.concurrent.ThreadLocalRandom.current().nextDouble() * 100.0 >= chance) return;
+
+        int min = cfg.getInt("mining-money-drops.min-amount", 5000);
+        int max = cfg.getInt("mining-money-drops.max-amount", 7000);
+        int amount = java.util.concurrent.ThreadLocalRandom.current().nextInt(min, max + 1);
+
+        String command = cfg.getString("mining-money-drops.command", "eco give %player% {amount}");
+        command = command.replace("%player%", player.getName()).replace("{amount}", String.valueOf(amount));
+
+        try {
+            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to dispatch money-drop command: " + e.getMessage());
+            return;
+        }
+
+        String prefix = dev.r3faced.minecurse.wasteland.utils.MessageUtil
+                .colorize(plugin.getConfigManager().getMessages().getString("prefix", ""));
+        String msg = dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
+                cfg.getString("mining-money-drops.message",
+                        "{prefix}&aYou found &2${amount} &awhile mining!")
+                        .replace("{prefix}", prefix)
+                        .replace("{amount}", String.valueOf(amount)));
+        player.sendMessage(msg);
     }
 }
