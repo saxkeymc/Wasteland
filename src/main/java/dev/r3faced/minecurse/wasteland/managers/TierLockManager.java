@@ -125,16 +125,21 @@ public class TierLockManager {
                 plugin.getSkillManager().awardXp(player, skill, xp);
             }
 
-            // Turn the block to BEDROCK.
-            block.setType(Material.BEDROCK);
+            // Send a FAKE bedrock block change ONLY to the player who broke it.
+            // Other players still see the original ore and can mine it.
+            player.sendBlockChange(block.getLocation(), Material.BEDROCK, (byte) 0);
 
-            // Schedule restoration after 6 seconds (120 ticks).
+            // Schedule restoration after 6 seconds — send the original ore
+            // block change back to just this player.
             final Block blockToRestore = block;
+            final Player playerToRestore = player;
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (blockToRestore.getType() == Material.BEDROCK) {
-                    blockToRestore.setType(originalType);
+                // Only restore if the actual world block is still the original
+                // (it might have been changed by another mechanic).
+                if (blockToRestore.getType() == originalType) {
+                    playerToRestore.sendBlockChange(blockToRestore.getLocation(), originalType, (byte) 0);
                 }
-            }, 120L);
+            }, 120L); // 6 seconds
             return true;
         }
     }

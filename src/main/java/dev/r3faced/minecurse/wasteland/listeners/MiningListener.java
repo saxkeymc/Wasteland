@@ -82,8 +82,20 @@ public class MiningListener implements Listener {
 
         plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
 
-        // Set the block to AIR so it doesn't drop anything.
-        event.getBlock().setType(Material.AIR);
+        // Send a FAKE AIR block change ONLY to the player who broke it.
+        // The actual world block stays, but the player sees it as gone.
+        // Other players still see the original ore and can mine it.
+        player.sendBlockChange(event.getBlock().getLocation(), Material.AIR, (byte) 0);
+
+        // After 6 seconds, restore the visual for this player.
+        final org.bukkit.Location blockLoc = event.getBlock().getLocation();
+        final Player p = player;
+        final Material origMat = event.getBlock().getType();
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (p.isOnline()) {
+                p.sendBlockChange(blockLoc, origMat, (byte) 0);
+            }
+        }, 120L); // 6 seconds
 
         // Award Dust.
         int dustAmount = plugin.getDustManager().getDefaultDustPerAction(SkillType.MINING);

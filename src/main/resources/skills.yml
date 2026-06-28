@@ -36,8 +36,8 @@ mining:
     DIRT: 2
     SAND: 2
   xp-formula:
-    base: 100
-    multiplier: 1.75
+    base: 1000
+    multiplier: 2.0
 
 woodcutting:
   level-cap: 50
@@ -54,8 +54,8 @@ woodcutting:
     LEAVES: 2
     LEAVES_2: 2
   xp-formula:
-    base: 100
-    multiplier: 1.75
+    base: 1000
+    multiplier: 2.0
 
 farming:
   level-cap: 50
@@ -72,8 +72,8 @@ farming:
     BEETROOT_BLOCK: 4
     CHORUS_FLOWER: 5
   xp-formula:
-    base: 100
-    multiplier: 1.75
+    base: 1000
+    multiplier: 2.0
 
 fishing:
   level-cap: 50
@@ -92,5 +92,5 @@ fishing:
     SADDLE: 40
     LILY_PAD: 15
   xp-formula:
-    base: 100
-    multiplier: 1.75
+    base: 1000
+    multiplier: 2.0

@@ -10,16 +10,15 @@ import org.bukkit.scheduler.BukkitRunnable;
 /**
  * Periodic task that updates the XP bar for players in Wasteland worlds.
  * <p>
- * The XP bar shows the player's TOTAL level across all 4 skills, with the
- * bar fill representing progress toward the next level.
+ * Runs EVERY TICK (1 tick = 50ms) to prevent vanilla XP from
+ * interfering with the Wasteland XP bar display.
  * <p>
- * Only applies if the player has the setting enabled. Vanilla XP is
- * saved when entering a Wasteland world and restored when leaving.
+ * Shows the player's LOWEST skill level on the XP bar, with the
+ * bar fill representing progress toward the next level of that skill.
  */
 public class XpBarTask extends BukkitRunnable {
 
     private final WastelandPlugin plugin;
-    private static final long INTERVAL_TICKS = 10L; // Update every 0.5 seconds
 
     public XpBarTask(WastelandPlugin plugin) {
         this.plugin = plugin;
@@ -28,66 +27,69 @@ public class XpBarTask extends BukkitRunnable {
     @Override
     public void run() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) continue;
-
-            PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
-            if (data == null) continue;
-
-            // Only update if the setting is enabled.
-            if (!data.isSettingXpBarDisplay()) continue;
-
-            // Use the player's lowest skill for the XP bar (since tier
-            // unlocks require ALL skills at the same level). This gives
-            // a more meaningful "progress" bar.
-            SkillType lowestSkill = null;
-            int lowestLevel = Integer.MAX_VALUE;
-            for (SkillType skill : SkillType.values()) {
-                int lvl = data.getLevel(skill);
-                if (lvl < lowestLevel) {
-                    lowestLevel = lvl;
-                    lowestSkill = skill;
-                }
+            try {
+                updatePlayer(player);
+            } catch (Exception ignored) {
+                // Fail silently — don't break the task for all players.
             }
+        }
+    }
 
-            // If all skills are at the same level, use the first skill.
-            // This prevents the XP bar from being stuck when all skills are 0.
-            if (lowestSkill == null) {
-                lowestSkill = SkillType.MINING;
+    private void updatePlayer(Player player) {
+        if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) return;
+
+        PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
+        if (data == null) return;
+
+        if (!data.isSettingXpBarDisplay()) return;
+
+        // Find the lowest skill.
+        SkillType lowestSkill = SkillType.MINING;
+        int lowestLevel = Integer.MAX_VALUE;
+        for (SkillType skill : SkillType.values()) {
+            int lvl = data.getLevel(skill);
+            if (lvl < lowestLevel) {
+                lowestLevel = lvl;
+                lowestSkill = skill;
             }
+        }
 
-            if (lowestSkill == null) continue;
+        int currentLevel = data.getLevel(lowestSkill);
+        int cap = plugin.getSkillManager().getLevelCap(lowestSkill);
 
-            int currentLevel = data.getLevel(lowestSkill);
-            int cap = plugin.getSkillManager().getLevelCap(lowestSkill);
+        // Set the XP bar level to the current Wasteland level.
+        player.setLevel(currentLevel);
 
-            // Set the XP bar level to the current Wasteland level.
-            player.setLevel(currentLevel);
-
-            // Calculate XP progress within the current level.
-            if (currentLevel >= cap) {
-                player.setExp(1.0f); // Maxed out
+        // Calculate XP progress within the current level.
+        if (currentLevel >= cap) {
+            player.setExp(1.0f);
+        } else {
+            // xpToNextLevel returns the XP needed to go from currentLevel
+            // to currentLevel+1 (just the delta, not cumulative).
+            long xpToNext = plugin.getSkillManager().xpToNextLevel(lowestSkill, currentLevel);
+            if (xpToNext <= 0) {
+                player.setExp(0f);
             } else {
-                // XP needed to go from current level to next level.
-                long xpToNext = plugin.getSkillManager().xpToNextLevel(lowestSkill, currentLevel);
-                if (xpToNext <= 0) {
-                    player.setExp(0f);
-                } else {
-                    // XP accumulated since reaching the current level.
-                    long xpForCurrentLevel = plugin.getSkillManager().xpRequiredForLevel(lowestSkill, currentLevel);
-                    long xpIntoLevel = data.getXp(lowestSkill) - xpForCurrentLevel;
-                    if (xpIntoLevel < 0) xpIntoLevel = 0;
-                    float progress = (float) xpIntoLevel / (float) xpToNext;
-                    if (progress < 0f) progress = 0f;
-                    if (progress > 1f) progress = 1f;
-                    player.setExp(progress);
-                }
+                // Total XP accumulated minus total XP needed to reach
+                // the current level = XP into this level.
+                long xpForCurrentLevel = plugin.getSkillManager()
+                        .xpRequiredForLevel(lowestSkill, currentLevel);
+                long playerTotalXp = data.getXp(lowestSkill);
+                long xpIntoLevel = playerTotalXp - xpForCurrentLevel;
+                if (xpIntoLevel < 0) xpIntoLevel = 0;
+
+                float progress = (float) xpIntoLevel / (float) xpToNext;
+                if (progress < 0f) progress = 0f;
+                if (progress > 0.999f) progress = 0.999f; // Never show 100% (that triggers vanilla level-up)
+                player.setExp(progress);
             }
         }
     }
 
     public void start() {
         try {
-            runTaskTimer(plugin, INTERVAL_TICKS, INTERVAL_TICKS);
+            // Run every tick (1 tick) to prevent vanilla XP interference.
+            runTaskTimer(plugin, 1L, 1L);
         } catch (IllegalStateException ex) {
             plugin.getLogger().warning("Could not schedule XP bar task: " + ex.getMessage());
         }

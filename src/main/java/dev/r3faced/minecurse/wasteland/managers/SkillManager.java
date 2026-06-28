@@ -191,11 +191,12 @@ public class SkillManager {
                         .replace("{level}", String.valueOf(data.getLevel(skill)));
                 player.sendMessage(levelMsg);
 
-                // Show level-up on the action bar.
+                // Show level-up as a TITLE on screen (not action bar).
                 String skillName = skill.getKey().substring(0, 1).toUpperCase() + skill.getKey().substring(1);
-                String actionBarMsg = dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
-                        "&a&lLevel Up! &7" + skillName + " &aLevel " + data.getLevel(skill));
-                dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(player, actionBarMsg);
+                String title = dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize("&a&lLevel Up!");
+                String subtitle = dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
+                        "&7" + skillName + " &aLevel " + data.getLevel(skill));
+                player.sendTitle(title, subtitle);
 
                 Bukkit.getPluginManager().callEvent(new WastelandSkillLevelUpEvent(
                         player, skill, before, data.getLevel(skill), safeCause, source));

@@ -1,5 +1,5 @@
 name: Wasteland
-version: "1.9.1"
+version: "1.9.2"
 main: dev.r3faced.minecurse.wasteland.WastelandPlugin
 api-version: "1.8"
 author: r3faced
@@ -36,6 +36,19 @@ commands:
     usage: /wasteland
     aliases:
       - wl
+      - ws
+  mining:
+    description: Switch to Mining Omni Tool.
+    usage: /mining
+  chopping:
+    description: Switch to Chopping Omni Tool.
+    usage: /chopping
+  farming:
+    description: Switch to Farming Omni Tool.
+    usage: /farming
+  fishing:
+    description: Switch to Fishing Omni Tool.
+    usage: /fishing
 
 permissions:
   wasteland.use:

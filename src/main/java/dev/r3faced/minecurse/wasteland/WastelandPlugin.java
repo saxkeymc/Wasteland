@@ -97,6 +97,14 @@ public final class WastelandPlugin extends JavaPlugin {
         getCommand("wasteland").setExecutor(new WastelandCommand(this));
         getCommand("wasteland").setTabCompleter(new WastelandCommand(this));
 
+        // Register skill switch commands.
+        dev.r3faced.minecurse.wasteland.commands.SkillSwitchCommand skillSwitch =
+                new dev.r3faced.minecurse.wasteland.commands.SkillSwitchCommand(this);
+        getCommand("mining").setExecutor(skillSwitch);
+        getCommand("chopping").setExecutor(skillSwitch);
+        getCommand("farming").setExecutor(skillSwitch);
+        getCommand("fishing").setExecutor(skillSwitch);
+
         // Register listeners
         Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
         miningListener = new MiningListener(this);
