@@ -25,6 +25,7 @@ public class ToolRightClickListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (!event.getPlayer().isSneaking()) return;
 
         Player player = event.getPlayer();
         if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) return;
