@@ -116,6 +116,7 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new WorldChangeListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.WastelandWorldProtectionListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.ItemDropListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.ToolRightClickListener(this), this);
         previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
         Bukkit.getPluginManager().registerEvents(previewRewardEditor, this);
         commandWhitelistListener = new dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener(this);

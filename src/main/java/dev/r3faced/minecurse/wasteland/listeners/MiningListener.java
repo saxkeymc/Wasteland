@@ -54,11 +54,14 @@ public class MiningListener implements Listener {
 
     /**
      * XP awarding + random money drops — runs at MONITOR priority, only if
-     * the break was not cancelled.
+     * the break was not cancelled by the tier-lock check.
      * <p>
-     * Also cancels block drops so the player only gets XP, not the block
-     * items. Only ORES give XP — non-ore blocks (stone, dirt, etc.) are
-     * cancelled entirely.
+     * Cancels the event (so the actual block isn't destroyed server-side)
+     * and sends a fake BEDROCK visual to the player who broke it. Other
+     * players still see the original ore. After 6 seconds, the visual
+     * is restored.
+     * <p>
+     * Only ORES can be mined — non-ore blocks are cancelled entirely.
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
@@ -80,12 +83,16 @@ public class MiningListener implements Listener {
             return;
         }
 
+        // CANCEL the event so the actual block isn't destroyed server-side.
+        // We give XP + dust + fake visual instead.
+        event.setCancelled(true);
+
         plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
 
-        // Send a FAKE AIR block change ONLY to the player who broke it.
-        // The actual world block stays, but the player sees it as gone.
+        // Send a FAKE BEDROCK block change ONLY to the player who broke it.
+        // The actual world block stays as the ore, but the player sees bedrock.
         // Other players still see the original ore and can mine it.
-        player.sendBlockChange(event.getBlock().getLocation(), Material.AIR, (byte) 0);
+        player.sendBlockChange(event.getBlock().getLocation(), Material.BEDROCK, (byte) 0);
 
         // After 6 seconds, restore the visual for this player.
         final org.bukkit.Location blockLoc = event.getBlock().getLocation();
