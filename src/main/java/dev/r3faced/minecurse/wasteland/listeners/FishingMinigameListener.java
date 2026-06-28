@@ -2,7 +2,6 @@ package dev.r3faced.minecurse.wasteland.listeners;
 
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.api.WastelandXpCause;
-import dev.r3faced.minecurse.wasteland.model.PlayerData;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -13,6 +12,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.block.Action;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -22,26 +23,44 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Fishing minigame: when a player hooks a fish, they must hold the rod
- * for 8 seconds. The action bar shows progress (1% → 100%). At 100%,
- * the catch is awarded with XP. If the player releases (reels in) before
- * 100%, the catch is lost.
+ * Fishing minigame — two phases:
  * <p>
- * The minigame only applies in the fishing world.
+ * <strong>Phase 1: Bite Window (5-10 seconds after cast)</strong>
+ * <ul>
+ *   <li>After casting, wait 5-10 seconds for a bite.</li>
+ *   <li>When the bite happens: SPLASH sound, title "Hooked!", action bar "CLICK TO HOOK!".</li>
+ *   <li>The player has 3 seconds to right-click (reel in).</li>
+ *   <li>If they hook it in time → Phase 2.</li>
+ *   <li>If they DON'T hook it in time → "The fish got away!" message, minigame ends.</li>
+ * </ul>
+ * <p>
+ * <strong>Phase 2: Reel-in Progress (10 seconds)</strong>
+ * <ul>
+ *   <li>Action bar shows progress bar: [■■■□□□□□□□□□□□□□□□□□] 35%</li>
+ *   <li>The player must HOLD the rod for 10 seconds.</li>
+ *   <li>At 100% → catch! XP + dust + possible money drop.</li>
+ *   <li>If the player switches items or leaves → "Fishing cancelled!".</li>
+ * </ul>
  */
 public class FishingMinigameListener implements Listener {
 
     private final WastelandPlugin plugin;
 
-    /** Tracks active fishing sessions: UUID → progress (0-100). */
-    private final Map<UUID, FishingSession> activeSessions = new HashMap<>();
-
     /** Tracks pending bite tasks: UUID → BukkitRunnable. */
     private final Map<UUID, BukkitRunnable> pendingBites = new HashMap<>();
 
-    /** 8 seconds in ticks. */
-    private static final long DURATION_TICKS = 160L;
+    /** Tracks bite-window state: UUID → BiteWindow (waiting for player to hook). */
+    private final Map<UUID, BiteWindow> biteWindows = new HashMap<>();
+
+    /** Tracks active reel-in sessions: UUID → ReelSession. */
+    private final Map<UUID, ReelSession> activeSessions = new HashMap<>();
+
+    /** 10 seconds in ticks for the reel-in phase. */
+    private static final long REEL_DURATION_TICKS = 200L;
     private static final long TICK_INTERVAL = 4L; // Update every 4 ticks (0.2s)
+
+    /** 3 seconds to hook the fish after the bite. */
+    private static final long HOOK_WINDOW_TICKS = 60L;
 
     public FishingMinigameListener(WastelandPlugin plugin) {
         this.plugin = plugin;
@@ -64,14 +83,16 @@ public class FishingMinigameListener implements Listener {
 
         if (state == PlayerFishEvent.State.FISHING) {
             // Player just cast the rod. Schedule a guaranteed bite in 5-10 seconds.
-            // We can't force a vanilla bite, so we simulate one by starting the
-            // minigame directly after the delay.
             final Player p = player;
             final UUID puuid = player.getUniqueId();
 
             // Cancel any existing pending bite.
             if (pendingBites.containsKey(puuid)) {
                 pendingBites.get(puuid).cancel();
+            }
+            // Cancel any existing bite window.
+            if (biteWindows.containsKey(puuid)) {
+                biteWindows.remove(puuid);
             }
 
             // Schedule a bite in 5-10 seconds (100-200 ticks).
@@ -84,56 +105,90 @@ public class FishingMinigameListener implements Listener {
                     if (!plugin.getWastelandWorldManager().isWastelandWorld(p.getWorld())) return;
 
                     // Check if the player is still holding the fishing rod.
-                    ItemStack hand = p.getItemInHand();
-                    if (!plugin.getToolManager().isOmniTool(hand, SkillType.FISHING)) return;
+                    ItemStack h = p.getItemInHand();
+                    if (!plugin.getToolManager().isOmniTool(h, SkillType.FISHING)) return;
 
-                    // Check if not already in a minigame session.
+                    // Check if not already in a reel session.
                     if (activeSessions.containsKey(puuid)) return;
 
-                    // Play a bite sound + action bar message.
+                    // ── BITE! ──
+                    // Play splash sound.
                     try {
-                        p.playSound(p.getLocation(), Sound.SPLASH, 0.5f, 1.5f);
+                        p.playSound(p.getLocation(), Sound.SPLASH, 0.7f, 1.2f);
                     } catch (Exception ignored) {}
-                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(p,
-                            org.bukkit.ChatColor.AQUA + "A fish is on the line! Hold your rod!");
 
-                    // Start the minigame with a random catch type.
-                    String caughtType = getRandomCatchType();
-                    FishingSession session = new FishingSession(p, caughtType);
-                    activeSessions.put(puuid, session);
-                    startProgressBar(session);
+                    // Show title "Hooked!" + subtitle.
+                    p.sendTitle(
+                        ChatColor.AQUA + "" + ChatColor.BOLD + "Hooked!",
+                        ChatColor.GRAY + "Right-click to hook the fish!"
+                    );
+
+                    // Action bar.
+                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(p,
+                        ChatColor.AQUA + "" + ChatColor.BOLD + "CLICK TO HOOK!");
+
+                    // Open the bite window — player has 3 seconds to right-click.
+                    BiteWindow window = new BiteWindow(p, getRandomCatchType());
+                    biteWindows.put(puuid, window);
+
+                    // Schedule the timeout — if the player doesn't hook in 3 seconds.
+                    final String caughtType = window.caughtType;
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (biteWindows.containsKey(puuid)) {
+                            biteWindows.remove(puuid);
+                            // Fish escaped.
+                            dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(p,
+                                ChatColor.RED + "The fish got away!");
+                            p.playSound(p.getLocation(), Sound.VILLAGER_NO, 0.3f, 1.0f);
+                        }
+                    }, HOOK_WINDOW_TICKS); // 3 seconds
                 }
             };
             biteTask.runTaskLater(plugin, delayTicks);
             pendingBites.put(puuid, biteTask);
 
         } else if (state == PlayerFishEvent.State.CAUGHT_FISH) {
-            // A vanilla fish bite — cancel it (we handle bites ourselves via the
-            // scheduled task above).
+            // Cancel vanilla catches — we handle everything ourselves.
             event.setCancelled(true);
-
-            // Don't start if already in a session.
-            if (activeSessions.containsKey(player.getUniqueId())) return;
-
-            // Determine what was caught (for XP calculation later).
-            String caughtType = "DEFAULT";
-            if (event.getCaught() instanceof Item) {
-                ItemStack caught = ((Item) event.getCaught()).getItemStack();
-                caughtType = caught.getType().name();
-            }
-
-            // Start the minigame.
-            FishingSession session = new FishingSession(player, caughtType);
-            activeSessions.put(player.getUniqueId(), session);
-            startProgressBar(session);
         }
     }
 
     /**
-     * Start the action-bar progress bar. Updates every TICK_INTERVAL ticks.
-     * At 100%, awards XP and plays a sound.
+     * Listen for right-clicks during the bite window to hook the fish.
      */
-    private void startProgressBar(FishingSession session) {
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+
+        // Check if there's an active bite window.
+        if (!biteWindows.containsKey(uuid)) return;
+
+        // Check if holding the fishing rod.
+        ItemStack hand = player.getItemInHand();
+        if (!plugin.getToolManager().isOmniTool(hand, SkillType.FISHING)) return;
+
+        // ── HOOKED! Start the reel-in phase. ──
+        event.setCancelled(true);
+        BiteWindow window = biteWindows.remove(uuid);
+
+        // Play hook sound.
+        try {
+            player.playSound(player.getLocation(), Sound.ORB_PICKUP, 0.5f, 1.5f);
+        } catch (Exception ignored) {}
+
+        // Start reel-in session.
+        ReelSession session = new ReelSession(player, window.caughtType);
+        activeSessions.put(uuid, session);
+        startReelProgress(session);
+    }
+
+    /**
+     * Start the 10-second reel-in progress bar.
+     */
+    private void startReelProgress(ReelSession session) {
         final Player player = session.player;
         final UUID uuid = player.getUniqueId();
         final String caughtType = session.caughtType;
@@ -141,13 +196,13 @@ public class FishingMinigameListener implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
-                FishingSession s = activeSessions.get(uuid);
+                ReelSession s = activeSessions.get(uuid);
                 if (s == null) {
                     this.cancel();
                     return;
                 }
 
-                // Check if player is still online and still in fishing world.
+                // Check if player is still online and in fishing world.
                 if (!player.isOnline()) {
                     activeSessions.remove(uuid);
                     this.cancel();
@@ -158,6 +213,8 @@ public class FishingMinigameListener implements Listener {
                 SkillType worldSkill = plugin.getToolManager().getSkillForWorld(worldName);
                 if (worldSkill != SkillType.FISHING) {
                     activeSessions.remove(uuid);
+                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(player,
+                        ChatColor.RED + "Fishing cancelled!");
                     this.cancel();
                     return;
                 }
@@ -165,27 +222,32 @@ public class FishingMinigameListener implements Listener {
                 // Check if player is still holding the fishing rod.
                 ItemStack hand = player.getItemInHand();
                 if (!plugin.getToolManager().isOmniTool(hand, SkillType.FISHING)) {
-                    // Player switched items — abort minigame.
+                    // Player switched items — abort.
                     activeSessions.remove(uuid);
-                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(
-                        player, ChatColor.RED + "Fishing cancelled!"
-                    );
+                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(player,
+                        ChatColor.RED + "Fishing cancelled!");
                     this.cancel();
                     return;
                 }
 
                 // Increment progress.
                 long elapsed = System.currentTimeMillis() - s.startTime;
-                int progress = (int) ((elapsed * 100L) / (DURATION_TICKS * 50L)); // 50ms per tick
+                int progress = (int) ((elapsed * 100L) / (REEL_DURATION_TICKS * 50L)); // 50ms per tick
                 if (progress >= 100) {
                     progress = 100;
-                    // Complete!
+
+                    // ── CAUGHT! ──
                     activeSessions.remove(uuid);
 
                     // Build the progress bar.
                     String bar = buildProgressBar(100);
-                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(
-                        player, ChatColor.GREEN + bar + " " + ChatColor.GREEN + "100% " + ChatColor.GOLD + "Caught!"
+                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(player,
+                        ChatColor.GREEN + bar + " " + ChatColor.GREEN + "100% " + ChatColor.GOLD + "Caught!");
+
+                    // Show title.
+                    player.sendTitle(
+                        ChatColor.GREEN + "" + ChatColor.BOLD + "Caught!",
+                        ChatColor.GRAY + "Reeled in a fish!"
                     );
 
                     // Play success sound.
@@ -204,19 +266,17 @@ public class FishingMinigameListener implements Listener {
                     plugin.getDustManager().awardDust(player,
                             plugin.getDustManager().getDefaultDustPerAction(SkillType.FISHING));
 
-                    // Random money drop chance.
+                    // Random money drop.
                     tryRollMoneyDrop(player);
 
                     this.cancel();
                     return;
                 }
 
-                // Update action bar.
+                // Update action bar with progress bar.
                 String bar = buildProgressBar(progress);
-                ChatColor color = progress < 100 ? ChatColor.AQUA : ChatColor.GREEN;
-                dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(
-                    player, color + bar + " " + ChatColor.WHITE + progress + "%"
-                );
+                dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(player,
+                    ChatColor.AQUA + bar + " " + ChatColor.WHITE + progress + "%");
             }
         }.runTaskTimer(plugin, 0L, TICK_INTERVAL);
     }
@@ -227,13 +287,13 @@ public class FishingMinigameListener implements Listener {
         if (filled > 20) filled = 20;
         StringBuilder sb = new StringBuilder();
         sb.append(ChatColor.DARK_GRAY).append("[");
-        for (int i = 0; i < filled; i++) sb.append(ChatColor.AQUA).append("■");
-        for (int i = filled; i < 20; i++) sb.append(ChatColor.DARK_GRAY).append("□");
+        for (int i = 0; i < filled; i++) sb.append(ChatColor.AQUA).append("|");
+        for (int i = filled; i < 20; i++) sb.append(ChatColor.DARK_GRAY).append(".");
         sb.append(ChatColor.DARK_GRAY).append("]");
         return sb.toString();
     }
 
-    /** Random money drop — same logic as MiningListener. */
+    /** Random money drop. */
     private void tryRollMoneyDrop(Player player) {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
         if (!cfg.getBoolean("mining-money-drops.enabled", true)) return;
@@ -265,23 +325,36 @@ public class FishingMinigameListener implements Listener {
         player.sendMessage(msg);
     }
 
-    /** Simple session holder. */
-    private static class FishingSession {
-        final Player player;
-        final String caughtType;
-        final long startTime;
-
-        FishingSession(Player player, String caughtType) {
-            this.player = player;
-            this.caughtType = caughtType;
-            this.startTime = System.currentTimeMillis();
-        }
-    }
-
-    /** Returns a random catch type for the fishing minigame. */
+    /** Returns a random catch type. */
     private String getRandomCatchType() {
         String[] types = {"RAW_FISH", "RAW_SALMON", "CLOWNFISH", "PUFFERFISH",
                 "ENCHANTED_BOOK", "BOW", "FISHING_ROD", "NAME_TAG", "SADDLE", "DEFAULT"};
         return types[ThreadLocalRandom.current().nextInt(types.length)];
+    }
+
+    // ── Inner classes ──────────────────────────────────────────────────────────
+
+    /** Bite window — the player has 3 seconds to right-click after the bite. */
+    private static class BiteWindow {
+        final Player player;
+        final String caughtType;
+
+        BiteWindow(Player player, String caughtType) {
+            this.player = player;
+            this.caughtType = caughtType;
+        }
+    }
+
+    /** Reel session — the 10-second progress bar phase. */
+    private static class ReelSession {
+        final Player player;
+        final String caughtType;
+        final long startTime;
+
+        ReelSession(Player player, String caughtType) {
+            this.player = player;
+            this.caughtType = caughtType;
+            this.startTime = System.currentTimeMillis();
+        }
     }
 }
