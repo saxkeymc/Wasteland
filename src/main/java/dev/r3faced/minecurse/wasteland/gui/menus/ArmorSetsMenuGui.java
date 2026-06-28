@@ -122,11 +122,11 @@ public class ArmorSetsMenuGui extends WastelandGui {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         String basePath = "armor-loadout." + player.getUniqueId();
 
-        boolean hasLoadout = cfg.contains(basePath + ".helmet") ||
-                             cfg.contains(basePath + ".chestplate") ||
-                             cfg.contains(basePath + ".leggings") ||
-                             cfg.contains(basePath + ".boots") ||
-                             cfg.contains(basePath + ".sword");
+        boolean hasLoadout = cfg.isSet(basePath + ".helmet") ||
+                             cfg.isSet(basePath + ".chestplate") ||
+                             cfg.isSet(basePath + ".leggings") ||
+                             cfg.isSet(basePath + ".boots") ||
+                             cfg.isSet(basePath + ".sword");
 
         if (!hasLoadout) {
             // First time — create defaults.
@@ -147,7 +147,7 @@ public class ArmorSetsMenuGui extends WastelandGui {
         loadSlot(SWORD_SLOT, basePath + ".sword");
 
         // Load enchant books.
-        if (cfg.contains(basePath + ".enchants")) {
+        if (cfg.isSet(basePath + ".enchants")) {
             List<?> enchants = cfg.getList(basePath + ".enchants");
             if (enchants != null) {
                 int slotIdx = 0;
@@ -164,7 +164,7 @@ public class ArmorSetsMenuGui extends WastelandGui {
 
     private void loadSlot(int slot, String path) {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
-        if (cfg.contains(path)) {
+        if (cfg.isSet(path)) {
             ItemStack item = cfg.getItemStack(path);
             if (item != null && item.getType() != Material.AIR) {
                 // Overwrite the glass with the saved item.
@@ -201,9 +201,13 @@ public class ArmorSetsMenuGui extends WastelandGui {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         ItemStack item = inventory.getItem(slot);
         if (item != null && item.getType() != Material.STAINED_GLASS_PANE &&
-            item.getType() != Material.AIR) {
+            item.getType() != Material.AIR &&
+            item.getType() != Material.BARRIER &&
+            item.getType() != Material.SIGN) {
             cfg.set(path, item);
         } else {
+            // Slot is empty (glass, barrier, sign, or air) — save as null
+            // so the armor manager knows the player removed this piece.
             cfg.set(path, null);
         }
     }

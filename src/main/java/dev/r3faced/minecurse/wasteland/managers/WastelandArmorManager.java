@@ -93,18 +93,21 @@ public class WastelandArmorManager {
         player.updateInventory();
     }
 
-    /** Load a piece from config, or build a default if not saved. */
+    /** Load a piece from config. Returns null if the player removed it. */
     private ItemStack loadPiece(org.bukkit.configuration.file.FileConfiguration cfg, String path,
                                  Material mat, String name) {
-        if (cfg.contains(path)) {
+        // Check if the player has a saved loadout entry for this slot.
+        if (cfg.isSet(path)) {
+            // The path exists — it could be a saved item or null (removed).
             ItemStack item = cfg.getItemStack(path);
             if (item != null && item.getType() != Material.AIR) {
                 // Tag it as Wasteland armor so it can be removed on leave.
                 return dev.r3faced.minecurse.wasteland.nbt.NbtUtil.setTag(item, NBT_KEY, NBT_VALUE);
             }
-            return null; // Slot was emptied by the player.
+            // Item is null or AIR — player removed this piece. Return null.
+            return null;
         }
-        // No saved loadout — build default.
+        // Path doesn't exist at all — first time, give default.
         return buildPiece(mat, name,
                 "&7&o\"Quote\"", "&7&o\"  — Author\"");
     }
