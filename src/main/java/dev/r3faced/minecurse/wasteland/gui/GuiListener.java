@@ -22,8 +22,15 @@ public class GuiListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof WastelandGui) {
-            event.setCancelled(true);
-            ((WastelandGui) holder).handleClick(event);
+            WastelandGui gui = (WastelandGui) holder;
+            // ArmorSetsMenuGui is interactive — it handles its own click
+            // cancellation internally (only cancels non-editable slots).
+            if (gui instanceof dev.r3faced.minecurse.wasteland.gui.menus.ArmorSetsMenuGui) {
+                gui.handleClick(event);
+            } else {
+                event.setCancelled(true);
+                gui.handleClick(event);
+            }
         }
     }
 }

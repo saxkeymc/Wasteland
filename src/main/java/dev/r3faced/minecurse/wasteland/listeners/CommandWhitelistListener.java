@@ -60,8 +60,9 @@ public class CommandWhitelistListener implements Listener {
         // Only applies in wasteland worlds.
         if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) return;
 
-        // Admins and bypass-permission players are exempt.
-        if (player.hasPermission("wasteland.admin") ||
+        // Admins are exempt (so they can manage the server).
+        if (player.isOp() ||
+            player.hasPermission("wasteland.admin") ||
             player.hasPermission("wasteland.bypass-commands")) {
             return;
         }
@@ -69,10 +70,20 @@ public class CommandWhitelistListener implements Listener {
         // Extract the base command (first word, without leading /).
         String raw = event.getMessage();
         if (raw.startsWith("/")) raw = raw.substring(1);
+        // Handle plugin-prefixed commands like "minecraft:tp" or "essentials:home"
+        // by stripping everything before the colon.
+        if (raw.contains(":")) {
+            raw = raw.substring(raw.indexOf(":") + 1);
+        }
         String baseCommand = raw.split(" ")[0].toLowerCase();
 
+        // Also check with the original command (before colon stripping).
+        String originalRaw = event.getMessage();
+        if (originalRaw.startsWith("/")) originalRaw = originalRaw.substring(1);
+        String originalBase = originalRaw.split(" ")[0].toLowerCase();
+
         // Check if the command is on the whitelist.
-        if (!allowedCommands.contains(baseCommand)) {
+        if (!allowedCommands.contains(baseCommand) && !allowedCommands.contains(originalBase)) {
             event.setCancelled(true);
             player.sendMessage(MessageUtil.colorize(blockedMessage));
         }

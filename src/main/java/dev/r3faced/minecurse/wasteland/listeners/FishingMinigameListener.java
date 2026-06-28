@@ -36,6 +36,9 @@ public class FishingMinigameListener implements Listener {
     /** Tracks active fishing sessions: UUID → progress (0-100). */
     private final Map<UUID, FishingSession> activeSessions = new HashMap<>();
 
+    /** Tracks pending bite tasks: UUID → BukkitRunnable. */
+    private final Map<UUID, BukkitRunnable> pendingBites = new HashMap<>();
+
     /** 8 seconds in ticks. */
     private static final long DURATION_TICKS = 160L;
     private static final long TICK_INTERVAL = 4L; // Update every 4 ticks (0.2s)
@@ -59,8 +62,54 @@ public class FishingMinigameListener implements Listener {
 
         PlayerFishEvent.State state = event.getState();
 
-        if (state == PlayerFishEvent.State.CAUGHT_FISH) {
-            // A fish is on the hook — cancel the default catch and start the minigame.
+        if (state == PlayerFishEvent.State.FISHING) {
+            // Player just cast the rod. Schedule a guaranteed bite in 5-10 seconds.
+            // We can't force a vanilla bite, so we simulate one by starting the
+            // minigame directly after the delay.
+            final Player p = player;
+            final UUID puuid = player.getUniqueId();
+
+            // Cancel any existing pending bite.
+            if (pendingBites.containsKey(puuid)) {
+                pendingBites.get(puuid).cancel();
+            }
+
+            // Schedule a bite in 5-10 seconds (100-200 ticks).
+            int delayTicks = 100 + ThreadLocalRandom.current().nextInt(101); // 5-10 seconds
+            BukkitRunnable biteTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    pendingBites.remove(puuid);
+                    if (!p.isOnline()) return;
+                    if (!plugin.getWastelandWorldManager().isWastelandWorld(p.getWorld())) return;
+
+                    // Check if the player is still holding the fishing rod.
+                    ItemStack hand = p.getItemInHand();
+                    if (!plugin.getToolManager().isOmniTool(hand, SkillType.FISHING)) return;
+
+                    // Check if not already in a minigame session.
+                    if (activeSessions.containsKey(puuid)) return;
+
+                    // Play a bite sound + action bar message.
+                    try {
+                        p.playSound(p.getLocation(), Sound.SPLASH, 0.5f, 1.5f);
+                    } catch (Exception ignored) {}
+                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(p,
+                            org.bukkit.ChatColor.AQUA + "A fish is on the line! Hold your rod!");
+
+                    // Start the minigame with a random catch type.
+                    String caughtType = getRandomCatchType();
+                    FishingSession session = new FishingSession(p, caughtType);
+                    activeSessions.put(puuid, session);
+                    startProgressBar(session);
+                }
+            };
+            biteTask.runTaskLater(plugin, delayTicks);
+            pendingBites.put(puuid, biteTask);
+
+        } else if (state == PlayerFishEvent.State.CAUGHT_FISH) {
+            // A vanilla fish bite — cancel it (we handle bites ourselves via the
+            // scheduled task above).
             event.setCancelled(true);
 
             // Don't start if already in a session.
@@ -227,5 +276,12 @@ public class FishingMinigameListener implements Listener {
             this.caughtType = caughtType;
             this.startTime = System.currentTimeMillis();
         }
+    }
+
+    /** Returns a random catch type for the fishing minigame. */
+    private String getRandomCatchType() {
+        String[] types = {"RAW_FISH", "RAW_SALMON", "CLOWNFISH", "PUFFERFISH",
+                "ENCHANTED_BOOK", "BOW", "FISHING_ROD", "NAME_TAG", "SADDLE", "DEFAULT"};
+        return types[ThreadLocalRandom.current().nextInt(types.length)];
     }
 }

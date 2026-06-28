@@ -91,6 +91,14 @@ public class TierLockManager {
         Block block = event.getBlock();
         Material originalType = block.getType();
 
+        // Check if this block is on fake-bedrock cooldown for this player.
+        // If yes, cancel — the player can't break it again until the 6s
+        // cooldown ends.
+        if (plugin.getFakeBlockManager().isFakeBedrock(player, block.getLocation())) {
+            event.setCancelled(true);
+            return true;
+        }
+
         Map<Material, Integer> skillMap = lockedBlocks.get(skill);
         if (skillMap == null) return false;
 

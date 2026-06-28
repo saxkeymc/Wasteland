@@ -83,6 +83,13 @@ public class MiningListener implements Listener {
             return;
         }
 
+        // Check if this block is on fake-bedrock cooldown for this player.
+        // If yes, cancel — the player can't break it again until 6s cooldown.
+        if (plugin.getFakeBlockManager().isFakeBedrock(player, event.getBlock().getLocation())) {
+            event.setCancelled(true);
+            return;
+        }
+
         // CANCEL the event so the actual block isn't destroyed server-side.
         event.setCancelled(true);
 
