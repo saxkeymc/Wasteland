@@ -24,18 +24,19 @@ plugin-reloaded: "{prefix}&aPlugin reloaded successfully."
 skill:
   level-up: "{prefix}&aYour &e{skill} &askill reached &2Level {level}&a!"
   # Tier unlock is now SHARED across all skills (no {skill} placeholder).
-  tier-unlock: "{prefix}&aYou unlocked &2Tier {tier}&a! Use &2/wasteland collect &ato claim your reward."
+  tier-unlock: "{prefix}&aYou unlocked &2Tier {tier}&a! New rewards have been added to your storage. Use &2/wasteland claim &ato claim them."
   xp-gained: "{prefix}&7+&a{xp} &7{skill} XP"
   max-level: "{prefix}&cYou have already reached the maximum level for &e{skill}&c."
 
-# ── Tier-Locked Ore Messages ─────────────────────────────────────────────────
-# Sent when a player tries to break an ore they don't have the tier for.
+# ── Tier-Locked Block Messages ───────────────────────────────────────────────
+# Sent when a player tries to break a block they don't have the tier for.
 # Placeholders:
-#   {ore}       — the ore name (e.g. "Diamond Ore")
-#   {tier}      — the tier required to break this ore
+#   {block}       — the block name (e.g. "Diamond Ore")
+#   {tier}        — the tier required to break this block
 #   {player_tier} — the player's current shared tier
-mining:
-  tier-locked: "{prefix}&cYou need &4Tier {tier} &cto mine &4{ore}&c! You are currently at &4Tier {player_tier}&c."
+#   {skill}       — the skill name (mining, woodcutting, farming, fishing)
+block:
+  tier-locked: "{prefix}&cYou need &4Tier {tier} &cto break &4{block}&c! You are currently at &4Tier {player_tier}&c."
 
 tool:
   received: "{prefix}&aYou received your &e{skill} Omni Tool&a!"
@@ -47,7 +48,7 @@ rewards:
   already-claimed: "{prefix}&cYou have already claimed this tier."
   none-available: "{prefix}&cYou have no available rewards to claim."
   # Sent when a tier unlocks and rewards are added to the player's backpack.
-  added-to-storage: "{prefix}&a&2{count} &areward(s) from &2Tier {tier} &ahave been added to your storage! Use &2/wasteland claim &ato claim them."
+  added-to-storage: "{prefix}&a&2{count} &anew reward(s) have been added to your storage! Use &2/wasteland claim &ato claim them."
   # Sent when a player claims a single reward from the backpack GUI.
   claimed-single: "{prefix}&aYou have claimed a reward from your storage!"
 

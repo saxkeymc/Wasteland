@@ -41,6 +41,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor previewRewardEditor;
     private dev.r3faced.minecurse.wasteland.listeners.MiningListener miningListener;
     private dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener commandWhitelistListener;
+    private dev.r3faced.minecurse.wasteland.managers.TierLockManager tierLockManager;
     private WastelandApi api;
 
     @Override
@@ -61,6 +62,9 @@ public final class WastelandPlugin extends JavaPlugin {
         // Initialize config manager
         configManager = new ConfigManager(this);
         configManager.loadAll();
+
+        // Initialize tier-lock manager (reads tier-locked-blocks from config)
+        tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
 
         // Initialize data manager (YAML or MySQL)
         String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
@@ -165,11 +169,11 @@ public final class WastelandPlugin extends JavaPlugin {
         if (wastelandWorldManager != null) {
             wastelandWorldManager.reload();
         }
-        if (miningListener != null) {
-            miningListener.reloadTierLockedOres();
-        }
         if (commandWhitelistListener != null) {
             commandWhitelistListener.reload();
+        }
+        if (tierLockManager != null) {
+            tierLockManager.reload();
         }
     }
 
@@ -202,6 +206,14 @@ public final class WastelandPlugin extends JavaPlugin {
             previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
         }
         return previewRewardEditor;
+    }
+
+    /** Returns the tier-lock manager (handles tier-locked blocks for all skills). */
+    public dev.r3faced.minecurse.wasteland.managers.TierLockManager getTierLockManager() {
+        if (tierLockManager == null) {
+            tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
+        }
+        return tierLockManager;
     }
 
     public static WastelandPlugin getInstance() {

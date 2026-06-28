@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 /**
  * Awards Woodcutting XP when the player breaks log blocks with the Woodcutting Omni Tool.
+ * Also delegates tier-locked block checks to the TierLockManager.
  */
 public class WoodcuttingListener implements Listener {
 
@@ -19,6 +20,19 @@ public class WoodcuttingListener implements Listener {
 
     public WoodcuttingListener(WastelandPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Tier-lock check — runs at HIGHEST priority.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onTierLockedBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        String worldName = player.getWorld().getName();
+        SkillType worldSkill = plugin.getToolManager().getSkillForWorld(worldName);
+        if (worldSkill != SkillType.WOODCUTTING) return;
+
+        plugin.getTierLockManager().handleBlockBreak(event, SkillType.WOODCUTTING);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

@@ -10,11 +10,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Crops;
 
 /**
- * Awards Farming XP when the player harvests fully-grown crops with the Farming Omni Tool.
- * Uses the deprecated Crops material check for 1.8.8 compatibility.
+ * Awards Farming XP when the player harvests crops with the Farming Omni Tool.
+ * Also delegates tier-locked block checks to the TierLockManager.
  */
 public class HarvestListener implements Listener {
 
@@ -24,7 +23,19 @@ public class HarvestListener implements Listener {
         this.plugin = plugin;
     }
 
-    @SuppressWarnings("deprecation")
+    /**
+     * Tier-lock check — runs at HIGHEST priority.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onTierLockedBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        String worldName = player.getWorld().getName();
+        SkillType worldSkill = plugin.getToolManager().getSkillForWorld(worldName);
+        if (worldSkill != SkillType.FARMING) return;
+
+        plugin.getTierLockManager().handleBlockBreak(event, SkillType.FARMING);
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -39,13 +50,8 @@ public class HarvestListener implements Listener {
         Block block = event.getBlock();
         String blockType = block.getType().name();
 
-        // Only award XP for configured crop types
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.FARMING, blockType);
         if (xp <= 0) return;
-
-        // Optional: only fully-grown crops award XP (handled by config — if WHEAT is listed,
-        // we can do a data value check here for strictness)
-        // For maximum configurability we award XP on any configured block break.
 
         plugin.getSkillManager().awardXp(player, SkillType.FARMING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
     }

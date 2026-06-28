@@ -48,22 +48,34 @@ playtime:
   format: "{days}d {hours}h {minutes}m"
   strip-empty-parts: true
 
-# ── Tier-Locked Ores (Mining World) ──────────────────────────────────────────
-# In the mining world, certain ores require the player to have reached a
-# specific shared tier before they can be broken. If a player tries to break
-# an ore without the required tier, the break is cancelled and a configurable
-# message is sent.
+# ── Tier-Locked Blocks (All Worlds) ──────────────────────────────────────────
+# In each skill's world, certain blocks require the player to have reached
+# a specific shared tier before they can be broken. If a player tries to
+# break a locked block without the required tier, the break is cancelled
+# and a configurable message is sent (the block stays as-is, no bedrock).
+#
+# If the player HAS the tier, the break is cancelled, the block turns to
+# BEDROCK, the player gets XP + drops manually, and the block regenerates
+# after 6 seconds.
 #
 # The tier here is the SHARED tier (unlocked when all 4 skills reach the
-# required level), NOT the per-skill Mining level.
+# required level), NOT the per-skill level.
 #
 # Material names must match Bukkit 1.8 Material enum values.
-# Remove an entry or set its tier to 0 to disable the lock for that ore.
-tier-locked-ores:
-  COAL_ORE: 1
-  IRON_ORE: 2
-  GOLD_ORE: 3
-  EMERALD_ORE: 4
-  DIAMOND_ORE: 5
+# Remove an entry or set its tier to 0 to disable the lock for that block.
+tier-locked-blocks:
+  # Mining world — ores
+  mining:
+    COAL_ORE: 1
+    IRON_ORE: 2
+    GOLD_ORE: 3
+    EMERALD_ORE: 4
+    DIAMOND_ORE: 5
+  # Woodcutting world — logs (example: higher-tier logs require higher tier)
+  woodcutting: {}
+  # Farming world — crops (example: nether wart requires tier 2)
+  farming: {}
+  # Fishing world — (no blocks to lock, but kept for consistency)
+  fishing: {}
 
 debug: false
