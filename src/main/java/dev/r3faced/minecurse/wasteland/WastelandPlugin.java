@@ -42,6 +42,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.listeners.MiningListener miningListener;
     private dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener commandWhitelistListener;
     private dev.r3faced.minecurse.wasteland.managers.TierLockManager tierLockManager;
+    private dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager armorManager;
     private WastelandApi api;
 
     @Override
@@ -65,6 +66,7 @@ public final class WastelandPlugin extends JavaPlugin {
 
         // Initialize tier-lock manager (reads tier-locked-blocks from config)
         tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
+        armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
 
         // Initialize data manager (YAML or MySQL)
         String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
@@ -219,6 +221,14 @@ public final class WastelandPlugin extends JavaPlugin {
             tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
         }
         return tierLockManager;
+    }
+
+    /** Returns the Wasteland armor manager. */
+    public dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager getArmorManager() {
+        if (armorManager == null) {
+            armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
+        }
+        return armorManager;
     }
 
     public static WastelandPlugin getInstance() {

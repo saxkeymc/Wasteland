@@ -201,6 +201,24 @@ public class MainMenuGui extends WastelandGui {
         if (tm.hasTeleport(skill)) {
             org.bukkit.Location dest = tm.getTeleport(skill);
             if (dest != null) {
+                // Check if the player has any items in their inventory.
+                // They must have an empty inventory to teleport.
+                for (org.bukkit.inventory.ItemStack item : player.getInventory().getContents()) {
+                    if (item != null && item.getType() != org.bukkit.Material.AIR) {
+                        player.sendMessage(dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
+                                "&cYou must have an empty inventory to teleport to a Wasteland world!"));
+                        return;
+                    }
+                }
+                // Also check armor slots.
+                for (org.bukkit.inventory.ItemStack item : player.getInventory().getArmorContents()) {
+                    if (item != null && item.getType() != org.bukkit.Material.AIR) {
+                        player.sendMessage(dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
+                                "&cYou must remove all armor to teleport to a Wasteland world!"));
+                        return;
+                    }
+                }
+
                 player.teleport(dest);
                 String msg = MessageUtil.getMessage(plugin, "teleport.teleported")
                         .replace("{skill}", skill.getKey());
@@ -214,6 +232,7 @@ public class MainMenuGui extends WastelandGui {
                 final SkillType s = skill;
                 org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     plugin.getToolManager().giveOmniTool(p, s);
+                    plugin.getArmorManager().giveArmorSet(p);
                 }, 2L); // 2 ticks = 0.1 seconds
             } else {
                 player.sendMessage(MessageUtil.getMessage(plugin, "teleport.not-configured")

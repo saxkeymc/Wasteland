@@ -114,9 +114,9 @@ public class SettingsMenuGui extends WastelandGui {
         for (Player other : player.getWorld().getPlayers()) {
             if (other == player) continue;
             if (seePlayers) {
-                player.showPlayer(player);
+                player.showPlayer(other);
             } else {
-                player.hidePlayer(player);
+                player.hidePlayer(other);
             }
         }
     }

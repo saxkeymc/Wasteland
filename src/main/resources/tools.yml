@@ -2,8 +2,8 @@
 # Wasteland — Tools Configuration
 # ════════════════════════════════════════════════════════════════════════════
 # Omni tools are given automatically when entering a Wasteland world.
-# They are removed when leaving. All enchants are HIDDEN (ItemFlag.HIDE_ENCHANTS).
-# Lore uses themed quotes for each skill — no level/XP display.
+# They are removed when leaving. All enchants are HIDDEN.
+# Lore uses quotes from real historical miners/fishers/farmers/lumberjacks.
 # ════════════════════════════════════════════════════════════════════════════
 
 tools:
@@ -11,12 +11,10 @@ tools:
     material: DIAMOND_PICKAXE
     name: "&7&lMining Pickaxe"
     lore:
-      - "&7&o\"The deepest caves hide the greatest treasures,"
-      - "&7&obut only the brave dare to descend.\""
+      - "&7&o\"A mine is a hole in the ground"
+      - "&7&owith a liar standing beside it.\""
       - ""
-      - "  &8— Unknown Miner"
-      - ""
-      - "&8&oWasteland Omni Tool"
+      - "  &8— Mark Twain"
     enchants:
       DURABILITY: 10
       DIG_SPEED: 5
@@ -31,12 +29,10 @@ tools:
     material: DIAMOND_AXE
     name: "&6&lChopping Axe"
     lore:
-      - "&7&o\"A sharp axe and a steady hand"
-      - "&7&ocan fell the mightiest of trees.\""
+      - "&7&o\"He who plants a tree"
+      - "&7&oplants a hope.\""
       - ""
-      - "  &8— Forest Wanderer"
-      - ""
-      - "&8&oWasteland Omni Tool"
+      - "  &8— Lucy Larcom"
     enchants:
       DURABILITY: 10
       DIG_SPEED: 5
@@ -51,12 +47,11 @@ tools:
     material: DIAMOND_HOE
     name: "&a&lFarming Hoe"
     lore:
-      - "&7&o\"From a single seed, an empire grows."
-      - "&7&oPatience is the farmer's greatest tool.\""
+      - "&7&o\"Farming looks mighty easy when your plow"
+      - "&7&ois a pencil, and you're a thousand miles"
+      - "&7&ofrom the corn field.\""
       - ""
-      - "  &8— Old Farmer's Proverb"
-      - ""
-      - "&8&oWasteland Omni Tool"
+      - "  &8— Dwight D. Eisenhower"
     enchants:
       DURABILITY: 10
       LOOT_BONUS_BLOCKS: 3
@@ -70,12 +65,11 @@ tools:
     material: FISHING_ROD
     name: "&b&lFishing Rod"
     lore:
-      - "&7&o\"The waters are full of hidden rewards."
-      - "&7&oCast your line and let fate decide.\""
+      - "&7&o\"Many men go fishing all of their lives"
+      - "&7&owithout knowing that it is not fish"
+      - "&7&othey are after.\""
       - ""
-      - "  &8— Legendary Angler"
-      - ""
-      - "&8&oWasteland Omni Tool"
+      - "  &8— Henry David Thoreau"
     enchants:
       DURABILITY: 10
       LUCK: 3

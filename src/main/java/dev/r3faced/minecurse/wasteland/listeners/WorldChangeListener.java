@@ -109,6 +109,14 @@ public class WorldChangeListener implements Listener {
 
         // Give tool if already in a wasteland world
         checkAndGiveTool(player);
+
+        // Give Wasteland armor set if in a wasteland world.
+        if (plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) {
+            plugin.getArmorManager().giveArmorSet(player);
+        }
+
+        // Apply player visibility setting.
+        applyPlayerVisibility(player, data.isSettingSeePlayers());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -132,6 +140,9 @@ public class WorldChangeListener implements Listener {
             // get to keep the tool while inside a wasteland world.
             removeAllOmniTools(player);
 
+            // Remove the Wasteland armor set.
+            plugin.getArmorManager().removeArmorSet(player);
+
             // Restore the player's vanilla XP level and XP bar.
             player.setLevel(data.getSavedVanillaLevel());
             player.setExp(data.getSavedVanillaXp());
@@ -143,11 +154,17 @@ public class WorldChangeListener implements Listener {
             // Save the player's vanilla XP so it can be restored on leave.
             data.setSavedVanillaLevel(player.getLevel());
             data.setSavedVanillaXp(player.getExp());
+
+            // Give the Wasteland armor set.
+            plugin.getArmorManager().giveArmorSet(player);
         }
         // If both were WL worlds, the timestamp stays as-is (continuous session).
 
         // Re-equip the appropriate Omni Tool for the new world (if in one).
         checkAndGiveTool(player);
+
+        // Apply player visibility setting.
+        applyPlayerVisibility(player, data.isSettingSeePlayers());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -186,6 +203,21 @@ public class WorldChangeListener implements Listener {
         SkillType skill = plugin.getToolManager().getSkillForWorld(worldName);
         if (skill != null) {
             plugin.getToolManager().giveOmniTool(player, skill);
+        }
+    }
+
+    /**
+     * Show or hide other players based on the player's setting.
+     * Called on world change and settings toggle.
+     */
+    private void applyPlayerVisibility(Player player, boolean seePlayers) {
+        for (Player other : player.getWorld().getPlayers()) {
+            if (other == player) continue;
+            if (seePlayers) {
+                player.showPlayer(other);
+            } else {
+                player.hidePlayer(other);
+            }
         }
     }
 
