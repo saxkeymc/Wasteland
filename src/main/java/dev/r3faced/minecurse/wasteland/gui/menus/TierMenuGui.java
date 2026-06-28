@@ -95,17 +95,11 @@ public class TierMenuGui extends WastelandGui {
         for (int tier = 1; tier <= TierManager.TIER_COUNT; tier++) {
             int tierSlot = cfg.getInt("tier-menu.tier-slots." + tier, 10 + tier);
             // Both LEFT CLICK and RIGHT CLICK perform the same action:
-            // open that tier's reward preview GUI (if unlocked).
+            // open that tier's reward preview GUI.
+            // Players can view ANY tier's rewards regardless of whether
+            // they've unlocked it — no message is sent.
             if (slot == tierSlot) {
-                PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
-                if (plugin.getTierManager().meetsRequirements(data, tier)) {
-                    new RewardPageMenuGui(plugin, player, tier, 0).open();
-                } else {
-                    // Lock the inventory by closing it and sending the
-                    // configurable unlock-failed message.
-                    player.closeInventory();
-                    plugin.getTierManager().sendUnlockFailedMessage(player, tier);
-                }
+                new RewardPageMenuGui(plugin, player, tier, 0).open();
                 return;
             }
         }

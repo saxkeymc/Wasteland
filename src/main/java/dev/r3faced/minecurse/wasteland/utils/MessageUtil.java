@@ -59,12 +59,19 @@ public final class MessageUtil {
 
     /**
      * Read a message from messages.yml, apply prefix, colour, and optional PAPI for a player.
+     * <p>
+     * The {prefix} placeholder is replaced AFTER colorizing the rest of the
+     * message to avoid double-processing of color codes.
      */
     public static String getMessage(WastelandPlugin plugin, String path, Player player) {
         String raw = plugin.getConfigManager().getMessages().getString(path, "&cMissing message: " + path);
-        String prefix = plugin.getConfigManager().getMessages().getString("prefix", "&2&lWasteland &8• &f");
-        raw = raw.replace("{prefix}", colorize(prefix));
+        String prefix = plugin.getConfigManager().getMessages().getString("prefix", "&2&lWasteland &8\u2022 &f");
+        // Colorize the entire message first (translates & codes in the message body).
+        // Then replace {prefix} with the colorized prefix.
+        // This avoids double-processing: the prefix's & codes are translated
+        // independently, then inserted into the already-colorized message.
         raw = colorize(raw);
+        raw = raw.replace("{prefix}", colorize(prefix));
         if (papiPresent && player != null) {
             raw = PlaceholderAPI.setPlaceholders(player, raw);
         }

@@ -2,13 +2,11 @@ package dev.r3faced.minecurse.wasteland.gui.menus;
 
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.gui.WastelandGui;
-import dev.r3faced.minecurse.wasteland.model.PlayerData;
 import dev.r3faced.minecurse.wasteland.model.TierReward;
 import dev.r3faced.minecurse.wasteland.utils.ItemBuilder;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -19,14 +17,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Paginated reward browser for a specific tier.
+ * Reward preview GUI for a specific tier.
  * <p>
- * There is only ONE shared tier progression, so this menu does not take
- * a SkillType parameter. Title is simply "Tier N Rewards".
+ * Dynamic sizing based on reward count:
+ * <ul>
+ *   <li>1-9 rewards → 1 row (9 slots). Close button at slot 8 (last slot).</li>
+ *   <li>10-18 rewards → 2 rows (18 slots). Close button at slot 17.</li>
+ *   <li>19-27 rewards → 3 rows (27 slots). Close button at slot 26.</li>
+ *   <li>...up to 5 rows (45 slots). If more than 45 rewards, pagination kicks in.</li>
+ * </ul>
  * <p>
- * Shows ONE showcase item per reward entry. The showcase item is taken
- * verbatim from the reward's {@code display-item} configuration block.
- * Commands are NEVER shown anywhere in this GUI.
+ * For 4+ rows, the close button is placed in the bottom-middle slot.
+ * For 1-3 rows, the close button is at the last slot of the last row.
+ * <p>
+ * No messages are sent when clicking. Players can view ANY tier's
+ * rewards regardless of whether they've unlocked it.
+ * <p>
+ * Commands are NEVER shown — only the display items.
  */
 public class RewardPageMenuGui extends WastelandGui {
 
@@ -43,71 +50,67 @@ public class RewardPageMenuGui extends WastelandGui {
     @Override
     public void build() {
         FileConfiguration cfg = plugin.getConfigManager().getGui();
-        PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
-
-        String title = MessageUtil.colorize(cfg.getString("reward-page-menu.title",
-                "&7Tier {tier} Rewards")
-                .replace("{tier}", String.valueOf(tier)));
-        createInventory(title, 54);
-
-        // Border + filler
-        ItemStack border = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
-        ItemStack filler = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 7).name(" ").build();
-        fill(filler);
-        drawBorder(border);
-
-        // Reward slots
-        rewardSlots = cfg.getIntegerList("reward-page-menu.reward-slots");
-        if (rewardSlots.isEmpty()) {
-            for (int i = 10; i <= 34; i++) {
-                if (i % 9 != 0 && i % 9 != 8) rewardSlots.add(i);
-            }
-        }
+        FileConfiguration tiersCfg = plugin.getConfigManager().getTiers();
+        String displayName = tiersCfg.getString("tiers." + tier + ".display-name", "&fTier " + tier);
 
         List<TierReward> rewards = plugin.getTierManager().getRewards(tier);
-        int perPage = rewardSlots.size();
-        int start = page * perPage;
-        int maxPage = (int) Math.ceil((double) rewards.size() / perPage) - 1;
+        int totalRewards = rewards.size();
 
-        boolean claimed = data.hasClaimedTier(tier);
-        boolean unlocked = data.getTier() >= tier;
+        // Calculate pagination — max 45 rewards per page (5 rows × 9).
+        int maxPerPage = 45;
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalRewards / maxPerPage));
+        int currentPage = Math.min(page, totalPages - 1);
+        if (currentPage < 0) currentPage = 0;
 
-        for (int i = 0; i < perPage && (start + i) < rewards.size(); i++) {
+        int start = currentPage * maxPerPage;
+        int rewardsThisPage = Math.min(maxPerPage, totalRewards - start);
+
+        // Calculate dynamic inventory size.
+        int rows;
+        boolean needsNavRow = totalPages > 1;
+        if (needsNavRow) {
+            // With pagination: 5 reward rows + 1 nav row = 6 rows (54 slots)
+            rows = 6;
+        } else {
+            // Without pagination: rows = ceil(rewardsThisPage / 9), min 1
+            rows = Math.max(1, (int) Math.ceil(rewardsThisPage / 9.0));
+            // If there are 0 rewards, still show 1 row with a close button.
+            if (rows == 0) rows = 1;
+        }
+        int size = rows * 9;
+
+        // Title: just the tier display name + " Rewards"
+        String title = MessageUtil.colorize(displayName + " &7Rewards");
+        createInventory(title, size);
+
+        // Fill reward slots — start at slot 0, fill left-to-right.
+        rewardSlots = new ArrayList<>();
+        for (int i = 0; i < rewardsThisPage && (start + i) < rewards.size(); i++) {
             TierReward reward = rewards.get(start + i);
-            int slot = rewardSlots.get(i);
+            int slot = i;
+            rewardSlots.add(slot);
 
+            // Build the display item with enchants + flags.
             List<String> lore = new ArrayList<>(reward.getDisplayLore());
-            lore.add("");
-            String statusLabel;
-            if (claimed) {
-                statusLabel = MessageUtil.colorize(cfg.getString("reward-page-menu.status.claimed", "&a\u2714 Claimed"));
-            } else if (unlocked) {
-                statusLabel = MessageUtil.colorize(cfg.getString("reward-page-menu.status.unclaimed", "&e\u25cf Unclaimed"));
-            } else {
-                statusLabel = MessageUtil.colorize(cfg.getString("reward-page-menu.status.locked", "&c\u2718 Locked"));
-            }
-            lore.add(statusLabel);
-
             ItemStack rewardItem = new ItemBuilder(reward.getDisplayMaterial(), 1, reward.getDisplayData())
                     .name(reward.getDisplayName())
                     .lore(lore)
                     .build();
 
-            // Apply enchantments and item flags from the reward config.
+            // Apply enchantments and item flags.
             ItemMeta meta = rewardItem.getItemMeta();
             if (meta != null) {
-                // Enchants
                 if (reward.getDisplayEnchants() != null) {
                     for (Map.Entry<String, Integer> ench : reward.getDisplayEnchants().entrySet()) {
                         try {
-                            Enchantment enchant = Enchantment.getByName(ench.getKey());
+                            org.bukkit.enchantments.Enchantment enchant =
+                                    org.bukkit.enchantments.Enchantment.getByName(ench.getKey());
                             if (enchant != null) {
                                 meta.addEnchant(enchant, ench.getValue(), true);
                             }
                         } catch (Exception ignored) {}
                     }
                 }
-                // Item flags
                 if (reward.getDisplayItemFlags() != null) {
                     for (String flagName : reward.getDisplayItemFlags()) {
                         try {
@@ -120,84 +123,85 @@ public class RewardPageMenuGui extends WastelandGui {
             setItem(slot, rewardItem);
         }
 
-        // Empty-state
-        if (rewards.isEmpty()) {
-            int emptySlot = 22;
-            FileConfiguration msgs = plugin.getConfigManager().getMessages();
-            String emptyName = MessageUtil.colorize(msgs.getString("gui.no-rewards", "&7No rewards available."));
-            setItem(emptySlot, new ItemBuilder(Material.BARRIER).name(emptyName).build());
+        // ── Close button ─────────────────────────────────────────────────────
+        // For 1-3 rows: close button at the last slot of the last row.
+        // For 4+ rows: close button at the bottom-middle slot.
+        // For 6 rows (pagination): close button at slot 49 (bottom-middle of nav row).
+        int closeSlot;
+        if (needsNavRow) {
+            closeSlot = 49; // Bottom-middle of the 6th row
+        } else if (rows >= 4) {
+            closeSlot = (rows * 9) - 5; // Bottom-middle slot
+        } else {
+            closeSlot = (rows * 9) - 1; // Last slot of last row
         }
 
-        // Prev page
-        int prevSlot = cfg.getInt("reward-page-menu.prev-page.slot", 45);
-        if (page > 0) {
-            Material prevMat = parseMaterial(cfg.getString("reward-page-menu.prev-page.material", "ARROW"), Material.ARROW);
-            String prevName = MessageUtil.colorize(cfg.getString("reward-page-menu.prev-page.name", "&7\u00ab Previous Page"));
-            setItem(prevSlot, new ItemBuilder(prevMat).name(prevName).build());
+        setItem(closeSlot, new ItemBuilder(Material.ARROW)
+                .name(MessageUtil.colorize("&c&lClose"))
+                .build());
+
+        // ── Navigation buttons (only if pagination is needed) ────────────────
+        if (needsNavRow) {
+            // Previous page button (slot 45)
+            if (currentPage > 0) {
+                setItem(45, new ItemBuilder(Material.ARROW)
+                        .name(MessageUtil.colorize("&7\u00ab Previous Page"))
+                        .build());
+            }
+            // Next page button (slot 53)
+            if (currentPage < totalPages - 1) {
+                setItem(53, new ItemBuilder(Material.ARROW)
+                        .name(MessageUtil.colorize("&aNext Page &7\u00bb"))
+                        .build());
+            }
         }
 
-        // Next page
-        int nextSlot = cfg.getInt("reward-page-menu.next-page.slot", 53);
-        int maxPg = (int) Math.ceil((double) rewards.size() / perPage) - 1;
-        if (page < maxPg) {
-            Material nextMat = parseMaterial(cfg.getString("reward-page-menu.next-page.material", "ARROW"), Material.ARROW);
-            String nextName = MessageUtil.colorize(cfg.getString("reward-page-menu.next-page.name", "&aNext Page &7\u00bb"));
-            setItem(nextSlot, new ItemBuilder(nextMat).name(nextName).build());
+        // Empty state
+        if (totalRewards == 0) {
+            setItem(0, new ItemBuilder(Material.BARRIER)
+                    .name(MessageUtil.colorize("&7No rewards configured for this tier."))
+                    .build());
         }
-
-        // Back (returns to tier browser)
-        int backSlot = cfg.getInt("reward-page-menu.back.slot", 49);
-        Material backMat = parseMaterial(cfg.getString("reward-page-menu.back.material", "ARROW"), Material.ARROW);
-        String backName = MessageUtil.colorize(cfg.getString("reward-page-menu.back.name", "&7\u00ab Back"));
-        setItem(backSlot, new ItemBuilder(backMat).name(backName).build());
     }
 
     @Override
     public void handleClick(InventoryClickEvent event) {
         if (event.getCurrentItem() == null) return;
-        FileConfiguration cfg = plugin.getConfigManager().getGui();
         int slot = event.getSlot();
-
-        List<TierReward> rewards = plugin.getTierManager().getRewards(tier);
-        int perPage = rewardSlots != null ? rewardSlots.size() : 21;
-        int maxPage = (int) Math.ceil((double) rewards.size() / perPage) - 1;
-
-        int backSlot = cfg.getInt("reward-page-menu.back.slot", 49);
-        int prevSlot = cfg.getInt("reward-page-menu.prev-page.slot", 45);
-        int nextSlot = cfg.getInt("reward-page-menu.next-page.slot", 53);
-
-        if (slot == backSlot) {
-            new TierMenuGui(plugin, player).open();
-        } else if (slot == prevSlot && page > 0) {
-            new RewardPageMenuGui(plugin, player, tier, page - 1).open();
-        } else if (slot == nextSlot && page < maxPage) {
-            new RewardPageMenuGui(plugin, player, tier, page + 1).open();
-        }
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private Material parseMaterial(String name, Material fallback) {
-        if (name == null) return fallback;
-        try { return Material.valueOf(name.toUpperCase()); }
-        catch (Exception e) { return fallback; }
-    }
-
-    private void drawBorder(ItemStack border) {
         int size = inventory.getSize();
-        int cols = 9;
-        int rows = size / cols;
-        for (int col = 0; col < cols; col++) {
-            int top = col;
-            int bottom = (rows - 1) * cols + col;
-            if (inventory.getItem(top) == null)    inventory.setItem(top, border);
-            if (inventory.getItem(bottom) == null) inventory.setItem(bottom, border);
+        int rows = size / 9;
+
+        // Check if this is a navigation click — no message sent.
+        boolean needsNavRow = rows == 6;
+        if (needsNavRow) {
+            if (slot == 45 && page > 0) {
+                new RewardPageMenuGui(plugin, player, tier, page - 1).open();
+                return;
+            }
+            if (slot == 53) {
+                new RewardPageMenuGui(plugin, player, tier, page + 1).open();
+                return;
+            }
+            if (slot == 49) {
+                // Close button → go back to tier menu
+                new TierMenuGui(plugin, player).open();
+                return;
+            }
+        } else {
+            // Non-paginated: check close button position
+            int closeSlot;
+            if (rows >= 4) {
+                closeSlot = (rows * 9) - 5;
+            } else {
+                closeSlot = (rows * 9) - 1;
+            }
+            if (slot == closeSlot) {
+                new TierMenuGui(plugin, player).open();
+                return;
+            }
         }
-        for (int row = 0; row < rows; row++) {
-            int left  = row * cols;
-            int right = row * cols + (cols - 1);
-            if (inventory.getItem(left) == null)  inventory.setItem(left, border);
-            if (inventory.getItem(right) == null) inventory.setItem(right, border);
-        }
+
+        // Reward slots — no action (preview only, no claiming here).
+        // This GUI is just for viewing rewards, not claiming them.
     }
 }

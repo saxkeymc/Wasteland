@@ -1,81 +1,59 @@
 # ════════════════════════════════════════════════════════════════════════════
 # Wasteland — Help GUI Configuration
 # ════════════════════════════════════════════════════════════════════════════
-# Opened via /wasteland help. A 3-row (27-slot) inventory with a single
-# book item in the middle slot (slot 13). All text below is configurable.
-#
-# Placeholders (substituted at runtime):
-#   {player}     — the player's name
-#   {tier}       — the player's current shared tier
-#   {playtime}   — the player's formatted Wasteland playtime
-#   {total_level}— the player's total level across all 4 skills
+# Opened via /wasteland help.
+# Everything below is fully configurable.
 # ════════════════════════════════════════════════════════════════════════════
 
 help-menu:
-  title: "&7Wasteland &8\u2022 &aHelp"
+  title: "&7Wasteland Guide"
   size: 27
 
-  # Outer-border decorative panes
+  # Outer border
   border-item:
     material: STAINED_GLASS_PANE
     data: 15
     name: " "
-  # Inner-area filler panes
+
+  # Inner filler
   fill-item:
     material: STAINED_GLASS_PANE
     data: 7
     name: " "
 
-  # The book item shown in the middle slot (slot 13).
-  # Lore supports unlimited lines — every line is read from the config
-  # and applied to the ItemMeta. No truncation, no length limit.
+  # Guide Book
   book:
     slot: 13
     material: BOOK
     data: 0
-    name: "&a&lWasteland Help"
+    name: "&2&lWasteLand Guide"
     lore:
-      - "&7Welcome to &fWasteland&7!"
+      - "&7&oWelcome to the Wasteland, where every"
+      - "&7&oadventure leads to greater rewards."
       - ""
-      - "&fGetting Started:"
-      - "&7\u2022 Use &f/wasteland &7to open the main menu."
-      - "&7\u2022 Click a skill icon to teleport to that area."
-      - "&7\u2022 Level up by mining, chopping, farming, or fishing."
-      - "&7\u2022 Every skill must reach the required level to unlock the next tier."
+      - "&eMining"
+      - "&7&oJourney into dangerous caves to uncover"
+      - "&7&orare ores, hidden treasures, and valuable"
+      - "&7&oresources buried beneath the surface."
       - ""
-      - "&fCommands:"
-      - "&7\u2022 &f/wasteland &7- Open main menu"
-      - "&7\u2022 &f/wasteland tiers &7- Browse tier rewards"
-      - "&7\u2022 &f/wasteland collect &7- Claim unlocked rewards"
-      - "&7\u2022 &f/wasteland claim &7- Alias for collect"
-      - "&7\u2022 &f/wasteland help &7- Show this menu"
-      - "&7\u2022 &f/wasteland playtime &7- View your playtime"
-      - "&7\u2022 &f/wasteland stats &7- View statistics"
+      - "&6Chopping"
+      - "&7&oExplore dense forests and gather wood"
+      - "&7&ofrom towering trees to strengthen your"
+      - "&7&oprogression through the Wasteland."
       - ""
-      - "&fAdmin Commands:"
-      - "&7\u2022 &f/wasteland reset <player> &7- Reset one player"
-      - "&7\u2022 &f/wasteland reset all confirm &7- Reset everyone"
+      - "&aFarming"
+      - "&7&oPlant, harvest, and grow your fields."
+      - "&7&oEvery successful harvest brings you"
+      - "&7&ocloser to unlocking greater rewards."
       - ""
-      - "&fTier System:"
-      - "&7\u2022 Tier 1 requires every skill at Level 10"
-      - "&7\u2022 Tier 2 requires every skill at Level 20"
-      - "&7\u2022 Tier 3 requires every skill at Level 30"
-      - "&7\u2022 Tier 4 requires every skill at Level 30"
-      - "&7\u2022 Tier 5 requires every skill at Level 40"
+      - "&bFishing"
+      - "&7&oCast your line into mysterious waters"
+      - "&7&oto discover rare catches and hidden"
+      - "&7&otreasures waiting below."
       - ""
-      - "&fYour Stats:"
-      - "&7\u2022 Tier: &a{tier}"
-      - "&7\u2022 Total Level: &a{total_level}"
-      - "&7\u2022 Playtime: &a{playtime}"
-      - ""
-      - "&fTips:"
-      - "&7\u2022 Level all four skills equally to advance faster."
-      - "&7\u2022 Teleport to skill areas by clicking their icons."
-      - "&7\u2022 Use &f/wasteland collect &7to claim unlocked rewards."
-      - ""
-      - "&eGood luck out there, &f{player}&e!"
+      - "&fGood luck out there, &2&n{player}&f!"
 
-  # Optional close button (slot 22, bottom-middle).
+  # Close Button
   close:
     slot: 22
     material: BARRIER
