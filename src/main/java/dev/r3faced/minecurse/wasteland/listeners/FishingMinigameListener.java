@@ -55,6 +55,9 @@ public class FishingMinigameListener implements Listener {
     /** Tracks active reel-in sessions: UUID → ReelSession. */
     private final Map<UUID, ReelSession> activeSessions = new HashMap<>();
 
+    /** Tracks the fishing hook entity per player: UUID → FishHook. */
+    private final Map<UUID, org.bukkit.entity.FishHook> activeHooks = new HashMap<>();
+
     /** 10 seconds in ticks for the reel-in phase. */
     private static final long REEL_DURATION_TICKS = 200L;
     private static final long TICK_INTERVAL = 4L; // Update every 4 ticks (0.2s)
@@ -82,6 +85,12 @@ public class FishingMinigameListener implements Listener {
         PlayerFishEvent.State state = event.getState();
 
         if (state == PlayerFishEvent.State.FISHING) {
+            // Player just cast the rod. Store the hook entity so we can
+            // check if it's still in the water later.
+            if (event.getHook() != null) {
+                activeHooks.put(player.getUniqueId(), event.getHook());
+            }
+
             // Player just cast the rod. Schedule a guaranteed bite in 5-10 seconds.
             final Player p = player;
             final UUID puuid = player.getUniqueId();
@@ -93,6 +102,10 @@ public class FishingMinigameListener implements Listener {
             // Cancel any existing bite window.
             if (biteWindows.containsKey(puuid)) {
                 biteWindows.remove(puuid);
+            }
+            // Cancel any existing reel session — the player re-cast.
+            if (activeSessions.containsKey(puuid)) {
+                activeSessions.remove(puuid);
             }
 
             // Schedule a bite in 5-10 seconds (100-200 ticks).
@@ -150,6 +163,19 @@ public class FishingMinigameListener implements Listener {
         } else if (state == PlayerFishEvent.State.CAUGHT_FISH) {
             // Cancel vanilla catches — we handle everything ourselves.
             event.setCancelled(true);
+
+        } else if (state == PlayerFishEvent.State.IN_GROUND || state == PlayerFishEvent.State.FAILED_ATTEMPT) {
+            // Player reeled in the rod without a bite (or the hook landed on ground).
+            // Clean up: cancel pending bite, remove bite window, remove active session,
+            // and remove the hook entity.
+            UUID uuid = player.getUniqueId();
+            if (pendingBites.containsKey(uuid)) {
+                pendingBites.get(uuid).cancel();
+                pendingBites.remove(uuid);
+            }
+            biteWindows.remove(uuid);
+            activeSessions.remove(uuid);
+            activeHooks.remove(uuid);
         }
     }
 
@@ -230,6 +256,19 @@ public class FishingMinigameListener implements Listener {
                     return;
                 }
 
+                // Check if the fishing hook is still in the water.
+                // If the player reeled in (hook removed), cancel the minigame.
+                org.bukkit.entity.FishHook hook = activeHooks.get(uuid);
+                if (hook == null || hook.isDead() || !hook.isValid()) {
+                    // Hook was removed — player reeled in or it despawned.
+                    activeSessions.remove(uuid);
+                    activeHooks.remove(uuid);
+                    dev.r3faced.minecurse.wasteland.utils.ActionBarUtil.sendActionBar(player,
+                        ChatColor.RED + "Fishing cancelled!");
+                    this.cancel();
+                    return;
+                }
+
                 // Increment progress.
                 long elapsed = System.currentTimeMillis() - s.startTime;
                 int progress = (int) ((elapsed * 100L) / (REEL_DURATION_TICKS * 50L)); // 50ms per tick
@@ -238,6 +277,12 @@ public class FishingMinigameListener implements Listener {
 
                     // ── CAUGHT! ──
                     activeSessions.remove(uuid);
+
+                    // Remove the fishing hook from the water.
+                    if (hook != null) {
+                        hook.remove();
+                    }
+                    activeHooks.remove(uuid);
 
                     // Build the progress bar.
                     String bar = buildProgressBar(100);
