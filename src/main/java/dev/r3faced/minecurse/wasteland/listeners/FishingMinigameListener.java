@@ -55,6 +55,9 @@ public class FishingMinigameListener implements Listener {
     /** Tracks active reel-in sessions: UUID → ReelSession. */
     private final Map<UUID, ReelSession> activeSessions = new HashMap<>();
 
+    /** Tracks catch cooldown: UUID → epoch-millis when the player can cast again. */
+    private final Map<UUID, Long> catchCooldown = new HashMap<>();
+
     /** Tracks the fishing hook entity per player: UUID → FishHook. */
     private final Map<UUID, org.bukkit.entity.FishHook> activeHooks = new HashMap<>();
 
@@ -85,6 +88,15 @@ public class FishingMinigameListener implements Listener {
         PlayerFishEvent.State state = event.getState();
 
         if (state == PlayerFishEvent.State.FISHING) {
+            // Check catch cooldown — prevent immediate re-cast after a catch.
+            Long cooldownUntil = catchCooldown.get(player.getUniqueId());
+            if (cooldownUntil != null && System.currentTimeMillis() < cooldownUntil) {
+                // Still on cooldown — cancel this cast.
+                event.setCancelled(true);
+                return;
+            }
+            catchCooldown.remove(player.getUniqueId());
+
             // Player just cast the rod. Store the hook entity so we can
             // check if it's still in the water later.
             if (event.getHook() != null) {
@@ -165,7 +177,8 @@ public class FishingMinigameListener implements Listener {
             event.setCancelled(true);
 
         } else if (state == PlayerFishEvent.State.IN_GROUND || state == PlayerFishEvent.State.FAILED_ATTEMPT) {
-            // Player reeled in the rod without a bite (or the hook landed on ground).
+            // Player reeled in the rod without a bite (or the hook landed on ground,
+            // or the hook was removed after a catch).
             // Clean up: cancel pending bite, remove bite window, remove active session,
             // and remove the hook entity.
             UUID uuid = player.getUniqueId();
@@ -176,6 +189,7 @@ public class FishingMinigameListener implements Listener {
             biteWindows.remove(uuid);
             activeSessions.remove(uuid);
             activeHooks.remove(uuid);
+            // Don't schedule a new bite — this is a cleanup, not a cast.
         }
     }
 
@@ -283,6 +297,11 @@ public class FishingMinigameListener implements Listener {
                         hook.remove();
                     }
                     activeHooks.remove(uuid);
+
+                    // Set a 2-second cooldown before the player can cast again.
+                    // This prevents the hook-removal event from re-triggering
+                    // a new fishing session.
+                    catchCooldown.put(uuid, System.currentTimeMillis() + 2000L);
 
                     // Build the progress bar.
                     String bar = buildProgressBar(100);
