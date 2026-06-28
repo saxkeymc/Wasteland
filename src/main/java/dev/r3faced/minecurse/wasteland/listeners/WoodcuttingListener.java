@@ -3,6 +3,7 @@ package dev.r3faced.minecurse.wasteland.listeners;
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import dev.r3faced.minecurse.wasteland.api.WastelandXpCause;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -10,9 +11,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
- * Awards Woodcutting XP when the player breaks log blocks with the Woodcutting Omni Tool.
- * Also delegates tier-locked block checks to the TierLockManager.
+ * Awards Woodcutting XP + dust + money when the player breaks log/plank
+ * blocks with the Woodcutting Omni Tool. Also delegates tier-locked block
+ * checks to the TierLockManager.
  */
 public class WoodcuttingListener implements Listener {
 
@@ -22,9 +26,6 @@ public class WoodcuttingListener implements Listener {
         this.plugin = plugin;
     }
 
-    /**
-     * Tier-lock check — runs at HIGHEST priority.
-     */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onTierLockedBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -50,6 +51,53 @@ public class WoodcuttingListener implements Listener {
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.WOODCUTTING, blockType);
         if (xp <= 0) return;
 
+        // Cancel the break — no drops, block stays. Per-player fake bedrock.
+        event.setCancelled(true);
+
+        // Award XP.
         plugin.getSkillManager().awardXp(player, SkillType.WOODCUTTING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
+
+        // Award Dust.
+        plugin.getDustManager().awardDust(player,
+                plugin.getDustManager().getDefaultDustPerAction(SkillType.WOODCUTTING));
+
+        // Random money drop.
+        tryRollMoneyDrop(player);
+
+        // Fake bedrock visual.
+        final org.bukkit.Location blockLoc = event.getBlock().getLocation();
+        final Player p = player;
+        final Material origMat = event.getBlock().getType();
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            p.sendBlockChange(blockLoc, Material.BEDROCK, (byte) 0);
+            plugin.getFakeBlockManager().addFakeBlock(p, blockLoc, origMat);
+        }, 1L);
+
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (p.isOnline()) {
+                p.sendBlockChange(blockLoc, origMat, (byte) 0);
+            }
+            plugin.getFakeBlockManager().removeFakeBlock(p, blockLoc);
+        }, 121L);
+    }
+
+    private void tryRollMoneyDrop(Player player) {
+        org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
+        if (!cfg.getBoolean("mining-money-drops.enabled", true)) return;
+        double chance = cfg.getDouble("mining-money-drops.chance", 5.0);
+        if (ThreadLocalRandom.current().nextDouble() * 100.0 >= chance) return;
+        int min = cfg.getInt("mining-money-drops.min-amount", 5000);
+        int max = cfg.getInt("mining-money-drops.max-amount", 7000);
+        int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
+        String command = cfg.getString("mining-money-drops.command", "eco give %player% {amount}")
+                .replace("%player%", player.getName()).replace("{amount}", String.valueOf(amount));
+        try {
+            org.bukkit.Bukkit.getServer().dispatchCommand(org.bukkit.Bukkit.getConsoleSender(), command);
+        } catch (Exception e) { return; }
+        String prefix = dev.r3faced.minecurse.wasteland.utils.MessageUtil
+                .colorize(plugin.getConfigManager().getMessages().getString("prefix", ""));
+        player.sendMessage(dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
+                cfg.getString("mining-money-drops.message", "{prefix}&aYou found &2${amount} &awhile chopping!")
+                        .replace("{prefix}", prefix).replace("{amount}", String.valueOf(amount))));
     }
 }

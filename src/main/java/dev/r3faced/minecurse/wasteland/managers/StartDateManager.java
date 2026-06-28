@@ -83,9 +83,10 @@ public class StartDateManager {
 
     /**
      * Returns true if the given tier is currently available (its day has arrived).
+     * If /wasteland start was never run, ALL tiers are available (no day restriction).
      */
     public boolean isTierAvailable(int tier) {
-        if (!started) return tier <= 1; // Tier 1 always available
+        if (!started) return true; // If not started, allow all tiers
         return tier <= getMaxAvailableTier();
     }
 
