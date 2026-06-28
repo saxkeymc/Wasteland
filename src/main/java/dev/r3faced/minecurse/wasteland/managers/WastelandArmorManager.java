@@ -58,32 +58,97 @@ public class WastelandArmorManager {
             if (isWastelandArmor(item)) return;
         }
 
-        // Create and equip the armor set.
-        ItemStack helmet = buildPiece(Material.DIAMOND_HELMET, "Helmet",
-                "&7&o\"The mind is the helmet of the soul,\"",
-                "&7&o\"  — Unknown\"");
-        ItemStack chestplate = buildPiece(Material.DIAMOND_CHESTPLATE, "Chestplate",
-                "&7&o\"Courage is the armor of the mind,\"",
-                "&7&o\"  — Unknown\"");
-        ItemStack leggings = buildPiece(Material.DIAMOND_LEGGINGS, "Leggings",
-                "&7&o\"Stand firm in what you believe,\"",
-                "&7&o\"  — Unknown\"");
-        ItemStack boots = buildPiece(Material.DIAMOND_BOOTS, "Boots",
-                "&7&o\"Every journey begins with a single step,\"",
-                "&7&o\"  — Lao Tzu\"");
-        ItemStack sword = buildPiece(Material.DIAMOND_SWORD, "Sword",
-                "&7&o\"The pen is mightier than the sword,\"",
-                "&7&o\"  — Edward Bulwer-Lytton\"");
+        // Load the player's saved loadout from config.
+        // If no saved loadout, use defaults.
+        org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
+        String basePath = "armor-loadout." + player.getUniqueId();
 
-        // Equip armor.
-        player.getInventory().setHelmet(helmet);
-        player.getInventory().setChestplate(chestplate);
-        player.getInventory().setLeggings(leggings);
-        player.getInventory().setBoots(boots);
+        ItemStack helmet = loadPiece(cfg, basePath + ".helmet", Material.DIAMOND_HELMET, "Helmet");
+        ItemStack chestplate = loadPiece(cfg, basePath + ".chestplate", Material.DIAMOND_CHESTPLATE, "Chestplate");
+        ItemStack leggings = loadPiece(cfg, basePath + ".leggings", Material.DIAMOND_LEGGINGS, "Leggings");
+        ItemStack boots = loadPiece(cfg, basePath + ".boots", Material.DIAMOND_BOOTS, "Boots");
+        ItemStack sword = loadPiece(cfg, basePath + ".sword", Material.DIAMOND_SWORD, "Sword");
 
-        // Give sword in the first available hotbar slot.
-        player.getInventory().addItem(sword);
+        // Equip armor (only if not null — player may have removed it).
+        if (helmet != null) player.getInventory().setHelmet(helmet);
+        if (chestplate != null) player.getInventory().setChestplate(chestplate);
+        if (leggings != null) player.getInventory().setLeggings(leggings);
+        if (boots != null) player.getInventory().setBoots(boots);
+        if (sword != null) player.getInventory().addItem(sword);
+
+        // Also apply enchant books from the loadout.
+        if (cfg.contains(basePath + ".enchants")) {
+            java.util.List<?> enchants = cfg.getList(basePath + ".enchants");
+            if (enchants != null) {
+                // Apply each enchant book to the appropriate armor piece.
+                for (Object obj : enchants) {
+                    if (obj instanceof ItemStack) {
+                        ItemStack book = (ItemStack) obj;
+                        applyEnchantBook(player, book);
+                    }
+                }
+            }
+        }
+
         player.updateInventory();
+    }
+
+    /** Load a piece from config, or build a default if not saved. */
+    private ItemStack loadPiece(org.bukkit.configuration.file.FileConfiguration cfg, String path,
+                                 Material mat, String name) {
+        if (cfg.contains(path)) {
+            ItemStack item = cfg.getItemStack(path);
+            if (item != null && item.getType() != Material.AIR) {
+                // Tag it as Wasteland armor so it can be removed on leave.
+                return dev.r3faced.minecurse.wasteland.nbt.NbtUtil.setTag(item, NBT_KEY, NBT_VALUE);
+            }
+            return null; // Slot was emptied by the player.
+        }
+        // No saved loadout — build default.
+        return buildPiece(mat, name,
+                "&7&o\"Quote\"", "&7&o\"  — Author\"");
+    }
+
+    /** Apply an enchant book's stored enchants to the player's armor. */
+    private void applyEnchantBook(Player player, ItemStack book) {
+        if (book == null || book.getType() != Material.ENCHANTED_BOOK) return;
+        if (book.getItemMeta() instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
+            org.bukkit.inventory.meta.EnchantmentStorageMeta storage =
+                    (org.bukkit.inventory.meta.EnchantmentStorageMeta) book.getItemMeta();
+            for (java.util.Map.Entry<org.bukkit.enchantments.Enchantment, Integer> entry :
+                    storage.getStoredEnchants().entrySet()) {
+                // Apply to all armor pieces + sword.
+                applyToAllArmor(player, entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private void applyToAllArmor(Player player, org.bukkit.enchantments.Enchantment ench, int level) {
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        for (int i = 0; i < armor.length; i++) {
+            if (armor[i] != null && isWastelandArmor(armor[i])) {
+                org.bukkit.inventory.meta.ItemMeta meta = armor[i].getItemMeta();
+                if (meta != null) {
+                    meta.addEnchant(ench, level, true);
+                    armor[i].setItemMeta(meta);
+                }
+            }
+        }
+        player.getInventory().setArmorContents(armor);
+
+        // Also apply to the sword (first Wasteland sword in inventory).
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            ItemStack item = player.getInventory().getItem(i);
+            if (item != null && isWastelandArmor(item) && item.getType().name().contains("SWORD")) {
+                org.bukkit.inventory.meta.ItemMeta meta = item.getItemMeta();
+                if (meta != null) {
+                    meta.addEnchant(ench, level, true);
+                    item.setItemMeta(meta);
+                    player.getInventory().setItem(i, item);
+                }
+                break;
+            }
+        }
     }
 
     /**

@@ -21,17 +21,14 @@ import java.util.Set;
  * <p>
  * ONLY opens OUTSIDE Wasteland worlds.
  * <p>
- * Players can:
- * <ul>
- *   <li>Take armor pieces out (they stay removed — the slot becomes empty).</li>
- *   <li>Place new armor pieces in to replace them.</li>
- *   <li>Place enchanted books to apply enchants.</li>
- *   <li>Only whitelisted enchants can be applied — others are rejected.</li>
- * </ul>
+ * Slots 10-14: Armor pieces (Helmet, Chestplate, Leggings, Boots, Sword).
+ * Slots 19-25, 28-34: Enchant book slots.
+ * Slot 40: Info. Slot 44: Close.
  * <p>
- * The loadout is saved to config.yml per-player and loaded when the GUI
- * is reopened. When the player enters a Wasteland world, the saved loadout
- * is what they receive.
+ * - Armor pieces can be taken out and replaced.
+ * - Empty armor slots stay empty (no glass filling in).
+ * - Only whitelisted enchants can be placed as books.
+ * - The saved loadout is what WastelandArmorManager gives on world entry.
  */
 public class ArmorSetsMenuGui extends WastelandGui {
 
@@ -50,15 +47,14 @@ public class ArmorSetsMenuGui extends WastelandGui {
         28, 29, 30, 31, 32, 33, 34
     };
 
+    /** Slots that are editable (armor + enchant). */
     private static final int[] ALL_EDITABLE;
-
     static {
         ALL_EDITABLE = new int[ARMOR_SLOTS.length + ENCHANT_SLOTS.length];
         System.arraycopy(ARMOR_SLOTS, 0, ALL_EDITABLE, 0, ARMOR_SLOTS.length);
         System.arraycopy(ENCHANT_SLOTS, 0, ALL_EDITABLE, ARMOR_SLOTS.length, ENCHANT_SLOTS.length);
     }
 
-    /** Whitelisted vanilla enchant names (uppercase). */
     private static final Set<String> WHITELISTED_ENCHANTS = new HashSet<>();
     static {
         WHITELISTED_ENCHANTS.add("PROTECTION_ENVIRONMENTAL");
@@ -92,11 +88,13 @@ public class ArmorSetsMenuGui extends WastelandGui {
         String title = MessageUtil.colorize("&8Wasteland Armor Sets");
         createInventory(title, 45);
 
-        // Fill with dark glass.
+        // Fill ALL slots with dark glass first.
         ItemStack darkPane = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
-        fill(darkPane);
+        for (int i = 0; i < 45; i++) {
+            inventory.setItem(i, darkPane);
+        }
 
-        // Load saved loadout from config (or defaults if first time).
+        // Load saved loadout — this OVERWRITES the glass in editable slots.
         loadLoadout();
 
         // Info.
@@ -120,15 +118,10 @@ public class ArmorSetsMenuGui extends WastelandGui {
                 .build());
     }
 
-    /**
-     * Load the player's saved loadout from config. If no saved loadout
-     * exists, create the default Wasteland armor set and save it.
-     */
     private void loadLoadout() {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         String basePath = "armor-loadout." + player.getUniqueId();
 
-        // Check if a saved loadout exists.
         boolean hasLoadout = cfg.contains(basePath + ".helmet") ||
                              cfg.contains(basePath + ".chestplate") ||
                              cfg.contains(basePath + ".leggings") ||
@@ -136,7 +129,7 @@ public class ArmorSetsMenuGui extends WastelandGui {
                              cfg.contains(basePath + ".sword");
 
         if (!hasLoadout) {
-            // First time — create default loadout.
+            // First time — create defaults.
             setItem(HELMET_SLOT, buildDefaultPiece(Material.DIAMOND_HELMET, "Helmet"));
             setItem(CHESTPLATE_SLOT, buildDefaultPiece(Material.DIAMOND_CHESTPLATE, "Chestplate"));
             setItem(LEGGINGS_SLOT, buildDefaultPiece(Material.DIAMOND_LEGGINGS, "Leggings"));
@@ -146,7 +139,7 @@ public class ArmorSetsMenuGui extends WastelandGui {
             return;
         }
 
-        // Load saved pieces — if a slot was emptied, it stays empty.
+        // Load saved pieces — if a slot was emptied (null), leave it as glass.
         loadSlot(HELMET_SLOT, basePath + ".helmet");
         loadSlot(CHESTPLATE_SLOT, basePath + ".chestplate");
         loadSlot(LEGGINGS_SLOT, basePath + ".leggings");
@@ -160,7 +153,8 @@ public class ArmorSetsMenuGui extends WastelandGui {
                 int slotIdx = 0;
                 for (Object obj : enchants) {
                     if (obj instanceof ItemStack && slotIdx < ENCHANT_SLOTS.length) {
-                        setItem(ENCHANT_SLOTS[slotIdx], (ItemStack) obj);
+                        // Overwrite glass with the enchant book.
+                        inventory.setItem(ENCHANT_SLOTS[slotIdx], (ItemStack) obj);
                         slotIdx++;
                     }
                 }
@@ -173,21 +167,17 @@ public class ArmorSetsMenuGui extends WastelandGui {
         if (cfg.contains(path)) {
             ItemStack item = cfg.getItemStack(path);
             if (item != null && item.getType() != Material.AIR) {
-                setItem(slot, item);
+                // Overwrite the glass with the saved item.
+                inventory.setItem(slot, item);
             }
-            // If the saved value is null/AIR, the slot stays empty (dark glass).
+            // If null/AIR, the slot stays as glass (empty).
         }
-        // If path doesn't exist at all, slot stays empty.
     }
 
-    /**
-     * Save the current GUI state to config.
-     */
     private void saveLoadout() {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         String basePath = "armor-loadout." + player.getUniqueId();
 
-        // Save armor pieces (or null if empty).
         saveSlot(HELMET_SLOT, basePath + ".helmet");
         saveSlot(CHESTPLATE_SLOT, basePath + ".chestplate");
         saveSlot(LEGGINGS_SLOT, basePath + ".leggings");
@@ -210,12 +200,10 @@ public class ArmorSetsMenuGui extends WastelandGui {
     private void saveSlot(int slot, String path) {
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         ItemStack item = inventory.getItem(slot);
-        // Only save if it's NOT a glass pane (glass = empty slot).
         if (item != null && item.getType() != Material.STAINED_GLASS_PANE &&
             item.getType() != Material.AIR) {
             cfg.set(path, item);
         } else {
-            // Slot is empty — save as null so it stays empty on reload.
             cfg.set(path, null);
         }
     }
@@ -249,8 +237,12 @@ public class ArmorSetsMenuGui extends WastelandGui {
 
         if (slot >= 0 && slot < 45) {
             // Clicked inside our inventory.
-            if (!isEditableSlot(slot)) {
-                // Non-editable — cancel.
+            ItemStack clicked = inventory.getItem(slot);
+
+            // If the clicked item is glass, info sign, or close barrier — cancel.
+            if (clicked != null && (clicked.getType() == Material.STAINED_GLASS_PANE ||
+                clicked.getType() == Material.BARRIER ||
+                clicked.getType() == Material.SIGN)) {
                 event.setCancelled(true);
                 if (slot == CLOSE_SLOT) {
                     saveLoadout();
@@ -259,14 +251,18 @@ public class ArmorSetsMenuGui extends WastelandGui {
                 return;
             }
 
+            // If it's not an editable slot — cancel.
+            if (!isEditableSlot(slot)) {
+                event.setCancelled(true);
+                return;
+            }
+
             // Editable slot — check what's being placed.
             ItemStack cursor = event.getCursor();
 
             if (cursor != null && cursor.getType() != Material.AIR) {
-                // Player is trying to PLACE an item.
-
+                // Player is placing an item.
                 if (isEnchantSlot(slot)) {
-                    // Enchant slots: only allow enchanted books with whitelisted enchants.
                     if (cursor.getType() != Material.ENCHANTED_BOOK) {
                         event.setCancelled(true);
                         player.sendMessage(MessageUtil.colorize("&cYou can only place enchanted books here."));
@@ -277,18 +273,19 @@ public class ArmorSetsMenuGui extends WastelandGui {
                         player.sendMessage(MessageUtil.colorize("&cYou cannot put this enchant on this item."));
                         return;
                     }
-                } else if (isArmorSlot(slot)) {
-                    // Armor slots: allow placing ANY item (replace the piece).
-                    // Don't cancel — let the swap happen.
                 }
+                // Armor slots: allow any item to be placed (swap).
             }
-            // If taking an item (cursor is empty), allow it — the slot
-            // will be saved as empty.
+            // Taking items from editable slots is allowed.
         }
-        // Clicks in the player's own inventory are allowed.
+        // Shift-click from player inventory — cancel to prevent shifting
+        // items into our GUI randomly.
+        if (slot >= 45 && event.getClick().isShiftClick()) {
+            event.setCancelled(true);
+            return;
+        }
 
-        // Save on any change (delayed to let the event complete).
-        final int clickedSlot = slot;
+        // Save on any change (delayed).
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline() && event.getView().getTopInventory().getHolder() == this) {
                 saveLoadout();
@@ -317,25 +314,11 @@ public class ArmorSetsMenuGui extends WastelandGui {
         return false;
     }
 
-    /**
-     * Check if an enchanted book has ONLY whitelisted enchants.
-     */
     private boolean isEnchantWhitelisted(ItemStack book) {
         if (book == null) return false;
         ItemMeta meta = book.getItemMeta();
         if (meta == null) return false;
 
-        // Check stored enchants on the book.
-        if (meta.hasEnchants()) {
-            for (java.util.Map.Entry<Enchantment, Integer> entry : meta.getEnchants().entrySet()) {
-                String enchName = entry.getKey().getName().toUpperCase();
-                if (!WHITELISTED_ENCHANTS.contains(enchName)) {
-                    return false;
-                }
-            }
-        }
-
-        // Also check stored enchants (for enchanted books with stored enchants).
         if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
             org.bukkit.inventory.meta.EnchantmentStorageMeta storageMeta =
                     (org.bukkit.inventory.meta.EnchantmentStorageMeta) meta;
@@ -346,7 +329,6 @@ public class ArmorSetsMenuGui extends WastelandGui {
                 }
             }
         }
-
         return true;
     }
 }
