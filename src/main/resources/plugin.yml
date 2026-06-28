@@ -1,5 +1,5 @@
 name: Wasteland
-version: "1.8.1"
+version: "1.9.0"
 main: dev.r3faced.minecurse.wasteland.WastelandPlugin
 api-version: "1.8"
 author: r3faced
@@ -34,6 +34,8 @@ commands:
   wasteland:
     description: Main Wasteland command. /wasteland tiers opens the Tier Rewards menu.
     usage: /wasteland
+    aliases:
+      - wl
 
 permissions:
   wasteland.use:

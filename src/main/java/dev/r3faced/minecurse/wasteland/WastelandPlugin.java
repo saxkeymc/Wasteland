@@ -43,6 +43,8 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener commandWhitelistListener;
     private dev.r3faced.minecurse.wasteland.managers.TierLockManager tierLockManager;
     private dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager armorManager;
+    private dev.r3faced.minecurse.wasteland.managers.StartDateManager startDateManager;
+    private dev.r3faced.minecurse.wasteland.managers.DustManager dustManager;
     private WastelandApi api;
 
     @Override
@@ -67,6 +69,8 @@ public final class WastelandPlugin extends JavaPlugin {
         // Initialize tier-lock manager (reads tier-locked-blocks from config)
         tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
         armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
+        startDateManager = new dev.r3faced.minecurse.wasteland.managers.StartDateManager(this);
+        dustManager = new dev.r3faced.minecurse.wasteland.managers.DustManager(this);
 
         // Initialize data manager (YAML or MySQL)
         String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
@@ -103,6 +107,7 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.FishingMinigameListener(this), this);
         Bukkit.getPluginManager().registerEvents(new WorldChangeListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.WastelandWorldProtectionListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.ItemDropListener(this), this);
         previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
         Bukkit.getPluginManager().registerEvents(previewRewardEditor, this);
         commandWhitelistListener = new dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener(this);
@@ -229,6 +234,22 @@ public final class WastelandPlugin extends JavaPlugin {
             armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
         }
         return armorManager;
+    }
+
+    /** Returns the start date manager (day-based tier progression). */
+    public dev.r3faced.minecurse.wasteland.managers.StartDateManager getStartDateManager() {
+        if (startDateManager == null) {
+            startDateManager = new dev.r3faced.minecurse.wasteland.managers.StartDateManager(this);
+        }
+        return startDateManager;
+    }
+
+    /** Returns the dust manager (tool upgrade currency). */
+    public dev.r3faced.minecurse.wasteland.managers.DustManager getDustManager() {
+        if (dustManager == null) {
+            dustManager = new dev.r3faced.minecurse.wasteland.managers.DustManager(this);
+        }
+        return dustManager;
     }
 
     public static WastelandPlugin getInstance() {

@@ -175,6 +175,10 @@ public class TierManager {
         int currentTier = data.getTier();
 
         for (int tier = currentTier + 1; tier <= TIER_COUNT; tier++) {
+            // Check if this tier is available based on start date.
+            if (!plugin.getStartDateManager().isTierAvailable(tier)) {
+                break; // Tier not available yet (day hasn't arrived).
+            }
             if (meetsRequirements(data, tier)) {
                 WastelandTierUnlockEvent unlockEvent = new WastelandTierUnlockEvent(
                         player, data.getTier(), tier, getRequiredLevel(tier));

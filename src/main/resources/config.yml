@@ -18,27 +18,21 @@ storage:
 worlds:
   mining:
     enabled: true
-    world: "wasteland_mining"
+    world: "wasteland"
   woodcutting:
     enabled: true
-    world: "wasteland_woodcutting"
+    world: "wasteland"
   farming:
     enabled: true
-    world: "wasteland_farming"
+    world: "wasteland"
   fishing:
     enabled: true
-    world: "wasteland_fishing"
+    world: "wasteland"
 
 # ── Wasteland Worlds ─────────────────────────────────────────────────────────
-# Players only accumulate Wasteland Playtime while inside one of these worlds.
-# Time spent in spawn, hub, survival, or any other world does NOT count.
-# If this list is empty, the plugin falls back to all worlds configured in the
-# 'worlds' section above.
+# All skills use the same world. Players teleport to different spots within it.
 wasteland-worlds:
-  - wasteland_mining
-  - wasteland_woodcutting
-  - wasteland_farming
-  - wasteland_fishing
+  - wasteland
 
 # ── Playtime Tracking ────────────────────────────────────────────────────────
 # Tracks total time players spend in the Wasteland system.
@@ -91,3 +85,16 @@ mining-money-drops:
   message: "{prefix}&aYou found &2${amount} &awhile mining!"
 
 debug: false
+
+# ── Start Date (set by /wasteland start) ─────────────────────────────────────
+# When /wasteland start is run, the current timestamp is recorded here.
+# Each tier becomes available on consecutive days:
+#   Day 0 = Tier 1, Day 1 = Tier 2, Day 2 = Tier 3, etc.
+start-date:
+  timestamp: 0
+
+# ── Dust System ──────────────────────────────────────────────────────────────
+# Dust is earned from mining, chopping, farming, and fishing.
+# It's used to upgrade Omni Tools, which is required to mine at higher tiers.
+# Upgrade costs: 500, 1000, 1500, 2000 dust (for upgrades 1-4).
+# Dust per action: Mining=10, Fishing=15, Chopping=7, Farming=5

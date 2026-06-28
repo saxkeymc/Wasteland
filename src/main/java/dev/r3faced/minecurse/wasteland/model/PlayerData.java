@@ -53,6 +53,13 @@ public class PlayerData {
     /** Saved vanilla XP float — restored when leaving a Wasteland world. */
     private transient float savedVanillaXp = 0f;
 
+    // ── Dust currency (persisted) ─────────────────────────────────────────────
+    private int dust = 0;
+
+    // ── Tool upgrade levels (persisted) ───────────────────────────────────────
+    /** Per-skill tool upgrade level (0 = no upgrade, 1-4 = upgraded). */
+    private final Map<SkillType, Integer> toolUpgrades = new EnumMap<>(SkillType.class);
+
     /**
      * Virtual reward backpack — rewards unlocked via tier progression
      * that haven't been claimed yet. Each entry carries its own hidden
@@ -242,4 +249,20 @@ public class PlayerData {
 
     public float getSavedVanillaXp() { return savedVanillaXp; }
     public void setSavedVanillaXp(float v) { this.savedVanillaXp = v; }
+
+    // ── Dust ──────────────────────────────────────────────────────────────────
+
+    public int getDust() { return dust; }
+    public void setDust(int v) { this.dust = v; }
+    public void addDust(int amount) { this.dust += amount; }
+
+    // ── Tool Upgrades ──────────────────────────────────────────────────────────
+
+    public int getToolUpgradeLevel(SkillType skill) {
+        return toolUpgrades.getOrDefault(skill, 0);
+    }
+    public void setToolUpgradeLevel(SkillType skill, int level) {
+        toolUpgrades.put(skill, level);
+    }
+    public Map<SkillType, Integer> getToolUpgrades() { return toolUpgrades; }
 }

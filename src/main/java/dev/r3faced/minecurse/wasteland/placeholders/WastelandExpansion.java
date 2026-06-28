@@ -174,6 +174,18 @@ public class WastelandExpansion extends PlaceholderExpansion {
             return String.valueOf(data.getPlaytimeSeconds());
         }
 
+        // ── Dust placeholder ────────────────────────────────────────────────
+        if (identifier.equals("dust")) {
+            return String.valueOf(data.getDust());
+        }
+
+        // ── Tool upgrade placeholders ───────────────────────────────────────
+        for (SkillType skill : SkillType.values()) {
+            if (identifier.equals(skill.getKey() + "_tool_upgrade")) {
+                return String.valueOf(data.getToolUpgradeLevel(skill));
+            }
+        }
+
         return null;
     }
 }

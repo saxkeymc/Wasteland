@@ -162,6 +162,12 @@ public class YamlDataManager implements DataManager {
         data.setSettingXpNoises(yaml.getBoolean("settings.xp-noises", true));
         data.setSettingXpBarDisplay(yaml.getBoolean("settings.xp-bar-display", true));
 
+        // Dust + tool upgrades
+        data.setDust(yaml.getInt("dust", 0));
+        for (dev.r3faced.minecurse.wasteland.model.SkillType skill : dev.r3faced.minecurse.wasteland.model.SkillType.values()) {
+            data.setToolUpgradeLevel(skill, yaml.getInt("tool-upgrades." + skill.getKey(), 0));
+        }
+
         // Stored rewards (virtual backpack)
         if (yaml.isList("stored-rewards")) {
             for (Map<?, ?> entry : yaml.getMapList("stored-rewards")) {
@@ -210,6 +216,12 @@ public class YamlDataManager implements DataManager {
         yaml.set("settings.see-players", data.isSettingSeePlayers());
         yaml.set("settings.xp-noises", data.isSettingXpNoises());
         yaml.set("settings.xp-bar-display", data.isSettingXpBarDisplay());
+
+        // Dust + tool upgrades
+        yaml.set("dust", data.getDust());
+        for (dev.r3faced.minecurse.wasteland.model.SkillType skill : dev.r3faced.minecurse.wasteland.model.SkillType.values()) {
+            yaml.set("tool-upgrades." + skill.getKey(), data.getToolUpgradeLevel(skill));
+        }
 
         // Stored rewards (virtual backpack) — serialize as a list of maps.
         List<Map<String, Object>> rewardsOut = new ArrayList<>();

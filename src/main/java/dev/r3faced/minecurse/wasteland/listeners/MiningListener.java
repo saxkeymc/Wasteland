@@ -82,6 +82,10 @@ public class MiningListener implements Listener {
         // omni tool in the mining world (not just tier-locked ones).
         event.getBlock().setType(Material.AIR);
 
+        // ── Award Dust ───────────────────────────────────────────────────────
+        int dustAmount = plugin.getDustManager().getDefaultDustPerAction(SkillType.MINING);
+        plugin.getDustManager().awardDust(player, dustAmount);
+
         // ── Random money drop ───────────────────────────────────────────────
         tryRollMoneyDrop(player);
     }

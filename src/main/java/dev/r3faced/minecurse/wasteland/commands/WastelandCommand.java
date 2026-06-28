@@ -6,7 +6,6 @@ import dev.r3faced.minecurse.wasteland.api.WastelandXpCause;
 import dev.r3faced.minecurse.wasteland.gui.menus.CollectMenuGui;
 import dev.r3faced.minecurse.wasteland.gui.menus.HelpMenuGui;
 import dev.r3faced.minecurse.wasteland.gui.menus.MainMenuGui;
-import dev.r3faced.minecurse.wasteland.gui.menus.StatsMenuGui;
 import dev.r3faced.minecurse.wasteland.gui.menus.TierMenuGui;
 import dev.r3faced.minecurse.wasteland.model.PlayerData;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
@@ -53,7 +52,7 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SKILLS = Arrays.asList("mining", "woodcutting", "farming", "fishing");
     private static final List<String> PLAYER_SUBCOMMANDS = Arrays.asList(
-            "collect", "claim", "tiers", "stats", "help", "playtime", "settings"
+            "collect", "claim", "tiers", "help", "playtime", "settings", "start", "armorsets"
     );
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
             "reload", "give", "setlevel", "addxp", "removexp", "settier", "reset",
@@ -103,17 +102,33 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            case "stats": {
-                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
-                if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
-                new StatsMenuGui(plugin, (Player) sender).open();
-                return true;
-            }
-
             case "help": {
                 if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
                 if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
                 new HelpMenuGui(plugin, (Player) sender).open();
+                return true;
+            }
+
+            case "start": {
+                if (!sender.hasPermission("wasteland.admin") && !sender.hasPermission("wasteland.*")) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission"));
+                    return true;
+                }
+                if (plugin.getStartDateManager().isStarted()) {
+                    sender.sendMessage(MessageUtil.colorize("&cWasteland has already started on &4" +
+                            plugin.getStartDateManager().getStartDateString() + "&c!"));
+                    return true;
+                }
+                plugin.getStartDateManager().start();
+                sender.sendMessage(MessageUtil.colorize("&a&lWasteland has been started! &7Players can now progress through tiers."));
+                sender.sendMessage(MessageUtil.colorize("&7Tier 1 is available today, Tier 2 tomorrow, etc."));
+                return true;
+            }
+
+            case "armorsets": {
+                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
+                if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
+                new dev.r3faced.minecurse.wasteland.gui.menus.ArmorSetsMenuGui(plugin, (Player) sender).open();
                 return true;
             }
 

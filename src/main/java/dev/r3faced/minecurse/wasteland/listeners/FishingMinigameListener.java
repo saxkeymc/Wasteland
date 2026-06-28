@@ -151,6 +151,10 @@ public class FishingMinigameListener implements Listener {
                                 WastelandXpCause.FISHING, caughtType);
                     }
 
+                    // Award Dust.
+                    plugin.getDustManager().awardDust(player,
+                            plugin.getDustManager().getDefaultDustPerAction(SkillType.FISHING));
+
                     // Random money drop chance.
                     tryRollMoneyDrop(player);
 

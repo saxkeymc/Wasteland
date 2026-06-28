@@ -41,8 +41,8 @@ block:
   tier-locked: "{prefix}&cYou need &4Tier {tier} &cto break &4{block}&c! You are currently at &4Tier {player_tier}&c."
 
 tool:
-  received: "{prefix}&aYou received your &e{skill} Omni Tool&a!"
-  already-have: "{prefix}&cYou already have your Omni Tool."
+  received: ""
+  already-have: ""
 
 rewards:
   # No {skill} placeholder — tiers are shared.
