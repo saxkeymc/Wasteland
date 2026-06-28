@@ -6,7 +6,7 @@
 
     <groupId>dev.r3faced.minecurse</groupId>
     <artifactId>Wasteland</artifactId>
-    <version>1.7.3</version>
+    <version>1.7.4</version>
     <packaging>jar</packaging>
 
     <name>Wasteland</name>

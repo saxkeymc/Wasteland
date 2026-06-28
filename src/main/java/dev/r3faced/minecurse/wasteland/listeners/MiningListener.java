@@ -5,6 +5,7 @@ import dev.r3faced.minecurse.wasteland.api.WastelandXpCause;
 import dev.r3faced.minecurse.wasteland.model.SkillType;
 import dev.r3faced.minecurse.wasteland.utils.MessageUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -54,6 +55,9 @@ public class MiningListener implements Listener {
     /**
      * XP awarding + random money drops — runs at MONITOR priority, only if
      * the break was not cancelled.
+     * <p>
+     * Also cancels block drops so the player only gets XP, not the block
+     * items. Blocks in wasteland worlds are only for getting XP.
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
@@ -71,6 +75,12 @@ public class MiningListener implements Listener {
         if (xp > 0) {
             plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
         }
+
+        // ── Cancel block drops — blocks are only for XP, not items ──────────
+        // We set the block to AIR so it doesn't drop anything. The player
+        // already got XP above. This applies to ALL blocks broken with the
+        // omni tool in the mining world (not just tier-locked ones).
+        event.getBlock().setType(Material.AIR);
 
         // ── Random money drop ───────────────────────────────────────────────
         tryRollMoneyDrop(player);

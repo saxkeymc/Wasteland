@@ -10,9 +10,7 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.inventory.ItemStack;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -116,31 +114,15 @@ public class TierLockManager {
             return true;
         } else {
             // ── Player HAS the tier ────────────────────────────────────────
-            // Cancel the break, turn to BEDROCK, give XP + drops, regen after 6s.
+            // Cancel the break, turn to BEDROCK, give XP only (NO drops),
+            // regen after 6s. Blocks are only for getting XP — no item drops.
             event.setCancelled(true);
 
-            // Award XP.
+            // Award XP only — no drops.
             String blockType = originalType.name();
             int xp = plugin.getSkillManager().getXpForBlock(skill, blockType);
             if (xp > 0) {
                 plugin.getSkillManager().awardXp(player, skill, xp);
-            }
-
-            // Give the player the block's natural drops.
-            try {
-                Collection<ItemStack> drops = block.getDrops(player.getItemInHand());
-                if (drops != null && !drops.isEmpty()) {
-                    for (ItemStack drop : drops) {
-                        if (drop != null && drop.getType() != Material.AIR) {
-                            player.getInventory().addItem(drop).values()
-                                .forEach(leftover -> player.getWorld().dropItemNaturally(block.getLocation(), leftover));
-                        }
-                    }
-                } else {
-                    player.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(originalType));
-                }
-            } catch (Exception ignored) {
-                player.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(originalType));
             }
 
             // Turn the block to BEDROCK.
