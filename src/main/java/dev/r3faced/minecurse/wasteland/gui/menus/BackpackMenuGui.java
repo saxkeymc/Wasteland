@@ -12,8 +12,17 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 /**
- * Wasteland Backpack GUI — shows items collected from player kills.
- * Click an item to take it. Paginated if more than 45 items.
+ * Wasteland Backpack GUI — clean, dark, minimal design.
+ * <p>
+ * Shows items collected from player kills. Click an item to take it.
+ * Dynamic sizing based on item count. Paginated if needed.
+ * <p>
+ * Design:
+ * - Dark glass border (data 15)
+ * - Light glass filler (data 7)
+ * - Items fill left-to-right starting at slot 0
+ * - No decorative items, no clutter
+ * - Navigation only when needed
  */
 public class BackpackMenuGui extends WastelandGui {
 
@@ -38,49 +47,79 @@ public class BackpackMenuGui extends WastelandGui {
         if (page < 0) page = 0;
 
         boolean hasMultiPages = totalPages > 1;
-        int rows = hasMultiPages ? 6 : Math.max(1, (int) Math.ceil(Math.min(total, MAX_PER_PAGE) / 9.0));
+
+        // Dynamic sizing.
+        int rows;
+        if (hasMultiPages) {
+            rows = 6; // 5 item rows + 1 nav row
+        } else {
+            int itemCount = Math.min(total, MAX_PER_PAGE);
+            rows = Math.max(1, (int) Math.ceil(itemCount / 9.0));
+            if (rows < 1) rows = 1;
+        }
         int size = rows * 9;
 
         String title = MessageUtil.colorize("&8Backpack");
         createInventory(title, size);
 
+        // Fill with dark glass for a clean look.
+        ItemStack darkPane = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
+        fill(darkPane);
+
+        // Place items starting at slot 0, left-to-right.
         int start = page * MAX_PER_PAGE;
         int count = Math.min(MAX_PER_PAGE, total - start);
         for (int i = 0; i < count; i++) {
             setItem(i, items.get(start + i).clone());
         }
 
+        // Empty state.
         if (total == 0) {
-            setItem(0, new ItemBuilder(Material.BARRIER)
+            setItem(4, new ItemBuilder(Material.BARRIER)
                     .name(MessageUtil.colorize("&7Backpack is empty."))
+                    .lore(MessageUtil.colorize("&7Kill players to collect loot."))
                     .build());
         }
 
+        // Navigation row (only if multiple pages).
         if (hasMultiPages) {
+            // Previous.
             if (page > 0) {
                 setItem(45, new ItemBuilder(Material.ARROW)
-                        .name(MessageUtil.colorize("&7Previous"))
+                        .name(MessageUtil.colorize("&7Previous Page"))
                         .build());
+            } else {
+                setItem(45, darkPane);
             }
-            if (page < totalPages - 1) {
-                setItem(53, new ItemBuilder(Material.ARROW)
-                        .name(MessageUtil.colorize("&aNext"))
-                        .build());
-            }
+
+            // Close.
             setItem(49, new ItemBuilder(Material.BARRIER)
                     .name(MessageUtil.colorize("&cClose"))
+                    .build());
+
+            // Next.
+            if (page < totalPages - 1) {
+                setItem(53, new ItemBuilder(Material.ARROW)
+                        .name(MessageUtil.colorize("&aNext Page"))
+                        .build());
+            } else {
+                setItem(53, darkPane);
+            }
+
+            // Page indicator.
+            String pageText = "&7" + (page + 1) + "&8/&7" + totalPages;
+            setItem(48, new ItemBuilder(Material.PAPER)
+                    .name(MessageUtil.colorize(pageText))
                     .build());
         }
     }
 
     @Override
     public void handleClick(InventoryClickEvent event) {
-        // This GUI is interactive — players can take items out.
         int slot = event.getRawSlot();
         int size = inventory.getSize();
 
         if (slot >= 0 && slot < size) {
-            // Clicked inside our inventory.
             ItemStack clicked = inventory.getItem(slot);
             if (clicked == null || clicked.getType() == Material.AIR) return;
 
@@ -95,14 +134,17 @@ public class BackpackMenuGui extends WastelandGui {
                 new BackpackMenuGui(plugin, player, page + 1).open();
                 return;
             }
-            if (slot == 49) {
+            if (slot == 49 || slot == 48) {
                 event.setCancelled(true);
-                player.closeInventory();
+                if (slot == 49) player.closeInventory();
                 return;
             }
 
-            // Barrier (empty state) — don't allow taking.
-            if (clicked.getType() == Material.BARRIER || clicked.getType() == Material.ARROW) {
+            // Don't allow taking glass panes, barriers, arrows, paper.
+            if (clicked.getType() == Material.STAINED_GLASS_PANE ||
+                clicked.getType() == Material.BARRIER ||
+                clicked.getType() == Material.ARROW ||
+                clicked.getType() == Material.PAPER) {
                 event.setCancelled(true);
                 return;
             }
@@ -114,8 +156,6 @@ public class BackpackMenuGui extends WastelandGui {
             if (index < items.size()) {
                 items.remove(index);
                 plugin.getDataManager().savePlayer(player.getUniqueId());
-                // Don't cancel — let the item move to the player's inventory.
-                // Refresh after 1 tick.
                 final int currentPage = page;
                 org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (player.isOnline()) {
@@ -124,6 +164,5 @@ public class BackpackMenuGui extends WastelandGui {
                 }, 1L);
             }
         }
-        // Clicks in player's own inventory are allowed (shift-click to deposit).
     }
 }
