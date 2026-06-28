@@ -52,7 +52,7 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SKILLS = Arrays.asList("mining", "woodcutting", "farming", "fishing");
     private static final List<String> PLAYER_SUBCOMMANDS = Arrays.asList(
-            "collect", "claim", "tiers", "help", "playtime", "settings", "start", "armorsets"
+            "collect", "claim", "tiers", "help", "playtime", "settings", "start", "armorsets", "backpack"
     );
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
             "reload", "give", "setlevel", "addxp", "removexp", "settier", "reset",
@@ -177,6 +177,13 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
                 if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
                 new dev.r3faced.minecurse.wasteland.gui.menus.SettingsMenuGui(plugin, (Player) sender).open();
+                return true;
+            }
+
+            case "backpack": {
+                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
+                if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
+                new dev.r3faced.minecurse.wasteland.gui.menus.BackpackMenuGui(plugin, (Player) sender).open();
                 return true;
             }
 

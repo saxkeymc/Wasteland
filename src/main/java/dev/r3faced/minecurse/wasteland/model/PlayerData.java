@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.bukkit.inventory.ItemStack;
+
 /**
  * Holds all Wasteland data for a single player.
  * <p>
@@ -61,6 +63,10 @@ public class PlayerData {
     // ── Tool upgrade levels (persisted) ───────────────────────────────────────
     /** Per-skill tool upgrade level (0 = no upgrade, 1-4 = upgraded). */
     private final Map<SkillType, Integer> toolUpgrades = new EnumMap<>(SkillType.class);
+
+    // ── Wasteland Backpack (persisted) ────────────────────────────────────────
+    /** Items stored from player kills. */
+    private final List<ItemStack> backpackItems = new java.util.ArrayList<>();
 
     /**
      * Virtual reward backpack — rewards unlocked via tier progression
@@ -270,4 +276,9 @@ public class PlayerData {
         toolUpgrades.put(skill, level);
     }
     public Map<SkillType, Integer> getToolUpgrades() { return toolUpgrades; }
+
+    // ── Backpack ──────────────────────────────────────────────────────────────
+
+    public List<ItemStack> getBackpackItems() { return backpackItems; }
+    public void clearBackpack() { backpackItems.clear(); }
 }

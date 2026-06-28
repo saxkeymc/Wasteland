@@ -25,6 +25,11 @@ allowed-commands:
   - wastelandcollect
   - wastelandclaim
   - wl
+  - ws
+  - mining
+  - chopping
+  - farming
+  - fishing
   - msg
   - r
   - reply
@@ -44,3 +49,4 @@ allowed-commands:
   - ping
   - list
   - online
+  - pots

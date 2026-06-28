@@ -168,6 +168,15 @@ public class YamlDataManager implements DataManager {
             data.setToolUpgradeLevel(skill, yaml.getInt("tool-upgrades." + skill.getKey(), 0));
         }
 
+        // Backpack items
+        if (yaml.isList("backpack")) {
+            for (Object obj : yaml.getList("backpack")) {
+                if (obj instanceof org.bukkit.inventory.ItemStack) {
+                    data.getBackpackItems().add((org.bukkit.inventory.ItemStack) obj);
+                }
+            }
+        }
+
         // Stored rewards (virtual backpack)
         if (yaml.isList("stored-rewards")) {
             for (Map<?, ?> entry : yaml.getMapList("stored-rewards")) {
@@ -222,6 +231,9 @@ public class YamlDataManager implements DataManager {
         for (dev.r3faced.minecurse.wasteland.model.SkillType skill : dev.r3faced.minecurse.wasteland.model.SkillType.values()) {
             yaml.set("tool-upgrades." + skill.getKey(), data.getToolUpgradeLevel(skill));
         }
+
+        // Backpack items
+        yaml.set("backpack", data.getBackpackItems());
 
         // Stored rewards (virtual backpack) — serialize as a list of maps.
         List<Map<String, Object>> rewardsOut = new ArrayList<>();

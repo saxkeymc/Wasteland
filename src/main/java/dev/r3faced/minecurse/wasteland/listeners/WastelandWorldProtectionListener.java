@@ -39,8 +39,9 @@ public class WastelandWorldProtectionListener implements Listener {
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
         if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) return;
-        // Allow damage in the designated PvP zone.
-        if (plugin.getPvpZoneManager().isInPvpZone(player.getLocation())) return;
+        // Allow damage if the player is Tier 5 (PvP enabled everywhere for Tier 5).
+        int playerTier = plugin.getDataManager().getPlayerData(player.getUniqueId()).getTier();
+        if (playerTier >= 5) return;
         // Cancel silently — no message.
         event.setCancelled(true);
         player.setFireTicks(0);
@@ -55,9 +56,12 @@ public class WastelandWorldProtectionListener implements Listener {
         if (!(event.getEntity() instanceof Player)) return;
         if (!(event.getDamager() instanceof Player)) return;
         Player victim = (Player) event.getEntity();
+        Player attacker = (Player) event.getDamager();
         if (!plugin.getWastelandWorldManager().isWastelandWorld(victim.getWorld())) return;
-        // Allow PvP in the designated PvP zone.
-        if (plugin.getPvpZoneManager().isInPvpZone(victim.getLocation())) return;
+        // Allow PvP if BOTH players are Tier 5.
+        int victimTier = plugin.getDataManager().getPlayerData(victim.getUniqueId()).getTier();
+        int attackerTier = plugin.getDataManager().getPlayerData(attacker.getUniqueId()).getTier();
+        if (victimTier >= 5 && attackerTier >= 5) return;
         // Cancel silently.
         event.setCancelled(true);
     }

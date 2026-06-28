@@ -67,12 +67,23 @@ public class EnchantCancelListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        // Check both the victim AND the attacker.
+        if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
+            Player victim = (Player) event.getEntity();
+            Player attacker = (Player) event.getDamager();
+            if (plugin.getWastelandWorldManager().isWastelandWorld(victim.getWorld())) {
+                // Allow enchants if BOTH players are Tier 5.
+                int victimTier = plugin.getDataManager().getPlayerData(victim.getUniqueId()).getTier();
+                int attackerTier = plugin.getDataManager().getPlayerData(attacker.getUniqueId()).getTier();
+                if (victimTier >= 5 && attackerTier >= 5) return;
+                event.setCancelled(true);
+                return;
+            }
+        }
         if (event.getEntity() instanceof Player) {
             Player victim = (Player) event.getEntity();
             if (plugin.getWastelandWorldManager().isWastelandWorld(victim.getWorld())) {
-                // Allow enchants to proc in the PvP zone.
-                if (plugin.getPvpZoneManager().isInPvpZone(victim.getLocation())) return;
+                int victimTier = plugin.getDataManager().getPlayerData(victim.getUniqueId()).getTier();
+                if (victimTier >= 5) return;
                 event.setCancelled(true);
                 return;
             }
@@ -80,8 +91,8 @@ public class EnchantCancelListener implements Listener {
         if (event.getDamager() instanceof Player) {
             Player attacker = (Player) event.getDamager();
             if (plugin.getWastelandWorldManager().isWastelandWorld(attacker.getWorld())) {
-                // Allow enchants to proc in the PvP zone.
-                if (plugin.getPvpZoneManager().isInPvpZone(attacker.getLocation())) return;
+                int attackerTier = plugin.getDataManager().getPlayerData(attacker.getUniqueId()).getTier();
+                if (attackerTier >= 5) return;
                 event.setCancelled(true);
             }
         }
