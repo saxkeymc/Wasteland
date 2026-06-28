@@ -94,8 +94,8 @@ public class ArmorSetsMenuGui extends WastelandGui {
                     MessageUtil.colorize("&7Drag enchanted books onto armor to enchant."),
                     MessageUtil.colorize("&7Only whitelisted enchants can be applied."),
                     MessageUtil.colorize(""),
-                    MessageUtil.colorize("&7This is the armor set you wear"),
-                    MessageUtil.colorize("&7inside Wasteland worlds.")
+                    MessageUtil.colorize("&7These changes apply when you enter"),
+                    MessageUtil.colorize("&7a Wasteland world.")
                 )
                 .build());
 

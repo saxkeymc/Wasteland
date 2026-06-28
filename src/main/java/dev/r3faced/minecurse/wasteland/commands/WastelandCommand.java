@@ -129,10 +129,10 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
                 if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
                 Player p = (Player) sender;
-                // Can only open INSIDE a Wasteland world — you're editing
-                // the actual armor set you're wearing.
-                if (!plugin.getWastelandWorldManager().isWastelandWorld(p.getWorld())) {
-                    p.sendMessage(MessageUtil.colorize("&cYou can only open this inside a Wasteland world!"));
+                // Can only open OUTSIDE Wasteland worlds — you're editing
+                // the armor set that will be applied when you enter Wasteland.
+                if (plugin.getWastelandWorldManager().isWastelandWorld(p.getWorld())) {
+                    p.sendMessage(MessageUtil.colorize("&cYou can only open this outside Wasteland worlds!"));
                     return true;
                 }
                 new dev.r3faced.minecurse.wasteland.gui.menus.ArmorSetsMenuGui(plugin, p).open();
