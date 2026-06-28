@@ -72,6 +72,9 @@ public class SkillSwitchCommand implements CommandExecutor {
         plugin.getToolManager().giveOmniTool(player, skill);
         player.updateInventory();
 
+        // Set the active skill so the XP bar shows THIS skill's level.
+        plugin.getDataManager().getPlayerData(player.getUniqueId()).setActiveSkill(skill);
+
         return true;
     }
 }

@@ -52,6 +52,8 @@ public class PlayerData {
     private transient int savedVanillaLevel = 0;
     /** Saved vanilla XP float — restored when leaving a Wasteland world. */
     private transient float savedVanillaXp = 0f;
+    /** The skill currently shown on the XP bar. Set by /mining, /fishing, etc. */
+    private transient SkillType activeSkill = null;
 
     // ── Dust currency (persisted) ─────────────────────────────────────────────
     private int dust = 0;
@@ -249,6 +251,9 @@ public class PlayerData {
 
     public float getSavedVanillaXp() { return savedVanillaXp; }
     public void setSavedVanillaXp(float v) { this.savedVanillaXp = v; }
+
+    public SkillType getActiveSkill() { return activeSkill; }
+    public void setActiveSkill(SkillType skill) { this.activeSkill = skill; }
 
     // ── Dust ──────────────────────────────────────────────────────────────────
 

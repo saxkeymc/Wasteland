@@ -203,6 +203,11 @@ public class WorldChangeListener implements Listener {
         SkillType skill = plugin.getToolManager().getSkillForWorld(worldName);
         if (skill != null) {
             plugin.getToolManager().giveOmniTool(player, skill);
+            // Set the active skill so the XP bar shows this skill.
+            PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
+            if (data != null) {
+                data.setActiveSkill(skill);
+            }
         }
     }
 
