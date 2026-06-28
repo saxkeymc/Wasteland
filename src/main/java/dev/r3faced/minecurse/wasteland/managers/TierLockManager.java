@@ -46,25 +46,66 @@ public class TierLockManager {
     public void reload() {
         lockedBlocks.clear();
         FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
-        if (!cfg.isConfigurationSection("tier-locked-blocks")) return;
 
-        for (SkillType skill : SkillType.values()) {
-            Map<Material, Integer> skillMap = new HashMap<>();
-            String basePath = "tier-locked-blocks." + skill.getKey();
-            if (cfg.isConfigurationSection(basePath)) {
-                for (String matName : cfg.getConfigurationSection(basePath).getKeys(false)) {
-                    int requiredTier = cfg.getInt(basePath + "." + matName, 0);
-                    if (requiredTier <= 0) continue;
-                    try {
-                        Material mat = Material.valueOf(matName.toUpperCase());
-                        skillMap.put(mat, requiredTier);
-                    } catch (IllegalArgumentException e) {
-                        plugin.getLogger().warning("Unknown material '" + matName +
-                                "' in tier-locked-blocks." + skill.getKey() + "; skipping.");
+        // ── New format: tier-locked-blocks.<skill>.<MATERIAL> = tier ──
+        if (cfg.isConfigurationSection("tier-locked-blocks")) {
+            for (SkillType skill : SkillType.values()) {
+                Map<Material, Integer> skillMap = new HashMap<>();
+                String basePath = "tier-locked-blocks." + skill.getKey();
+                if (cfg.isConfigurationSection(basePath)) {
+                    for (String matName : cfg.getConfigurationSection(basePath).getKeys(false)) {
+                        int requiredTier = cfg.getInt(basePath + "." + matName, 0);
+                        if (requiredTier <= 0) continue;
+                        try {
+                            Material mat = Material.valueOf(matName.toUpperCase());
+                            skillMap.put(mat, requiredTier);
+                        } catch (IllegalArgumentException e) {
+                            plugin.getLogger().warning("Unknown material '" + matName +
+                                    "' in tier-locked-blocks." + skill.getKey() + "; skipping.");
+                        }
                     }
                 }
+                lockedBlocks.put(skill, skillMap);
             }
-            lockedBlocks.put(skill, skillMap);
+        }
+
+        // ── Old format fallback: tier-locked-ores.<MATERIAL> = tier ──
+        // For backwards compatibility with old config.yml files.
+        if (cfg.isConfigurationSection("tier-locked-ores")) {
+            Map<Material, Integer> miningMap = lockedBlocks.getOrDefault(SkillType.MINING, new HashMap<>());
+            for (String matName : cfg.getConfigurationSection("tier-locked-ores").getKeys(false)) {
+                int requiredTier = cfg.getInt("tier-locked-ores." + matName, 0);
+                if (requiredTier <= 0) continue;
+                try {
+                    Material mat = Material.valueOf(matName.toUpperCase());
+                    if (!miningMap.containsKey(mat)) {
+                        miningMap.put(mat, requiredTier);
+                    }
+                } catch (IllegalArgumentException ignored) {}
+            }
+            lockedBlocks.put(SkillType.MINING, miningMap);
+        }
+
+        // ── Auto-add default ores if mining map is empty ──
+        // Ensures coal/iron/gold/emerald/diamond are always tier-locked
+        // even if config is missing or misconfigured.
+        Map<Material, Integer> miningMap = lockedBlocks.getOrDefault(SkillType.MINING, new HashMap<>());
+        if (miningMap.isEmpty()) {
+            miningMap.put(Material.COAL_ORE, 1);
+            miningMap.put(Material.IRON_ORE, 2);
+            miningMap.put(Material.GOLD_ORE, 3);
+            miningMap.put(Material.EMERALD_ORE, 4);
+            miningMap.put(Material.DIAMOND_ORE, 5);
+            lockedBlocks.put(SkillType.MINING, miningMap);
+            plugin.getLogger().info("TierLockManager: Auto-added default tier-locked ores (config was empty).");
+        }
+
+        // Log loaded blocks for debugging.
+        for (Map.Entry<SkillType, Map<Material, Integer>> entry : lockedBlocks.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                plugin.getLogger().info("TierLockManager: " + entry.getKey().getKey() +
+                        " has " + entry.getValue().size() + " tier-locked blocks.");
+            }
         }
     }
 

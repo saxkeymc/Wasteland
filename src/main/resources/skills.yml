@@ -6,9 +6,6 @@
 #   2. Mining   (2nd best)
 #   3. Chopping (3rd best)
 #   4. Farming  (least XP)
-#
-# XP formula: base × (multiplier ^ level)
-# Higher multiplier = steeper curve (each level needs much more XP).
 # ════════════════════════════════════════════════════════════════════════════
 
 mining:
@@ -44,15 +41,42 @@ woodcutting:
   display-name: "&6Chopping"
   icon: IRON_AXE
   xp:
-    LOG: 6
-    LOG_2: 6
-    HUGE_MUSHROOM_1: 5
-    HUGE_MUSHROOM_2: 5
-    CACTUS: 4
+    LOG: 12
+    LOG_2: 12
+    HUGE_MUSHROOM_1: 10
+    HUGE_MUSHROOM_2: 10
+    CACTUS: 6
     SUGAR_CANE_BLOCK: 4
     VINE: 3
     LEAVES: 2
     LEAVES_2: 2
+    WOOD: 8
+    WOOD_2: 8
+    PLANKS: 6
+    SPRUCE_WOOD_STAIRS: 4
+    BIRCH_WOOD_STAIRS: 4
+    JUNGLE_WOOD_STAIRS: 4
+    ACACIA_STAIRS: 4
+    DARK_OAK_STAIRS: 4
+    OAK_FENCE: 5
+    SPRUCE_FENCE: 5
+    BIRCH_FENCE: 5
+    JUNGLE_FENCE: 5
+    ACACIA_FENCE: 5
+    DARK_OAK_FENCE: 5
+    FENCE_GATE: 5
+    SPRUCE_FENCE_GATE: 5
+    BIRCH_FENCE_GATE: 5
+    JUNGLE_FENCE_GATE: 5
+    ACACIA_FENCE_GATE: 5
+    DARK_OAK_FENCE_GATE: 5
+    WORKBENCH: 8
+    CHEST: 8
+    TRAPPED_CHEST: 8
+    BOOKSHELF: 10
+    JUKEBOX: 12
+    NOTE_BLOCK: 10
+    CRAFTING_TABLE: 8
   xp-formula:
     base: 1000
     multiplier: 2.0
@@ -62,15 +86,19 @@ farming:
   display-name: "&aFarming"
   icon: DIAMOND_HOE
   xp:
-    WHEAT: 3
-    CARROT: 3
-    POTATO: 3
-    NETHER_WARTS: 5
-    COCOA: 4
-    MELON_BLOCK: 3
-    PUMPKIN: 3
-    BEETROOT_BLOCK: 4
-    CHORUS_FLOWER: 5
+    WHEAT: 2
+    CARROT: 2
+    POTATO: 2
+    NETHER_WARTS: 3
+    COCOA: 3
+    MELON_BLOCK: 2
+    PUMPKIN: 2
+    BEETROOT_BLOCK: 3
+    CHORUS_FLOWER: 4
+    SUGAR_CANE_BLOCK: 1
+    CACTUS: 1
+    BROWN_MUSHROOM: 2
+    RED_MUSHROOM: 2
   xp-formula:
     base: 1000
     multiplier: 2.0
@@ -80,17 +108,19 @@ fishing:
   display-name: "&bFishing"
   icon: FISHING_ROD
   xp:
-    DEFAULT: 25
-    FISH: 25
-    SALMON: 30
-    CLOWNFISH: 40
-    PUFFERFISH: 20
-    ENCHANTED_BOOK: 100
-    BOW: 50
-    FISHING_ROD: 40
-    NAME_TAG: 60
-    SADDLE: 40
-    LILY_PAD: 15
+    DEFAULT: 60
+    FISH: 60
+    SALMON: 75
+    CLOWNFISH: 100
+    PUFFERFISH: 50
+    ENCHANTED_BOOK: 250
+    BOW: 120
+    FISHING_ROD: 100
+    NAME_TAG: 150
+    SADDLE: 100
+    LILY_PAD: 40
+    RAW_FISH: 60
+    RAW_SALMON: 75
   xp-formula:
     base: 1000
     multiplier: 2.0

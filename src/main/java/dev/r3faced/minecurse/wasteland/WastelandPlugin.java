@@ -46,6 +46,7 @@ public final class WastelandPlugin extends JavaPlugin {
     private dev.r3faced.minecurse.wasteland.managers.StartDateManager startDateManager;
     private dev.r3faced.minecurse.wasteland.managers.DustManager dustManager;
     private dev.r3faced.minecurse.wasteland.managers.FakeBlockManager fakeBlockManager;
+    private dev.r3faced.minecurse.wasteland.managers.PvpZoneManager pvpZoneManager;
     private WastelandApi api;
 
     @Override
@@ -73,6 +74,7 @@ public final class WastelandPlugin extends JavaPlugin {
         startDateManager = new dev.r3faced.minecurse.wasteland.managers.StartDateManager(this);
         dustManager = new dev.r3faced.minecurse.wasteland.managers.DustManager(this);
         fakeBlockManager = new dev.r3faced.minecurse.wasteland.managers.FakeBlockManager();
+        pvpZoneManager = new dev.r3faced.minecurse.wasteland.managers.PvpZoneManager(this);
 
         // Initialize data manager (YAML or MySQL)
         String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
@@ -121,6 +123,7 @@ public final class WastelandPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.ToolRightClickListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.FakeBlockListener(this), this);
         Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.EnchantCancelListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new dev.r3faced.minecurse.wasteland.listeners.FallTeleportListener(this), this);
         previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
         Bukkit.getPluginManager().registerEvents(previewRewardEditor, this);
         commandWhitelistListener = new dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener(this);
@@ -271,6 +274,14 @@ public final class WastelandPlugin extends JavaPlugin {
             fakeBlockManager = new dev.r3faced.minecurse.wasteland.managers.FakeBlockManager();
         }
         return fakeBlockManager;
+    }
+
+    /** Returns the PvP zone manager. */
+    public dev.r3faced.minecurse.wasteland.managers.PvpZoneManager getPvpZoneManager() {
+        if (pvpZoneManager == null) {
+            pvpZoneManager = new dev.r3faced.minecurse.wasteland.managers.PvpZoneManager(this);
+        }
+        return pvpZoneManager;
     }
 
     public static WastelandPlugin getInstance() {

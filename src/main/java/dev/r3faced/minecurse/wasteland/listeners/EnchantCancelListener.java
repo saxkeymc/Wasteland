@@ -71,6 +71,8 @@ public class EnchantCancelListener implements Listener {
         if (event.getEntity() instanceof Player) {
             Player victim = (Player) event.getEntity();
             if (plugin.getWastelandWorldManager().isWastelandWorld(victim.getWorld())) {
+                // Allow enchants to proc in the PvP zone.
+                if (plugin.getPvpZoneManager().isInPvpZone(victim.getLocation())) return;
                 event.setCancelled(true);
                 return;
             }
@@ -78,6 +80,8 @@ public class EnchantCancelListener implements Listener {
         if (event.getDamager() instanceof Player) {
             Player attacker = (Player) event.getDamager();
             if (plugin.getWastelandWorldManager().isWastelandWorld(attacker.getWorld())) {
+                // Allow enchants to proc in the PvP zone.
+                if (plugin.getPvpZoneManager().isInPvpZone(attacker.getLocation())) return;
                 event.setCancelled(true);
             }
         }

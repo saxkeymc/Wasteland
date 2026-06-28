@@ -57,7 +57,7 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
     private static final List<String> ADMIN_SUBCOMMANDS = Arrays.asList(
             "reload", "give", "setlevel", "addxp", "removexp", "settier", "reset",
             "setteleportmining", "setteleportchopping", "setteleportfarming", "setteleportfishing",
-            "addpreviewreward"
+            "addpreviewreward", "start", "pvpzoneset"
     );
 
     public WastelandCommand(WastelandPlugin plugin) {
@@ -129,6 +129,35 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
                 if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
                 new dev.r3faced.minecurse.wasteland.gui.menus.ArmorSetsMenuGui(plugin, (Player) sender).open();
+                return true;
+            }
+
+            case "pvpzoneset": {
+                if (!sender.hasPermission("wasteland.admin") && !sender.hasPermission("wasteland.*")) {
+                    sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission"));
+                    return true;
+                }
+                if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
+                Player p = (Player) sender;
+                if (args.length < 2) {
+                    p.sendMessage(MessageUtil.colorize("&cUsage: /wasteland pvpzoneset <1|2>"));
+                    p.sendMessage(MessageUtil.colorize("&7Set position 1 and 2 to define the PvP zone."));
+                    return true;
+                }
+                int pos;
+                try { pos = Integer.parseInt(args[1]); } catch (NumberFormatException e) {
+                    p.sendMessage(MessageUtil.colorize("&cPosition must be 1 or 2."));
+                    return true;
+                }
+                if (pos == 1) {
+                    plugin.getPvpZoneManager().setPos1(p.getLocation());
+                    p.sendMessage(MessageUtil.colorize("&2PvP zone position 1 set."));
+                } else if (pos == 2) {
+                    plugin.getPvpZoneManager().setPos2(p.getLocation());
+                    p.sendMessage(MessageUtil.colorize("&2PvP zone position 2 set."));
+                } else {
+                    p.sendMessage(MessageUtil.colorize("&cPosition must be 1 or 2."));
+                }
                 return true;
             }
 

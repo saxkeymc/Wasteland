@@ -39,11 +39,10 @@ public class WastelandWorldProtectionListener implements Listener {
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
         if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) return;
+        // Allow damage in the designated PvP zone.
+        if (plugin.getPvpZoneManager().isInPvpZone(player.getLocation())) return;
         // Cancel silently — no message.
         event.setCancelled(true);
-        // Reset the player's health and fire ticks just in case.
-        // (Health is already full since damage was cancelled, but fire
-        // ticks may persist — clear them.)
         player.setFireTicks(0);
     }
 
@@ -57,6 +56,8 @@ public class WastelandWorldProtectionListener implements Listener {
         if (!(event.getDamager() instanceof Player)) return;
         Player victim = (Player) event.getEntity();
         if (!plugin.getWastelandWorldManager().isWastelandWorld(victim.getWorld())) return;
+        // Allow PvP in the designated PvP zone.
+        if (plugin.getPvpZoneManager().isInPvpZone(victim.getLocation())) return;
         // Cancel silently.
         event.setCancelled(true);
     }
