@@ -136,12 +136,10 @@ public class WorldChangeListener implements Listener {
             flushSession(data, now);
             plugin.getDataManager().savePlayer(player.getUniqueId());
 
-            // Remove ALL omni tools from the player's inventory — they only
-            // get to keep the tool while inside a wasteland world.
-            removeAllOmniTools(player);
-
-            // Remove the Wasteland armor set.
-            plugin.getArmorManager().removeArmorSet(player);
+            // Clear the player's entire inventory — no items leave the Wasteland.
+            player.getInventory().clear();
+            player.getInventory().setArmorContents(null);
+            player.updateInventory();
 
             // Restore the player's vanilla XP level and XP bar.
             player.setLevel(data.getSavedVanillaLevel());
