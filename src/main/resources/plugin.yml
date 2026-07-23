@@ -5,28 +5,6 @@ api-version: "1.8"
 author: r3faced
 description: Comprehensive skills plugin with mining, chopping, farming, and fishing progression plus a shared tier reward system.
 
-# Primary command reference:
-#   /wasteland                          — open main GUI
-#   /wasteland tiers                    — open the Tier Rewards menu (PRIMARY)
-#   /wasteland collect                  — open Collect Rewards GUI
-#   /wasteland claim                    — alias for collect
-#   /wasteland stats                    — open statistics GUI
-#   /wasteland help                     — open Help GUI
-#   /wasteland playtime                 — view your Wasteland playtime
-#   /wasteland settings                 — open settings GUI
-#   /wasteland reload                   — reload configs
-#   /wasteland give <p> <s>             — give omni tool
-#   /wasteland setlevel <p> <s> <l>     — set level
-#   /wasteland addxp <p> <s> <amt>      — add xp
-#   /wasteland removexp <p> <s> <amt>   — remove xp
-#   /wasteland settier <p> <t>          — set shared tier
-#   /wasteland reset <player>           — reset player
-#   /wasteland setteleportmining        — set mining teleport
-#   /wasteland setteleportchopping      — set chopping teleport
-#   /wasteland setteleportfarming       — set farming teleport
-#   /wasteland setteleportfishing       — set fishing teleport
-#   /wasteland addpreviewreward <tier>  — open preview reward editor
-
 softdepend:
   - PlaceholderAPI
 

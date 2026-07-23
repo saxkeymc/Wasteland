@@ -11,17 +11,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Settings GUI — a 3-row (27-slot) inventory opened via /wasteland settings.
- * <p>
- * Three toggle settings:
- * <ul>
- *   <li>Slot 11: See players in Wasteland</li>
- *   <li>Slot 13: Hear XP noises</li>
- *   <li>Slot 15: Show Level on XP Bar</li>
- * </ul>
- * Close button at slot 22.
- */
 public class SettingsMenuGui extends WastelandGui {
 
     public SettingsMenuGui(WastelandPlugin plugin, Player player) {
@@ -35,7 +24,6 @@ public class SettingsMenuGui extends WastelandGui {
         int size = cfg.getInt("settings-menu.size", 27);
         createInventory(title, size);
 
-        // Border + filler
         ItemStack border = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
         ItemStack filler = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 7).name(" ").build();
         fill(filler);
@@ -43,25 +31,21 @@ public class SettingsMenuGui extends WastelandGui {
 
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
 
-        // Setting 1: See players (slot 11)
         boolean seePlayers = data.isSettingSeePlayers();
         setToggleItem(11, "See Players in Wasteland", seePlayers,
                 "&7Toggle whether you can see other",
                 "&7players while in Wasteland worlds.");
 
-        // Setting 2: XP noises (slot 13)
         boolean xpNoises = data.isSettingXpNoises();
         setToggleItem(13, "XP Noises", xpNoises,
                 "&7Toggle whether you hear an XP",
                 "&7orb sound when using your tools.");
 
-        // Setting 3: XP bar display (slot 15)
         boolean xpBar = data.isSettingXpBarDisplay();
         setToggleItem(15, "Level on XP Bar", xpBar,
                 "&7Toggle whether your Wasteland level",
                 "&7is shown on your XP bar.");
 
-        // Close button (slot 22)
         setItem(22, new ItemBuilder(Material.BARRIER)
                 .name(MessageUtil.colorize("&c&lClose"))
                 .build());
@@ -106,10 +90,6 @@ public class SettingsMenuGui extends WastelandGui {
         }
     }
 
-    /**
-     * Show or hide other players based on the setting.
-     * If disabled, the player can't see anyone else in the world.
-     */
     private void applyPlayerVisibility(Player player, boolean seePlayers) {
         for (Player other : player.getWorld().getPlayers()) {
             if (other == player) continue;
@@ -120,8 +100,6 @@ public class SettingsMenuGui extends WastelandGui {
             }
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void drawBorder(ItemStack border) {
         int size = inventory.getSize();

@@ -14,11 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Public Wasteland API for other plugins.
- *
- * <p>All mutating methods should be called from the Bukkit main thread.</p>
- */
 public interface WastelandApi {
 
     WastelandPlugin getPlugin();
@@ -27,10 +22,6 @@ public interface WastelandApi {
 
     WastelandPlayer getPlayer(Player player);
 
-    /**
-     * Returns the live internal data object. Prefer the typed API methods unless
-     * you intentionally need raw access.
-     */
     PlayerData getPlayerData(UUID uuid);
 
     void savePlayer(UUID uuid);

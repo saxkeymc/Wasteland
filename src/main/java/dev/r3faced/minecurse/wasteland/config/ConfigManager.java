@@ -6,10 +6,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 
-/**
- * Manages all plugin configuration files.
- * Each config file is loaded on startup and can be reloaded via /wasteland reload.
- */
 public class ConfigManager {
 
     private final WastelandPlugin plugin;
@@ -27,9 +23,6 @@ public class ConfigManager {
         this.plugin = plugin;
     }
 
-    /**
-     * Load all configuration files from disk.
-     */
     public void loadAll() {
         plugin.reloadConfig();
         mainConfig = plugin.getConfig();
@@ -43,9 +36,6 @@ public class ConfigManager {
         commandsConfig = loadConfig("commands.yml");
     }
 
-    /**
-     * Load a named YAML file from the plugin data folder.
-     */
     private FileConfiguration loadConfig(String name) {
         File file = new File(plugin.getDataFolder(), name);
         if (!file.exists()) {

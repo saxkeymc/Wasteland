@@ -1,25 +1,5 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Command Whitelist Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# While inside a Wasteland world, players can ONLY run commands listed here.
-# Any command not on this list will be blocked and a configurable message
-# will be sent.
-#
-# The same whitelist applies to ALL wasteland worlds (mining, chopping,
-# farming, fishing).
-#
-# Commands are matched case-insensitively by the base command (the first
-# word). Arguments are ignored. For example, "/wasteland collect" matches
-# "wasteland" in the list.
-#
-# Players with the "wasteland.admin" or "wasteland.bypass-commands"
-# permission are exempt from this restriction.
-# ════════════════════════════════════════════════════════════════════════════
-
-# Message sent when a command is blocked. {command} = the blocked command.
 blocked-message: "&cYou cannot run that command in this world!"
 
-# List of allowed commands (without the leading /).
 allowed-commands:
   - wasteland
   - wastelandcollect

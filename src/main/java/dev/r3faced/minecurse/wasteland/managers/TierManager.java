@@ -22,47 +22,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Manages the SHARED tier system.
- * <p>
- * There is only ONE tier progression per player. To unlock the next tier,
- * <strong>EVERY skill</strong> (Mining, Chopping, Farming, Fishing) must
- * reach that tier's required level. Rushing a single skill will NOT unlock
- * the next tier — players are encouraged to level all four skills equally.
- * <p>
- * Reward config format (tiers.yml):
- * <pre>
- * tiers:
- *   1:
- *     required-level: 10
- *     display-name: "&aTier 1"
- *     glass-color: STAINED_GLASS_PANE
- *     glass-data: 5
- *     rewards:
- *       reward_1:
- *         chance: 100
- *         display-item:
- *           material: CHEST
- *           name: "&fStarter Reward"
- *           lore:
- *             - "&7A small bonus."
- *         commands:
- *           - "eco give %player% 1000"
- * </pre>
- * <p>
- * Commands are NEVER exposed to the GUI. The GUI only sees display-item.
- */
 public class TierManager {
 
     private final WastelandPlugin plugin;
 
-    /** Total number of tiers. */
     public static final int TIER_COUNT = 5;
 
-    /** Level required to unlock each tier — must be reached by EVERY skill. */
     private final Map<Integer, Integer> tierRequirements = new HashMap<>();
 
-    /** Rewards per tier (shared across all skills). */
     private final Map<Integer, List<TierReward>> tierRewards = new HashMap<>();
 
     public TierManager(WastelandPlugin plugin) {
@@ -100,7 +67,6 @@ public class TierManager {
             String name  = MessageUtil.colorize(cfg.getString(rewardPath + ".display-item.name", "&fReward"));
             List<String> lore = MessageUtil.colorizeList(cfg.getStringList(rewardPath + ".display-item.lore"));
 
-            // Parse enchants (map: enchantment-name → level)
             Map<String, Integer> enchants = new HashMap<>();
             if (cfg.isConfigurationSection(rewardPath + ".display-item.enchants")) {
                 ConfigurationSection enchSec = cfg.getConfigurationSection(rewardPath + ".display-item.enchants");
@@ -109,7 +75,6 @@ public class TierManager {
                 }
             }
 
-            // Parse item-flags (list of flag names)
             List<String> itemFlags = new ArrayList<>();
             for (String flagName : cfg.getStringList(rewardPath + ".display-item.item-flags")) {
                 itemFlags.add(flagName.toUpperCase());
@@ -122,21 +87,15 @@ public class TierManager {
         return out;
     }
 
-    /** Level required to reach the specified tier (each skill must reach this). */
     public int getRequiredLevel(int tier) {
         return tierRequirements.getOrDefault(tier, 0);
     }
 
-    /** All rewards for a given tier (shared across all skills). */
     public List<TierReward> getRewards(int tier) {
         List<TierReward> list = tierRewards.get(tier);
         return list != null ? list : new ArrayList<>();
     }
 
-    /**
-     * Returns true if EVERY skill has reached the required level for the
-     * given tier.
-     */
     public boolean meetsRequirements(PlayerData data, int tier) {
         int required = getRequiredLevel(tier);
         for (SkillType skill : SkillType.values()) {
@@ -145,10 +104,6 @@ public class TierManager {
         return true;
     }
 
-    /**
-     * Returns the list of skills that have NOT yet reached the required
-     * level for the given tier. Empty list if all skills meet the req.
-     */
     public List<SkillType> getMissingSkills(PlayerData data, int tier) {
         int required = getRequiredLevel(tier);
         List<SkillType> missing = new ArrayList<>();
@@ -160,24 +115,13 @@ public class TierManager {
         return missing;
     }
 
-    /**
-     * Called after any skill levels up to check whether the player's
-     * ALL-SKILLS requirement has been met for the next tier.
-     * <p>
-     * When a tier unlocks, the rewards are <strong>automatically rolled and
-     * added to the player's virtual reward backpack</strong> (PlayerData's
-     * storedRewards list). The player can then claim them at any time via
-     * /wasteland claim. Each reward's chance is rolled independently at
-     * unlock time; only successful rolls produce a StoredReward.
-     */
     public void checkTierUnlock(Player player) {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
         int currentTier = data.getTier();
 
         for (int tier = currentTier + 1; tier <= TIER_COUNT; tier++) {
-            // Check if this tier is available based on start date.
             if (!plugin.getStartDateManager().isTierAvailable(tier)) {
-                break; // Tier not available yet (day hasn't arrived).
+                break;
             }
             if (meetsRequirements(data, tier)) {
                 WastelandTierUnlockEvent unlockEvent = new WastelandTierUnlockEvent(
@@ -192,8 +136,6 @@ public class TierManager {
                 Bukkit.getPluginManager().callEvent(new WastelandTierChangeEvent(
                         player, previousTier, tier, WastelandChangeReason.GAMEPLAY));
 
-                // Roll each reward's chance and add successful ones to the
-                // player's virtual reward backpack.
                 List<TierReward> rewards = getRewards(tier);
                 int added = 0;
                 for (TierReward reward : rewards) {
@@ -216,14 +158,12 @@ public class TierManager {
                     }
                 }
 
-                // Persist the new stored rewards.
                 plugin.getDataManager().savePlayer(player.getUniqueId());
 
                 String msg = MessageUtil.getMessage(plugin, "skill.tier-unlock")
                         .replace("{tier}", String.valueOf(tier));
                 player.sendMessage(msg);
 
-                // Notify the player that rewards have been added to their backpack.
                 if (added > 0) {
                     String rewardMsg = MessageUtil.getMessage(plugin, "rewards.added-to-storage")
                             .replace("{count}", String.valueOf(added))
@@ -236,11 +176,6 @@ public class TierManager {
         }
     }
 
-    /**
-     * Claim a single stored reward: execute its hidden commands and remove
-     * it from the player's backpack. Returns true if the reward was found
-     * and claimed, false otherwise.
-     */
     public boolean claimStoredReward(Player player, StoredReward reward) {
         if (reward == null) return false;
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
@@ -250,7 +185,6 @@ public class TierManager {
         Bukkit.getPluginManager().callEvent(claimEvent);
         if (claimEvent.isCancelled()) return false;
 
-        // Execute the hidden commands.
         for (String raw : reward.getCommands()) {
             if (raw == null || raw.trim().isEmpty()) continue;
             String cmd = raw.replace("%player%", player.getName());
@@ -261,7 +195,6 @@ public class TierManager {
             }
         }
 
-        // Remove from storage and persist.
         data.removeStoredReward(reward);
         plugin.getDataManager().savePlayer(player.getUniqueId());
 
@@ -270,10 +203,6 @@ public class TierManager {
         return true;
     }
 
-    /**
-     * Send the player a configurable message listing which skills still
-     * need to be leveled up to unlock the given tier.
-     */
     public void sendUnlockFailedMessage(Player player, int tier) {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
         int required = getRequiredLevel(tier);
@@ -282,7 +211,6 @@ public class TierManager {
         String metTemplate     = msgs.getString("tier.requirement-met", "&a\u2714 Level {current}");
         String notMetTemplate  = msgs.getString("tier.requirement-not-met", "&c\u2718 Level {current}/{required}");
 
-        // Per-skill status strings (e.g. "&a✔ Level 10" or "&c✘ Level 8/10")
         Map<String, String> statuses = new HashMap<>();
         for (SkillType skill : SkillType.values()) {
             int current = data.getLevel(skill);
@@ -299,10 +227,8 @@ public class TierManager {
             statuses.put(skill.getKey() + "_status", status);
         }
 
-        // Build the multi-line message
         List<String> lines = msgs.getStringList("tier.unlock-failed");
         if (lines.isEmpty()) {
-            // Fallback if config missing
             player.sendMessage(MessageUtil.colorize("&cYou have not unlocked this tier yet!"));
             return;
         }
@@ -317,17 +243,11 @@ public class TierManager {
         }
     }
 
-    /**
-     * Dispatch all rewards for a specific tier to a player.
-     * Each reward is rolled independently based on its {@code chance}.
-     * Marks the tier as claimed and persists the data.
-     */
     public boolean dispatchRewards(Player player, int tier) {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
 
         if (data.hasClaimedTier(tier)) return false;
         if (data.getTier() < tier) {
-            // Not unlocked yet — send the requirements message.
             sendUnlockFailedMessage(player, tier);
             return false;
         }
@@ -372,69 +292,47 @@ public class TierManager {
         }
     }
 
-    /**
-     * Save a list of preview rewards for a specific tier to tiers.yml.
-     * This replaces all existing rewards for that tier.
-     * <p>
-     * Used by the in-game PreviewRewardEditor after the admin finishes
-     * placing items and entering commands.
-     *
-     * @param tier    the tier number (1-5)
-     * @param rewards the list of reward entries to save
-     */
     public void savePreviewRewards(int tier, List<PreviewRewardEntry> rewards) {
         FileConfiguration cfg = plugin.getConfigManager().getTiers();
         String basePath = "tiers." + tier + ".rewards";
 
-        // Clear existing rewards for this tier.
         cfg.set(basePath, null);
 
-        // Write each reward entry.
         for (int i = 0; i < rewards.size(); i++) {
             PreviewRewardEntry entry = rewards.get(i);
             String rewardPath = basePath + ".reward_" + (i + 1);
 
             cfg.set(rewardPath + ".chance", entry.getChance());
 
-            // Display item
             cfg.set(rewardPath + ".display-item.material", entry.getMaterial().name());
             cfg.set(rewardPath + ".display-item.data", (int) entry.getData());
             cfg.set(rewardPath + ".display-item.name", entry.getName());
             cfg.set(rewardPath + ".display-item.lore", entry.getLore());
 
-            // Enchants
             if (entry.getEnchants() != null && !entry.getEnchants().isEmpty()) {
                 for (Map.Entry<String, Integer> ench : entry.getEnchants().entrySet()) {
                     cfg.set(rewardPath + ".display-item.enchants." + ench.getKey(), ench.getValue());
                 }
             }
 
-            // Item flags
             if (entry.getItemFlags() != null && !entry.getItemFlags().isEmpty()) {
                 cfg.set(rewardPath + ".display-item.item-flags", entry.getItemFlags());
             }
 
-            // Commands
             if (entry.getCommands() != null && !entry.getCommands().isEmpty()) {
                 cfg.set(rewardPath + ".commands", entry.getCommands());
             }
         }
 
-        // Save the config file to disk.
         try {
             cfg.save(new java.io.File(plugin.getDataFolder(), "tiers.yml"));
         } catch (java.io.IOException e) {
             plugin.getLogger().severe("Could not save tiers.yml: " + e.getMessage());
         }
 
-        // Reload the tier cache so the new rewards take effect immediately.
         reload();
     }
 
-    /**
-     * Simple data holder used by PreviewRewardEditor to pass reward data
-     * to TierManager.savePreviewRewards().
-     */
     public static class PreviewRewardEntry {
         private final Material material;
         private final short data;

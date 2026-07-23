@@ -9,9 +9,6 @@ import org.bukkit.event.HandlerList;
 
 import java.util.UUID;
 
-/**
- * Fired before Wasteland resets a player's stored progress.
- */
 public class WastelandPlayerResetEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();

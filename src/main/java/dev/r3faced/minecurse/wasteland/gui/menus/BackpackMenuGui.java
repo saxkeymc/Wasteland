@@ -11,19 +11,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
-/**
- * Wasteland Backpack GUI — clean, dark, minimal design.
- * <p>
- * Shows items collected from player kills. Click an item to take it.
- * Dynamic sizing based on item count. Paginated if needed.
- * <p>
- * Design:
- * - Dark glass border (data 15)
- * - Light glass filler (data 7)
- * - Items fill left-to-right starting at slot 0
- * - No decorative items, no clutter
- * - Navigation only when needed
- */
 public class BackpackMenuGui extends WastelandGui {
 
     private int page;
@@ -48,10 +35,9 @@ public class BackpackMenuGui extends WastelandGui {
 
         boolean hasMultiPages = totalPages > 1;
 
-        // Dynamic sizing.
         int rows;
         if (hasMultiPages) {
-            rows = 6; // 5 item rows + 1 nav row
+            rows = 6;
         } else {
             int itemCount = Math.min(total, MAX_PER_PAGE);
             rows = Math.max(1, (int) Math.ceil(itemCount / 9.0));
@@ -62,18 +48,15 @@ public class BackpackMenuGui extends WastelandGui {
         String title = MessageUtil.colorize("&8Backpack");
         createInventory(title, size);
 
-        // Fill with dark glass for a clean look.
         ItemStack darkPane = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
         fill(darkPane);
 
-        // Place items starting at slot 0, left-to-right.
         int start = page * MAX_PER_PAGE;
         int count = Math.min(MAX_PER_PAGE, total - start);
         for (int i = 0; i < count; i++) {
             setItem(i, items.get(start + i).clone());
         }
 
-        // Empty state.
         if (total == 0) {
             setItem(4, new ItemBuilder(Material.BARRIER)
                     .name(MessageUtil.colorize("&7Backpack is empty."))
@@ -81,9 +64,7 @@ public class BackpackMenuGui extends WastelandGui {
                     .build());
         }
 
-        // Navigation row (only if multiple pages).
         if (hasMultiPages) {
-            // Previous.
             if (page > 0) {
                 setItem(45, new ItemBuilder(Material.ARROW)
                         .name(MessageUtil.colorize("&7Previous Page"))
@@ -92,12 +73,10 @@ public class BackpackMenuGui extends WastelandGui {
                 setItem(45, darkPane);
             }
 
-            // Close.
             setItem(49, new ItemBuilder(Material.BARRIER)
                     .name(MessageUtil.colorize("&cClose"))
                     .build());
 
-            // Next.
             if (page < totalPages - 1) {
                 setItem(53, new ItemBuilder(Material.ARROW)
                         .name(MessageUtil.colorize("&aNext Page"))
@@ -106,7 +85,6 @@ public class BackpackMenuGui extends WastelandGui {
                 setItem(53, darkPane);
             }
 
-            // Page indicator.
             String pageText = "&7" + (page + 1) + "&8/&7" + totalPages;
             setItem(48, new ItemBuilder(Material.PAPER)
                     .name(MessageUtil.colorize(pageText))
@@ -123,7 +101,6 @@ public class BackpackMenuGui extends WastelandGui {
             ItemStack clicked = inventory.getItem(slot);
             if (clicked == null || clicked.getType() == Material.AIR) return;
 
-            // Navigation buttons.
             if (slot == 45 && page > 0) {
                 event.setCancelled(true);
                 new BackpackMenuGui(plugin, player, page - 1).open();
@@ -140,7 +117,6 @@ public class BackpackMenuGui extends WastelandGui {
                 return;
             }
 
-            // Don't allow taking glass panes, barriers, arrows, paper.
             if (clicked.getType() == Material.STAINED_GLASS_PANE ||
                 clicked.getType() == Material.BARRIER ||
                 clicked.getType() == Material.ARROW ||
@@ -149,7 +125,6 @@ public class BackpackMenuGui extends WastelandGui {
                 return;
             }
 
-            // Allow taking the item — remove from backpack.
             List<ItemStack> items = plugin.getDataManager().getPlayerData(player.getUniqueId()).getBackpackItems();
             int start = page * MAX_PER_PAGE;
             int index = start + slot;

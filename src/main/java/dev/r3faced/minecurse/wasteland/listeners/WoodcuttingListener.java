@@ -13,11 +13,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Awards Woodcutting XP + dust + money when the player breaks log/plank
- * blocks with the Woodcutting Omni Tool. Also delegates tier-locked block
- * checks to the TierLockManager.
- */
 public class WoodcuttingListener implements Listener {
 
     private final WastelandPlugin plugin;
@@ -51,20 +46,15 @@ public class WoodcuttingListener implements Listener {
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.WOODCUTTING, blockType);
         if (xp <= 0) return;
 
-        // Cancel the break — no drops, block stays. Per-player fake bedrock.
         event.setCancelled(true);
 
-        // Award XP.
         plugin.getSkillManager().awardXp(player, SkillType.WOODCUTTING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
 
-        // Award Dust.
         plugin.getDustManager().awardDust(player,
                 plugin.getDustManager().getDefaultDustPerAction(SkillType.WOODCUTTING));
 
-        // Random money drop.
         tryRollMoneyDrop(player);
 
-        // Fake bedrock visual.
         final org.bukkit.Location blockLoc = event.getBlock().getLocation();
         final Player p = player;
         final Material origMat = event.getBlock().getType();

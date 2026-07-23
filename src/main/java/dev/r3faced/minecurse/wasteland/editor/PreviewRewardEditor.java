@@ -24,46 +24,22 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Manages the in-game preview reward editor.
- * <p>
- * Flow:
- * <ol>
- *   <li>Admin runs /wasteland addpreviewreward &lt;tier&gt;</li>
- *   <li>A 54-slot editable inventory opens. The admin drags items into it.</li>
- *   <li>On close, every non-empty item in the inventory is captured.</li>
- *   <li>The admin is prompted in chat, one reward at a time, to enter the
- *       chance (0-100) and the command to execute.</li>
- *   <li>After all rewards are processed, they are saved to tiers.yml and
- *       the tier cache is reloaded.</li>
- * </ol>
- * <p>
- * The preview item is display-only. The player never receives the item
- * itself — only the configured command executes silently when the reward
- * is won.
- */
 public class PreviewRewardEditor implements Listener {
 
     private final WastelandPlugin plugin;
 
-    /** Tracks players who currently have an editor inventory open. */
     private final Map<UUID, Integer> editingTiers = new ConcurrentHashMap<>();
 
-    /** Tracks players who are in the chat-prompt phase. */
     private final Map<UUID, PromptState> promptStates = new ConcurrentHashMap<>();
 
     public PreviewRewardEditor(WastelandPlugin plugin) {
         this.plugin = plugin;
     }
 
-    /**
-     * Open the editor inventory for the given admin and tier.
-     */
     public void openEditor(Player player, int tier) {
         Inventory inv = Bukkit.createInventory(null, 54,
                 MessageUtil.colorize("&8Preview Reward Editor &7\u00bb &aTier " + tier));
 
-        // Info item in the bottom-middle.
         ItemStack info = new ItemBuilder(Material.SIGN)
                 .name("&e&lInstructions")
                 .lore(
@@ -93,7 +69,6 @@ public class PreviewRewardEditor implements Listener {
 
         int tier = editingTiers.remove(uuid);
 
-        // Capture all non-empty items (skip the info item at slot 49).
         List<ItemStack> items = new ArrayList<>();
         for (int i = 0; i < event.getInventory().getSize(); i++) {
             if (i == 49) continue;
@@ -108,7 +83,6 @@ public class PreviewRewardEditor implements Listener {
             return;
         }
 
-        // Start the chat-prompt phase.
         PromptState state = new PromptState(tier, items);
         promptStates.put(uuid, state);
 
@@ -138,8 +112,6 @@ public class PreviewRewardEditor implements Listener {
         PromptState state = promptStates.get(uuid);
 
         if (state.stage == 0) {
-            // Parse chance — must be between 0.001 and 100 (inclusive).
-            // Reject anything outside this range and re-prompt.
             try {
                 double chance = Double.parseDouble(message);
                 if (chance < 0.001 || chance > 100.0) {
@@ -148,7 +120,6 @@ public class PreviewRewardEditor implements Listener {
                     player.sendMessage(MessageUtil.colorize("&7Please enter a valid chance (0.001 - 100):"));
                     return;
                 }
-                // Round to 3 decimal places to keep the config clean.
                 chance = Math.round(chance * 1000.0) / 1000.0;
                 state.chances.add(chance);
                 state.stage = 1;
@@ -250,7 +221,7 @@ public class PreviewRewardEditor implements Listener {
         final List<Double> chances = new ArrayList<>();
         final List<String> commands = new ArrayList<>();
         int index = 0;
-        int stage = 0; // 0 = chance, 1 = command
+        int stage = 0;
 
         PromptState(int tier, List<ItemStack> items) {
             this.tier = tier;

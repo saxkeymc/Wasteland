@@ -7,24 +7,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
-/**
- * Manages per-skill teleport destinations.
- * <p>
- * Locations are stored in {@code teleports.yml} inside the plugin data
- * folder so they survive restarts and reloads. The format is:
- * <pre>
- * teleports:
- *   mining:
- *     world: "world"
- *     x: 1.5
- *     y: 64.0
- *     z: 1.5
- *     yaw: 0.0
- *     pitch: 0.0
- *   woodcutting:
- *     ...
- * </pre>
- */
 public class TeleportManager {
 
     private final WastelandPlugin plugin;
@@ -37,13 +19,11 @@ public class TeleportManager {
         reload();
     }
 
-    /** (Re)load teleports.yml from disk, creating it from the bundled default if missing. */
     public void reload() {
         if (!file.exists()) {
             try {
                 plugin.saveResource("teleports.yml", false);
             } catch (Exception ignored) {
-                // Bundled default may not exist yet; just create an empty file.
                 try {
                     if (!file.exists() && file.getParentFile() != null) {
                         file.getParentFile().mkdirs();
@@ -57,7 +37,6 @@ public class TeleportManager {
         config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
     }
 
-    /** Save the in-memory config back to disk. */
     private void save() {
         try {
             config.save(file);
@@ -66,10 +45,6 @@ public class TeleportManager {
         }
     }
 
-    /**
-     * Set the teleport destination for the given skill to the player's
-     * current location. Persisted immediately.
-     */
     public void setTeleport(SkillType skill, Location loc) {
         if (skill == null || loc == null || loc.getWorld() == null) return;
         String base = "teleports." + skill.getKey();
@@ -82,16 +57,11 @@ public class TeleportManager {
         save();
     }
 
-    /** Returns true if a teleport destination is configured for this skill. */
     public boolean hasTeleport(SkillType skill) {
         if (skill == null) return false;
         return config.isConfigurationSection("teleports." + skill.getKey());
     }
 
-    /**
-     * Get the configured teleport destination for the given skill, or null
-     * if none is set or the world is no longer loaded.
-     */
     public Location getTeleport(SkillType skill) {
         if (skill == null) return null;
         String base = "teleports." + skill.getKey();

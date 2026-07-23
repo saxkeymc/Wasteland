@@ -1,12 +1,3 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Tier & Reward Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# TEST CONFIG — every tier gives a Diamond reward.
-# When claimed, executes: give %player% diamond 1
-#
-# The reward display item is just a Diamond — no tier labels, no tier info.
-# ════════════════════════════════════════════════════════════════════════════
-
 tiers:
   1:
     required-level: 0

@@ -8,11 +8,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Handles /mining, /chopping, /farming, /fishing commands.
- * Replaces the player's current omni tool with the requested skill's tool.
- * Only works in a Wasteland world.
- */
 public class SkillSwitchCommand implements CommandExecutor {
 
     private final WastelandPlugin plugin;
@@ -30,13 +25,11 @@ public class SkillSwitchCommand implements CommandExecutor {
 
         Player player = (Player) sender;
 
-        // Must be in a Wasteland world.
         if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) {
             player.sendMessage("§cYou must be in a Wasteland world to use this command!");
             return true;
         }
 
-        // Determine which skill based on the command name.
         SkillType skill;
         String cmdName = command.getName().toLowerCase();
         switch (cmdName) {
@@ -56,7 +49,6 @@ public class SkillSwitchCommand implements CommandExecutor {
                 return false;
         }
 
-        // Remove ALL omni tools from the player's inventory.
         for (int i = 0; i < player.getInventory().getSize(); i++) {
             ItemStack item = player.getInventory().getItem(i);
             if (item == null) continue;
@@ -68,11 +60,9 @@ public class SkillSwitchCommand implements CommandExecutor {
             }
         }
 
-        // Give the new tool.
         plugin.getToolManager().giveOmniTool(player, skill);
         player.updateInventory();
 
-        // Set the active skill so the XP bar shows THIS skill's level.
         plugin.getDataManager().getPlayerData(player.getUniqueId()).setActiveSkill(skill);
 
         return true;

@@ -14,10 +14,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Awards Farming XP + dust + money when the player harvests crops with the
- * Farming Omni Tool. Also delegates tier-locked block checks to the TierLockManager.
- */
 public class HarvestListener implements Listener {
 
     private final WastelandPlugin plugin;
@@ -52,20 +48,15 @@ public class HarvestListener implements Listener {
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.FARMING, blockType);
         if (xp <= 0) return;
 
-        // Cancel the break — no drops, block stays. Per-player fake bedrock.
         event.setCancelled(true);
 
-        // Award XP.
         plugin.getSkillManager().awardXp(player, SkillType.FARMING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
 
-        // Award Dust.
         plugin.getDustManager().awardDust(player,
                 plugin.getDustManager().getDefaultDustPerAction(SkillType.FARMING));
 
-        // Random money drop.
         tryRollMoneyDrop(player);
 
-        // Fake bedrock visual.
         final org.bukkit.Location blockLoc = block.getLocation();
         final Player p = player;
         final Material origMat = block.getType();

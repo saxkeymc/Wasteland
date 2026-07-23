@@ -16,19 +16,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Help GUI — a 3-row (27-slot) inventory opened via /wasteland help.
- * <p>
- * Shows a single configurable book item in the middle slot (default 13)
- * with all help text drawn from help.yml. A close button sits at the
- * bottom-middle (default 22).
- * <p>
- * Every property of every item (material, data, name, lore, slot,
- * enchants, flags, custom-model-data, skull-owner) is read directly
- * from the config section — nothing is hardcoded. Lore is read with
- * {@link ConfigurationSection#getStringList(String)}, which returns
- * every line regardless of length.
- */
 public class HelpMenuGui extends WastelandGui {
 
     public HelpMenuGui(WastelandPlugin plugin, Player player) {
@@ -42,7 +29,6 @@ public class HelpMenuGui extends WastelandGui {
         int size = cfg.getInt("help-menu.size", 27);
         createInventory(title, size);
 
-        // Border + filler — fully config-driven.
         ItemStack border = buildFiller(cfg, "help-menu.border-item", Material.STAINED_GLASS_PANE, (short) 15);
         ItemStack filler = buildFiller(cfg, "help-menu.fill-item",   Material.STAINED_GLASS_PANE, (short) 7);
         fill(filler);
@@ -51,7 +37,6 @@ public class HelpMenuGui extends WastelandGui {
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
         String playtime = PlaytimeFormatter.format(plugin, data.getPlaytimeSeconds());
 
-        // ── Book item (middle slot) ───────────────────────────────────────────
         ConfigurationSection bookSec = cfg.getConfigurationSection("help-menu.book");
         if (bookSec != null) {
             int bookSlot = bookSec.getInt("slot", 13);
@@ -59,7 +44,6 @@ public class HelpMenuGui extends WastelandGui {
             setItem(bookSlot, bookItem);
         }
 
-        // ── Close button ──────────────────────────────────────────────────────
         ConfigurationSection closeSec = cfg.getConfigurationSection("help-menu.close");
         if (closeSec != null) {
             int closeSlot = closeSec.getInt("slot", 22);
@@ -68,14 +52,7 @@ public class HelpMenuGui extends WastelandGui {
         }
     }
 
-    /**
-     * Build an ItemStack from a config section, applying placeholders to
-     * BOTH the name AND every lore line. Placeholders are substituted
-     * BEFORE colorization so any {@code &} codes inside placeholder
-     * values are correctly translated.
-     */
     private ItemStack buildConfigItem(ConfigurationSection section, PlayerData data, String playtime) {
-        // Read raw values from config.
         String matName = section.getString("material", "STONE");
         Material mat;
         try { mat = Material.valueOf(matName.toUpperCase()); }
@@ -85,16 +62,12 @@ public class HelpMenuGui extends WastelandGui {
         int amount  = section.getInt("amount", 1);
         short dataShort = (short) Math.max(0, Math.min(dataVal, Short.MAX_VALUE));
 
-        // Read name + lore as raw strings (placeholders not yet substituted).
         String rawName = section.getString("name");
         List<String> rawLore = section.isList("lore") ? section.getStringList("lore") : new ArrayList<String>();
 
-        // Apply placeholders FIRST, then colorize.
         String name = rawName == null ? null : MessageUtil.colorize(applyPlaceholders(rawName, data, playtime));
         List<String> lore = new ArrayList<>();
         for (String line : rawLore) {
-            // Substitute placeholders, THEN colorize — so &codes inside
-            // placeholder values are also translated.
             lore.add(MessageUtil.colorize(applyPlaceholders(line, data, playtime)));
         }
 
@@ -102,7 +75,6 @@ public class HelpMenuGui extends WastelandGui {
         if (name != null) b.name(name);
         if (!lore.isEmpty()) b.lore(lore);
 
-        // Enchants
         if (section.isConfigurationSection("enchants")) {
             ConfigurationSection enchSec = section.getConfigurationSection("enchants");
             for (String enchName : enchSec.getKeys(false)) {
@@ -115,30 +87,24 @@ public class HelpMenuGui extends WastelandGui {
             }
         }
 
-        // Item flags
         if (section.isList("item-flags")) {
             for (String flagName : section.getStringList("item-flags")) {
                 try {
                     org.bukkit.inventory.ItemFlag flag =
                             org.bukkit.inventory.ItemFlag.valueOf(flagName.toUpperCase());
-                    // Use reflection-safe path via ItemBuilder
-                    b.hideFlags(); // simplified — apply all flags if any are listed
+                    b.hideFlags();
                     break;
                 } catch (Exception ignored) {}
             }
         }
 
-        // Glowing
         if (section.getBoolean("glowing", false)) b.glowing();
 
-        // Hide flags
         if (section.getBoolean("hide-flags", false)) b.hideFlags();
 
-        // Custom Model Data (1.14+; silently no-op on 1.8)
         int cmd = section.getInt("custom-model-data", -1);
         if (cmd >= 0) b.customModelData(cmd);
 
-        // Skull owner
         if (mat == Material.SKULL_ITEM && dataShort == 3) {
             String owner = section.getString("skull-owner");
             if (owner != null) b.skullOwner(applyPlaceholders(owner, data, playtime));
@@ -147,12 +113,6 @@ public class HelpMenuGui extends WastelandGui {
         return b.build();
     }
 
-    /**
-     * Substitute placeholders in a single string. Does NOT colorize —
-     * the caller is responsible for calling {@link MessageUtil#colorize}
-     * after substitution so any {@code &} codes inside placeholder
-     * values are correctly translated.
-     */
     private String applyPlaceholders(String input, PlayerData data, String playtime) {
         if (input == null) return null;
         return input
@@ -173,8 +133,6 @@ public class HelpMenuGui extends WastelandGui {
             player.closeInventory();
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Material parseMaterial(String name, Material fallback) {
         if (name == null) return fallback;

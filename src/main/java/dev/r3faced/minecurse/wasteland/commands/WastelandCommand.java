@@ -22,30 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Handles all /wasteland (and /wl) sub-commands.
- *
- * <pre>
- * /wasteland                                  — open main GUI            [wasteland.use]
- * /wasteland collect                          — open collect GUI         [wasteland.use]
- * /wasteland claim                            — alias for collect        [wasteland.use]
- * /wasteland tiers                            — open tier browser        [wasteland.use]
- * /wasteland stats                            — open statistics GUI      [wasteland.use]
- * /wasteland help                             — open help GUI            [wasteland.use]
- * /wasteland playtime                         — view your playtime       [wasteland.use]
- * /wasteland reload                           — reload plugin            [wasteland.admin]
- * /wasteland give <player> <skill>            — give omni tool           [wasteland.admin]
- * /wasteland setlevel <p> <s> <l>             — set level                [wasteland.admin]
- * /wasteland addxp <p> <s> <amt>              — add xp                   [wasteland.admin]
- * /wasteland removexp <p> <s> <amt>           — remove xp                [wasteland.admin]
- * /wasteland settier <p> <t>                  — set tier                 [wasteland.admin]
- * /wasteland reset <player>                   — reset player             [wasteland.admin]
- * /wasteland setteleportmining                — set mining teleport      [wasteland.admin]
- * /wasteland setteleportchopping              — set chopping teleport    [wasteland.admin]
- * /wasteland setteleportfarming               — set farming teleport     [wasteland.admin]
- * /wasteland setteleportfishing               — set fishing teleport     [wasteland.admin]
- * </pre>
- */
 public class WastelandCommand implements CommandExecutor, TabCompleter {
 
     private final WastelandPlugin plugin;
@@ -67,7 +43,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-        // /wasteland (no args) — main menu
         if (args.length == 0) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage(MessageUtil.getMessage(plugin, "player-only"));
@@ -84,8 +59,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase();
 
         switch (sub) {
-
-            // ── Player commands ────────────────────────────────────────────────
 
             case "collect":
             case "claim": {
@@ -129,8 +102,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 if (!(sender instanceof Player)) { sender.sendMessage(MessageUtil.getMessage(plugin, "player-only")); return true; }
                 if (!sender.hasPermission("wasteland.use")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
                 Player p = (Player) sender;
-                // Can only open OUTSIDE Wasteland worlds — you're editing
-                // the armor set that will be applied when you enter Wasteland.
                 if (plugin.getWastelandWorldManager().isWastelandWorld(p.getWorld())) {
                     p.sendMessage(MessageUtil.colorize("&cYou can only open this outside Wasteland worlds!"));
                     return true;
@@ -194,8 +165,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            // ── Teleport setup commands ────────────────────────────────────────
-
             case "setteleportmining":
                 return handleSetTeleport(sender, SkillType.MINING);
             case "setteleportchopping":
@@ -235,8 +204,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(MessageUtil.colorize("&aOpening preview reward editor for Tier " + previewTier + "..."));
                 return true;
             }
-
-            // ── Admin commands ─────────────────────────────────────────────────
 
             case "reload": {
                 if (!sender.hasPermission("wasteland.admin")) { sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission")); return true; }
@@ -350,28 +317,22 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
 
-                // ── /wasteland reset all confirm ──────────────────────────────
                 if (args[1].equalsIgnoreCase("all")) {
                     if (args.length < 3 || !args[2].equalsIgnoreCase("confirm")) {
-                        // Send confirmation prompt — require "confirm" to proceed.
                         sender.sendMessage(MessageUtil.getMessage(plugin, "admin.reset-all-confirm"));
                         return true;
                     }
-                    // Reset every online player + every cached player.
                     int resetCount = 0;
                     for (Player online : Bukkit.getOnlinePlayers()) {
                         if (plugin.getApi().resetPlayer(online.getUniqueId(), WastelandChangeReason.COMMAND)) {
                             resetCount++;
                         }
                     }
-                    // Also reset any cached-but-offline players (the data
-                    // manager's resetPlayer already handles this via the cache).
                     sender.sendMessage(MessageUtil.getMessage(plugin, "admin.reset-all-complete")
                             .replace("{count}", String.valueOf(resetCount)));
                     return true;
                 }
 
-                // ── /wasteland reset <player> ────────────────────────────────
                 Player target = Bukkit.getPlayer(args[1]);
                 if (target == null) {
                     sender.sendMessage(MessageUtil.getMessage(plugin, "player-not-found").replace("{player}", args[1]));
@@ -394,8 +355,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** Handle /wasteland setteleport<skill> — saves the player's current location
-     *  AND updates the skill's world in config.yml to the player's current world. */
     private boolean handleSetTeleport(CommandSender sender, SkillType skill) {
         if (!sender.hasPermission("wasteland.admin")) {
             sender.sendMessage(MessageUtil.getMessage(plugin, "no-permission"));
@@ -406,18 +365,13 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         Player player = (Player) sender;
-        // Save the teleport location.
         plugin.getTeleportManager().setTeleport(skill, player.getLocation());
 
-        // Also update the skill's world in config.yml to the player's current world.
-        // This ensures the MiningListener, WorldChangeListener, WastelandWorldManager,
-        // etc. all recognise the new world as the skill's wasteland world.
         String currentWorldName = player.getWorld().getName();
         org.bukkit.configuration.file.FileConfiguration mainCfg = plugin.getConfig();
         mainCfg.set("worlds." + skill.getKey() + ".world", currentWorldName);
         plugin.saveConfig();
 
-        // Also update the wasteland-worlds list if the new world isn't already in it.
         java.util.List<String> wlWorlds = mainCfg.getStringList("wasteland-worlds");
         if (!wlWorlds.contains(currentWorldName)) {
             wlWorlds.add(currentWorldName);
@@ -425,7 +379,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             plugin.saveConfig();
         }
 
-        // Reload configs so the new world takes effect immediately.
         plugin.reload();
 
         String msg = MessageUtil.getMessage(plugin, "admin.set-teleport")
@@ -454,7 +407,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
 
         String sub = args[0].toLowerCase();
 
-        // Player name completions
         if ((sub.equals("give") || sub.equals("setlevel") || sub.equals("addxp")
                 || sub.equals("removexp") || sub.equals("settier") || sub.equals("reset"))
                 && args.length == 2) {
@@ -465,7 +417,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             return completions;
         }
 
-        // Skill completions
         if ((sub.equals("give") || sub.equals("setlevel") || sub.equals("addxp")
                 || sub.equals("removexp"))
                 && args.length == 3) {
@@ -476,7 +427,6 @@ public class WastelandCommand implements CommandExecutor, TabCompleter {
             return completions;
         }
 
-        // Tier completions (settier now uses 3 args: <player> <tier>)
         if (sub.equals("settier") && args.length == 3) {
             for (int i = 1; i <= dev.r3faced.minecurse.wasteland.managers.TierManager.TIER_COUNT; i++) {
                 completions.add(String.valueOf(i));

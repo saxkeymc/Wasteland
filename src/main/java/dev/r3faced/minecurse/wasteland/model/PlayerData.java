@@ -9,78 +9,36 @@ import java.util.UUID;
 
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Holds all Wasteland data for a single player.
- * <p>
- * Skill levels and XP are tracked per-skill, but the tier system is
- * SHARED across all skills — every skill contributes toward unlocking
- * the same single tier progression. There is no "Mining Tier" or
- * "Fishing Tier"; there is only one tier per player.
- * <p>
- * Playtime is tracked in seconds and persisted across restarts.
- */
 public class PlayerData {
 
     private final UUID uuid;
 
-    /** Skill level per skill type. */
     private final Map<SkillType, Integer> levels = new EnumMap<>(SkillType.class);
 
-    /** Accumulated XP per skill type. */
     private final Map<SkillType, Long> xp = new EnumMap<>(SkillType.class);
 
-    /** Single shared tier (1-based). */
     private int tier = 1;
 
-    /**
-     * Set of tier claim keys that have been collected.
-     * Key format: "tier_{n}" e.g. "tier_3"
-     */
     private final Set<String> claimedTiers = new HashSet<>();
 
-    /** Total time spent in the Wasteland system, in seconds. */
     private long playtimeSeconds = 0L;
 
-    // ── Player Settings (persisted) ──────────────────────────────────────────
-    /** Whether to see other players in Wasteland worlds. */
     private boolean settingSeePlayers = true;
-    /** Whether to hear XP orb sounds when using tools. */
     private boolean settingXpNoises = true;
-    /** Whether to show Wasteland level on the XP bar. */
     private boolean settingXpBarDisplay = true;
 
-    // ── Transient (NOT persisted) ─────────────────────────────────────────────
-    /** Saved vanilla XP level — restored when leaving a Wasteland world. */
     private transient int savedVanillaLevel = 0;
-    /** Saved vanilla XP float — restored when leaving a Wasteland world. */
     private transient float savedVanillaXp = 0f;
-    /** The skill currently shown on the XP bar. Set by /mining, /fishing, etc. */
     private transient SkillType activeSkill = null;
 
-    // ── Dust currency (persisted) ─────────────────────────────────────────────
     private int dust = 0;
 
-    // ── Tool upgrade levels (persisted) ───────────────────────────────────────
-    /** Per-skill tool upgrade level (0 = no upgrade, 1-4 = upgraded). */
     private final Map<SkillType, Integer> toolUpgrades = new EnumMap<>(SkillType.class);
 
-    // ── Wasteland Backpack (persisted) ────────────────────────────────────────
-    /** Items stored from player kills. */
     private final List<ItemStack> backpackItems = new java.util.ArrayList<>();
 
-    /**
-     * Virtual reward backpack — rewards unlocked via tier progression
-     * that haven't been claimed yet. Each entry carries its own hidden
-     * commands; the GUI stacks entries with identical display items.
-     */
     private final List<StoredReward> storedRewards = new java.util.ArrayList<>();
 
-    /**
-     * Transient (NOT persisted) — epoch-millis when the player most recently
-     * entered a Wasteland world, or 0 if they are not currently in one.
-     * Used by PlaytimeTask and WorldChangeListener to compute partial
-     * sessions on world change / quit / shutdown.
-     */
     private transient long inWastelandSince = 0L;
 
     public PlayerData(UUID uuid) {
@@ -94,8 +52,6 @@ public class PlayerData {
     public UUID getUuid() {
         return uuid;
     }
-
-    // ── Level ─────────────────────────────────────────────────────────────────
 
     public int getLevel(SkillType skill) {
         return levels.getOrDefault(skill, 0);
@@ -112,8 +68,6 @@ public class PlayerData {
         }
         return total;
     }
-
-    // ── XP ───────────────────────────────────────────────────────────────────
 
     public long getXp(SkillType skill) {
         return xp.getOrDefault(skill, 0L);
@@ -135,8 +89,6 @@ public class PlayerData {
         return total;
     }
 
-    // ── Tier (single, shared) ─────────────────────────────────────────────────
-
     public int getTier() {
         return tier;
     }
@@ -144,8 +96,6 @@ public class PlayerData {
     public void setTier(int tier) {
         this.tier = tier;
     }
-
-    // ── Tier Claim Tracking ───────────────────────────────────────────────────
 
     public static String tierClaimKey(int tier) {
         return "tier_" + tier;
@@ -168,8 +118,6 @@ public class PlayerData {
         claimedTiers.addAll(keys);
     }
 
-    // ── Playtime ──────────────────────────────────────────────────────────────
-
     public long getPlaytimeSeconds() {
         return playtimeSeconds;
     }
@@ -182,35 +130,24 @@ public class PlayerData {
         this.playtimeSeconds += seconds;
     }
 
-    /** Returns epoch-millis when the player entered a Wasteland world, or 0 if not in one. */
     public long getInWastelandSince() {
         return inWastelandSince;
     }
 
-    /** Set the epoch-millis when the player entered a Wasteland world (0 = not in one). */
     public void setInWastelandSince(long millis) {
         this.inWastelandSince = millis;
     }
 
-    // ── Stored Rewards (virtual backpack) ─────────────────────────────────────
-
-    /**
-     * Returns the list of rewards waiting to be claimed. This is the live
-     * list — mutations are visible immediately. The GUI reads from this
-     * list and removes entries as the player claims them.
-     */
     public List<StoredReward> getStoredRewards() {
         return storedRewards;
     }
 
-    /** Add a single reward to the backpack. */
     public void addStoredReward(StoredReward reward) {
         if (reward != null) {
             storedRewards.add(reward);
         }
     }
 
-    /** Add multiple rewards at once (e.g. when a tier unlocks). */
     public void addStoredRewards(List<StoredReward> rewards) {
         if (rewards != null) {
             for (StoredReward r : rewards) {
@@ -219,17 +156,13 @@ public class PlayerData {
         }
     }
 
-    /** Remove a specific reward instance from the backpack. */
     public void removeStoredReward(StoredReward reward) {
         storedRewards.remove(reward);
     }
 
-    /** Clear all stored rewards (used by /wasteland reset). */
     public void clearStoredRewards() {
         storedRewards.clear();
     }
-
-    // ── Bulk access for serialization ─────────────────────────────────────────
 
     public Map<SkillType, Integer> getLevels() {
         return levels;
@@ -238,8 +171,6 @@ public class PlayerData {
     public Map<SkillType, Long> getXpMap() {
         return xp;
     }
-
-    // ── Player Settings ───────────────────────────────────────────────────────
 
     public boolean isSettingSeePlayers() { return settingSeePlayers; }
     public void setSettingSeePlayers(boolean v) { this.settingSeePlayers = v; }
@@ -250,8 +181,6 @@ public class PlayerData {
     public boolean isSettingXpBarDisplay() { return settingXpBarDisplay; }
     public void setSettingXpBarDisplay(boolean v) { this.settingXpBarDisplay = v; }
 
-    // ── Saved vanilla XP (transient) ──────────────────────────────────────────
-
     public int getSavedVanillaLevel() { return savedVanillaLevel; }
     public void setSavedVanillaLevel(int v) { this.savedVanillaLevel = v; }
 
@@ -261,13 +190,9 @@ public class PlayerData {
     public SkillType getActiveSkill() { return activeSkill; }
     public void setActiveSkill(SkillType skill) { this.activeSkill = skill; }
 
-    // ── Dust ──────────────────────────────────────────────────────────────────
-
     public int getDust() { return dust; }
     public void setDust(int v) { this.dust = v; }
     public void addDust(int amount) { this.dust += amount; }
-
-    // ── Tool Upgrades ──────────────────────────────────────────────────────────
 
     public int getToolUpgradeLevel(SkillType skill) {
         return toolUpgrades.getOrDefault(skill, 0);
@@ -276,8 +201,6 @@ public class PlayerData {
         toolUpgrades.put(skill, level);
     }
     public Map<SkillType, Integer> getToolUpgrades() { return toolUpgrades; }
-
-    // ── Backpack ──────────────────────────────────────────────────────────────
 
     public List<ItemStack> getBackpackItems() { return backpackItems; }
     public void clearBackpack() { backpackItems.clear(); }

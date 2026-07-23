@@ -1,31 +1,12 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — GUI Configuration (v1.2 — shared tier system)
-# ════════════════════════════════════════════════════════════════════════════
-# All GUI titles, item names, materials, lores, and slots are configurable here.
-# Placeholders ({mining_level}, {player}, {tier}, {playtime}, etc.) are
-# substituted at runtime.
-#
-# Design notes:
-#   • Skill buttons ONLY teleport the player. They do NOT open sub-menus.
-#   • The flavour text uses &7&o (gray italic) for a clean, polished look.
-#   • "Click to view..." lines have been removed entirely.
-#   • The tier system is SHARED across all skills — no per-skill tiers.
-#   • The profile head shows colored skill sections + Wasteland Playtime.
-#   • "Rewards Claimed" is no longer tracked or displayed anywhere.
-# ════════════════════════════════════════════════════════════════════════════
-
 main-menu:
   title: "&7Wasteland"
   size: 54
-  # Skill-icon click behaviour: TELEPORT (always teleport, no menu).
   skill-click-behavior: TELEPORT
 
-  # Outer-border decorative panes
   border-item:
     material: STAINED_GLASS_PANE
     data: 15
     name: " "
-  # Inner-area filler panes
   fill-item:
     material: STAINED_GLASS_PANE
     data: 7
@@ -88,8 +69,6 @@ main-menu:
       lore:
         - "&7Click to close this menu."
 
-    # Player profile head — bottom-right corner.
-    # Colored skill sections + Wasteland Playtime (no Rewards Claimed).
     profile:
       slot: 53
       material: SKULL_ITEM
@@ -105,7 +84,6 @@ main-menu:
         - ""
         - "&fWasteland Playtime: &7{playtime}"
 
-# ── Skill Detail Menu (still accessible via /wasteland stats or other paths) ─
 skill-menu:
   title: "&7Wasteland &8\u2022 &a{skill}"
   size: 54
@@ -150,7 +128,6 @@ skill-menu:
       lore:
         - "&7View all tier rewards."
 
-# ── Tier Browser Menu (shared tiers, no skill) ───────────────────────────────
 tier-menu:
   title: "&7Wasteland &8\u2022 &aTier Rewards"
   size: 27
@@ -181,11 +158,9 @@ tier-menu:
     lore:
       - "&7Return to main menu."
 
-# ── Reward Page Menu (shared tier, no skill prefix) ──────────────────────────
 reward-page-menu:
   title: "&7Tier {tier} Rewards"
   size: 54
-  # Status labels — never include command info anywhere in this menu.
   status:
     claimed:   "&a\u2714 Claimed"
     unclaimed: "&e\u25cf Unclaimed"
@@ -228,10 +203,6 @@ reward-page-menu:
     lore:
       - "&7Return to tier browser."
 
-# ── Collect Rewards Menu (Virtual Reward Backpack) ───────────────────────────
-# Paginated, infinite-storage reward backpack. All rewards from all tiers
-# are merged into one continuous storage. Duplicate display items stack
-# visually. Pages are created automatically as the player accumulates rewards.
 collect-menu:
   title: "&d&7Collect Rewards"
   size: 54
@@ -243,7 +214,6 @@ collect-menu:
     material: STAINED_GLASS_PANE
     data: 7
     name: " "
-  # Reward slots — 45 per page (rows 1-5, excluding the border).
   reward-slots:
     - 10
     - 11
@@ -301,12 +271,10 @@ collect-menu:
     name: "&c&lClose"
     lore:
       - "&7Return to main menu."
-  # Stacking display — appended to the lore of stacked reward items.
   stacking:
     count-line: "&7Amount: &f{count}"
     claim-line: "&eClick to claim one."
 
-# ── Statistics Menu ──────────────────────────────────────────────────────────
 stats-menu:
   title: "&7Wasteland &8\u2022 &aStatistics"
   size: 54
@@ -362,7 +330,6 @@ stats-menu:
       data: 0
       name: "&c&lClose"
 
-# ── Progress Bar ─────────────────────────────────────────────────────────────
 progress-bar:
   filled-char: "\u25a0"
   empty-char: "\u25a1"
@@ -370,7 +337,6 @@ progress-bar:
   empty-color: "&7"
   length: 20
 
-# ── Settings Menu ────────────────────────────────────────────────────────────
 settings-menu:
   title: "&7Wasteland Settings"
   size: 27

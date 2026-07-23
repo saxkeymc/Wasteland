@@ -16,24 +16,16 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Handles XP awarding, level-up logic, and tier progression per skill.
- * XP required for the next level: base * (multiplier ^ currentLevel)
- */
 public class SkillManager {
 
     private final WastelandPlugin plugin;
 
-    /** Level caps keyed by skill type. */
     private final Map<SkillType, Integer> levelCaps = new HashMap<>();
 
-    /** XP formula base keyed by skill type. */
     private final Map<SkillType, Double> xpBase = new HashMap<>();
 
-    /** XP formula multiplier keyed by skill type. */
     private final Map<SkillType, Double> xpMultiplier = new HashMap<>();
 
-    /** XP per block/action keyed by skill type, then material name. */
     private final Map<SkillType, Map<String, Integer>> xpValues = new HashMap<>();
 
     public SkillManager(WastelandPlugin plugin) {
@@ -41,7 +33,6 @@ public class SkillManager {
         reload();
     }
 
-    /** Re-read skills.yml. */
     public void reload() {
         levelCaps.clear();
         xpBase.clear();
@@ -66,22 +57,10 @@ public class SkillManager {
         }
     }
 
-    // ── Level cap ─────────────────────────────────────────────────────────────
-
     public int getLevelCap(SkillType skill) {
         return levelCaps.getOrDefault(skill, 50);
     }
 
-    // ── XP per action ─────────────────────────────────────────────────────────
-
-    /**
-     * Returns the XP a player should earn for breaking/catching the given material.
-     * Falls back to "DEFAULT" key if the specific material is not configured.
-     *
-     * @param skill    the skill type
-     * @param material the material name (e.g. "COAL_ORE")
-     * @return XP amount, 0 if not configured
-     */
     public int getXpForBlock(SkillType skill, String material) {
         Map<String, Integer> map = xpValues.getOrDefault(skill, new HashMap<>());
         if (map.containsKey(material)) {
@@ -90,11 +69,6 @@ public class SkillManager {
         return map.getOrDefault("DEFAULT", 0);
     }
 
-    // ── XP formula ────────────────────────────────────────────────────────────
-
-    /**
-     * Calculate total XP required to reach the given level from 0.
-     */
     public long xpRequiredForLevel(SkillType skill, int level) {
         if (level <= 0) return 0;
         double base = xpBase.getOrDefault(skill, 100.0);
@@ -106,34 +80,16 @@ public class SkillManager {
         return total;
     }
 
-    /**
-     * XP needed to advance from the current level to the next level.
-     */
     public long xpToNextLevel(SkillType skill, int currentLevel) {
         double base = xpBase.getOrDefault(skill, 100.0);
         double mult = xpMultiplier.getOrDefault(skill, 1.15);
         return (long) (base * Math.pow(mult, currentLevel));
     }
 
-    // ── Core logic ────────────────────────────────────────────────────────────
-
-    /**
-     * Award XP to a player for a specific skill and check for level/tier ups.
-     * Must be called on the main thread.
-     *
-     * @param player the player receiving XP
-     * @param skill  the skill to award XP for
-     * @param amount the raw XP amount to add
-     */
     public void awardXp(Player player, SkillType skill, int amount) {
         awardXp(player, skill, amount, WastelandXpCause.CUSTOM, "legacy");
     }
 
-    /**
-     * Award XP to a player, firing the public API event before the XP is
-     * applied. The returned value is the final amount awarded after event
-     * modifiers. Returns 0 when cancelled, capped, or invalid.
-     */
     public long awardXp(Player player, SkillType skill, long amount, WastelandXpCause cause, String source) {
         if (amount <= 0) return 0L;
 
@@ -141,7 +97,7 @@ public class SkillManager {
         int currentLevel = data.getLevel(skill);
         int cap = getLevelCap(skill);
 
-        if (currentLevel >= cap) return 0L; // already max level
+        if (currentLevel >= cap) return 0L;
 
         WastelandXpCause safeCause = cause == null ? WastelandXpCause.CUSTOM : cause;
         WastelandXpGainEvent xpEvent = new WastelandXpGainEvent(player, skill, amount, safeCause, source);
@@ -156,20 +112,17 @@ public class SkillManager {
 
         data.addXp(skill, finalAmount);
 
-        // Play an XP orb sound if the player has the setting enabled.
         if (data.isSettingXpNoises()) {
             try {
                 org.bukkit.Sound xpSound = org.bukkit.Sound.valueOf("ORB_PICKUP");
                 player.playSound(player.getLocation(), xpSound, 0.3f, 1.2f);
             } catch (Exception ignored) {
-                // Fallback for servers that don't have ORB_PICKUP.
                 try {
                     player.playSound(player.getLocation(), org.bukkit.Sound.LEVEL_UP, 0.3f, 1.5f);
                 } catch (Exception ignored2) {}
             }
         }
 
-        // Notify the player — only send if the message is non-empty.
         String xpMsg = MessageUtil.getMessage(plugin, "skill.xp-gained")
                 .replace("{xp}", String.valueOf(finalAmount))
                 .replace("{skill}", skill.getKey());
@@ -177,7 +130,6 @@ public class SkillManager {
             player.sendMessage(xpMsg);
         }
 
-        // Check for level ups (may be multiple at once with large XP gains)
         boolean levelled = false;
         while (data.getLevel(skill) < cap) {
             long needed = xpRequiredForLevel(skill, data.getLevel(skill) + 1);
@@ -191,7 +143,6 @@ public class SkillManager {
                         .replace("{level}", String.valueOf(data.getLevel(skill)));
                 player.sendMessage(levelMsg);
 
-                // Show level-up as a TITLE on screen (not action bar).
                 String skillName = skill.getKey().substring(0, 1).toUpperCase() + skill.getKey().substring(1);
                 String title = dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize("&a&lLevel Up!");
                 String subtitle = dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
@@ -216,18 +167,13 @@ public class SkillManager {
         ));
 
         if (levelled) {
-            // Check for shared tier unlocks (based on total level across all skills)
             plugin.getTierManager().checkTierUnlock(player);
         }
 
-        // Schedule async save
         plugin.getDataManager().savePlayer(player.getUniqueId());
         return finalAmount;
     }
 
-    /**
-     * Returns a progress bar string for the given skill level and XP.
-     */
     public String getProgressBar(SkillType skill, PlayerData data) {
         FileConfiguration guiCfg = plugin.getConfigManager().getGui();
         int length = guiCfg.getInt("progress-bar.length", 20);

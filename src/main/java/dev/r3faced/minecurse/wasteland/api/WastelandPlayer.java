@@ -10,9 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Convenience wrapper around a Wasteland player's data.
- */
 public class WastelandPlayer {
 
     private final WastelandApi api;

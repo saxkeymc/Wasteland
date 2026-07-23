@@ -15,9 +15,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Statistics overview menu.
- */
 public class StatsMenuGui extends WastelandGui {
 
     public StatsMenuGui(WastelandPlugin plugin, Player player) {
@@ -30,7 +27,6 @@ public class StatsMenuGui extends WastelandGui {
         String title = MessageUtil.colorize(cfg.getString("stats-menu.title", "&2&lWasteland &8• &aStatistics"));
         createInventory(title, 54);
 
-        // Filler
         String fillerMat = cfg.getString("stats-menu.fill-item.material", "STAINED_GLASS_PANE");
         int fillerData = cfg.getInt("stats-menu.fill-item.data", 7);
         ItemStack filler = new ItemBuilder(parseMat(fillerMat), 1, (short) fillerData).name(" ").build();
@@ -38,7 +34,6 @@ public class StatsMenuGui extends WastelandGui {
 
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
 
-        // Per-skill items
         for (SkillType skill : SkillType.values()) {
             String cfgKey = skill.getKey();
             int slot = cfg.getInt("stats-menu.items." + cfgKey + ".slot", 20);
@@ -56,7 +51,6 @@ public class StatsMenuGui extends WastelandGui {
             setItem(slot, new ItemBuilder(mat).name(name).lore(lore).build());
         }
 
-        // Total
         int totalSlot = cfg.getInt("stats-menu.items.total.slot", 31);
         Material totalMat = parseMat(cfg.getString("stats-menu.items.total.material", "NETHER_STAR"));
         String totalName = MessageUtil.colorize(cfg.getString("stats-menu.items.total.name", "&e&lTotal Stats"));
@@ -69,7 +63,6 @@ public class StatsMenuGui extends WastelandGui {
         }
         setItem(totalSlot, new ItemBuilder(totalMat).name(totalName).lore(totalLore).build());
 
-        // Close
         int closeSlot = cfg.getInt("stats-menu.items.close.slot", 49);
         Material closeMat = parseMat(cfg.getString("stats-menu.items.close.material", "BARRIER"));
         String closeName = MessageUtil.colorize(cfg.getString("stats-menu.items.close.name", "&c&lClose"));
@@ -82,7 +75,6 @@ public class StatsMenuGui extends WastelandGui {
         FileConfiguration cfg = plugin.getConfigManager().getGui();
         int slot = event.getSlot();
         if (slot == cfg.getInt("stats-menu.items.close.slot", 49)) {
-            // Return to the Main Wasteland GUI instead of closing the inventory.
             new MainMenuGui(plugin, player).open();
         }
     }

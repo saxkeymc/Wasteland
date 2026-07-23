@@ -8,17 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-/**
- * Periodic task that updates the XP bar for players in Wasteland worlds.
- * <p>
- * Runs EVERY TICK to prevent vanilla XP from interfering.
- * <p>
- * Shows the player's ACTIVE skill (set by /mining, /fishing, etc.) level
- * on the XP bar, with the bar fill representing progress toward the next
- * level of that skill.
- * <p>
- * If no active skill is set, defaults to Mining.
- */
 public class XpBarTask extends BukkitRunnable {
 
     private final WastelandPlugin plugin;
@@ -44,11 +33,8 @@ public class XpBarTask extends BukkitRunnable {
 
         if (!data.isSettingXpBarDisplay()) return;
 
-        // Use the player's active skill (set by /mining, /fishing, etc.)
-        // Default to Mining if none set.
         SkillType skill = data.getActiveSkill();
         if (skill == null) {
-            // Try to detect from the tool the player is holding.
             ItemStack hand = player.getItemInHand();
             for (SkillType s : SkillType.values()) {
                 if (plugin.getToolManager().isOmniTool(hand, s)) {
@@ -58,17 +44,15 @@ public class XpBarTask extends BukkitRunnable {
                 }
             }
             if (skill == null) {
-                skill = SkillType.MINING; // fallback
+                skill = SkillType.MINING;
             }
         }
 
         int currentLevel = data.getLevel(skill);
         int cap = plugin.getSkillManager().getLevelCap(skill);
 
-        // Set the XP bar level to the current Wasteland level.
         player.setLevel(currentLevel);
 
-        // Calculate XP progress within the current level.
         if (currentLevel >= cap) {
             player.setExp(1.0f);
         } else {

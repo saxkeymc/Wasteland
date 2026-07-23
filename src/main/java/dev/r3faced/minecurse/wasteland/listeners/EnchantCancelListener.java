@@ -10,31 +10,6 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.projectiles.ProjectileSource;
 
-/**
- * Cancels ALL custom enchant procs from EnchantmentAPI / CurseEnchants
- * in Wasteland worlds.
- * <p>
- * Since we don't have the EnchantmentAPI JAR at compile time, we
- * intercept the Bukkit events that custom enchants use to proc:
- * <ul>
- *   <li>EntityDamageByEntityEvent — combat enchants (Abyss, Sharpness, etc.)</li>
- *   <li>EntityDamageEvent — defensive enchants (Mirror, etc.)</li>
- *   <li>ProjectileLaunchEvent — projectile enchants</li>
- * </ul>
- * <p>
- * In Wasteland worlds, ALL damage is already cancelled by
- * WastelandWorldProtectionListener (no PvP, no fall, no fire, etc.).
- * Since custom enchants proc ON damage events, and those events are
- * cancelled, the enchants effectively can't fire.
- * <p>
- * This listener runs at LOWEST priority to ensure that if any enchant
- * plugin tries to proc at LOWEST, it sees the event as already
- * cancelled (by another plugin) and skips its logic.
- * <p>
- * Additionally, non-damage enchant effects (potions, particles, etc.)
- * are neutralized because WastelandWorldProtectionListener cancels
- * ALL damage, meaning enchant procs that deal damage have no effect.
- */
 public class EnchantCancelListener implements Listener {
 
     private final WastelandPlugin plugin;
@@ -43,25 +18,11 @@ public class EnchantCancelListener implements Listener {
         this.plugin = plugin;
     }
 
-    /**
-     * Cancel enchant procs at the LOWEST priority. Most enchant plugins
-     * listen at NORMAL or HIGHEST. By running at LOWEST, we ensure that
-     * if the event was already cancelled (by WastelandWorldProtectionListener
-     * at HIGHEST, or by Bukkit itself), enchant plugins see it as cancelled.
-     * <p>
-     * However, since HIGHEST > LOWEST in execution order, this LOWEST
-     * handler runs FIRST (before HIGHEST). So we can't rely on the HIGHEST
-     * cancellation here. Instead, we cancel the event ourselves at LOWEST
-     * if the player is in a wasteland world.
-     */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onEntityDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
         if (!plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) return;
-        // Cancel at LOWEST priority so enchant plugins (which usually
-        // listen at NORMAL or HIGHEST) see the event as cancelled
-        // and skip their proc logic.
         event.setCancelled(true);
     }
 
@@ -71,7 +32,6 @@ public class EnchantCancelListener implements Listener {
             Player victim = (Player) event.getEntity();
             Player attacker = (Player) event.getDamager();
             if (plugin.getWastelandWorldManager().isWastelandWorld(victim.getWorld())) {
-                // Allow enchants if BOTH players are Tier 5.
                 int victimTier = plugin.getDataManager().getPlayerData(victim.getUniqueId()).getTier();
                 int attackerTier = plugin.getDataManager().getPlayerData(attacker.getUniqueId()).getTier();
                 if (victimTier >= 5 && attackerTier >= 5) return;
@@ -98,16 +58,12 @@ public class EnchantCancelListener implements Listener {
         }
     }
 
-    /**
-     * Cancel projectile-based enchant procs (but NOT fishing hooks).
-     */
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (event.getEntity().getShooter() instanceof Player) {
             Player player = (Player) event.getEntity().getShooter();
             if (plugin.getWastelandWorldManager().isWastelandWorld(player.getWorld())) {
                 String entityType = event.getEntity().getType().name();
-                // Don't cancel fishing hooks — needed for fishing minigame.
                 if (!entityType.equals("FISHING_HOOK")) {
                     event.setCancelled(true);
                 }

@@ -7,9 +7,6 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Fired before a Wasteland Omni Tool is placed in a player's inventory.
- */
 public class WastelandToolGiveEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();

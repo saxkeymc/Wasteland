@@ -11,9 +11,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Listens for right-clicks on Omni Tools and opens the Dust Upgrade GUI.
- */
 public class ToolRightClickListener implements Listener {
 
     private final WastelandPlugin plugin;
@@ -33,7 +30,6 @@ public class ToolRightClickListener implements Listener {
         ItemStack hand = player.getItemInHand();
         if (hand == null || hand.getType() == org.bukkit.Material.AIR) return;
 
-        // Check if the held item is an omni tool for any skill.
         for (SkillType skill : SkillType.values()) {
             if (plugin.getToolManager().isOmniTool(hand, skill)) {
                 event.setCancelled(true);

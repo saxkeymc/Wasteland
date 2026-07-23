@@ -19,24 +19,6 @@ import org.bukkit.inventory.meta.SkullMeta;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The main Wasteland menu opened by /wasteland.
- * <p>
- * Layout (54 slots):
- * <pre>
- *  0  1  2  3  4  5  6  7  8
- *  9 10 11 12 13 14 15 16 17
- * 18 19 20 21 22 23 24 25 26     ← Mining(20), Chopping(21), Farming(23), Fishing(24)
- * 27 28 29 30 31 32 33 34 35
- * 36 37 38 39 40 41 42 43 44
- * 45 46 47 48 49 50 51 52 53     ← Close(49), Profile head(53)
- * </pre>
- * <p>
- * Clicking a skill button ONLY teleports the player to the configured
- * destination for that skill. It does NOT open another GUI. The profile
- * head in the bottom-right shows the player's skin, name, and Wasteland
- * statistics including playtime.
- */
 public class MainMenuGui extends WastelandGui {
 
     public MainMenuGui(WastelandPlugin plugin, Player player) {
@@ -52,19 +34,16 @@ public class MainMenuGui extends WastelandGui {
 
         PlayerData data = plugin.getDataManager().getPlayerData(player.getUniqueId());
 
-        // ── Border glass panes ────────────────────────────────────────────────
         ItemStack borderFiller = buildFiller(cfg, "main-menu.border-item", Material.STAINED_GLASS_PANE, (short) 15);
         ItemStack innerFiller  = buildFiller(cfg, "main-menu.fill-item",   Material.STAINED_GLASS_PANE, (short) 7);
         fill(innerFiller);
         drawBorder(borderFiller);
 
-        // ── Skill buttons ─────────────────────────────────────────────────────
         setSkillButton(cfg, data, "mining",      SkillType.MINING);
         setSkillButton(cfg, data, "woodcutting", SkillType.WOODCUTTING);
         setSkillButton(cfg, data, "farming",     SkillType.FARMING);
         setSkillButton(cfg, data, "fishing",     SkillType.FISHING);
 
-        // ── Close button ──────────────────────────────────────────────────────
         int closeSlot = cfg.getInt("main-menu.buttons.close.slot", 49);
         Material closeMat = parseMaterial(cfg.getString("main-menu.buttons.close.material", "BARRIER"), Material.BARRIER);
         String closeName = cfg.getString("main-menu.buttons.close.name", "&c&lClose");
@@ -74,7 +53,6 @@ public class MainMenuGui extends WastelandGui {
                 .build();
         setItem(closeSlot, closeItem);
 
-        // ── Player profile head (bottom-right) ────────────────────────────────
         setProfileHead(cfg, data);
     }
 
@@ -153,7 +131,6 @@ public class MainMenuGui extends WastelandGui {
         setItem(slot, skull);
     }
 
-    /** Build a player-head ItemStack that shows the player's skin in 1.8.8. */
     @SuppressWarnings("deprecation")
     private ItemStack createPlayerHead(Player player, String name, List<String> lore) {
         ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
@@ -191,18 +168,11 @@ public class MainMenuGui extends WastelandGui {
         }
     }
 
-    /**
-     * Clicking a skill button ONLY teleports the player to the configured
-     * destination. No menu is opened. If no destination is set, a
-     * configurable 'not configured' message is sent.
-     */
     private void handleSkillClick(SkillType skill) {
         TeleportManager tm = plugin.getTeleportManager();
         if (tm.hasTeleport(skill)) {
             org.bukkit.Location dest = tm.getTeleport(skill);
             if (dest != null) {
-                // Check if the player has any items in their inventory.
-                // They must have an empty inventory to teleport.
                 for (org.bukkit.inventory.ItemStack item : player.getInventory().getContents()) {
                     if (item != null && item.getType() != org.bukkit.Material.AIR) {
                         player.sendMessage(dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
@@ -210,7 +180,6 @@ public class MainMenuGui extends WastelandGui {
                         return;
                     }
                 }
-                // Also check armor slots.
                 for (org.bukkit.inventory.ItemStack item : player.getInventory().getArmorContents()) {
                     if (item != null && item.getType() != org.bukkit.Material.AIR) {
                         player.sendMessage(dev.r3faced.minecurse.wasteland.utils.MessageUtil.colorize(
@@ -224,16 +193,12 @@ public class MainMenuGui extends WastelandGui {
                         .replace("{skill}", skill.getKey());
                 player.sendMessage(msg);
 
-                // Give the omni tool immediately after teleporting. We
-                // schedule it 1 tick later to ensure the world change has
-                // fully registered (cross-world teleports can have a slight
-                // delay before PlayerChangedWorldEvent fires).
                 final Player p = player;
                 final SkillType s = skill;
                 org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     plugin.getToolManager().giveOmniTool(p, s);
                     plugin.getArmorManager().giveArmorSet(p);
-                }, 2L); // 2 ticks = 0.1 seconds
+                }, 2L);
             } else {
                 player.sendMessage(MessageUtil.getMessage(plugin, "teleport.not-configured")
                         .replace("{skill}", skill.getKey()));
@@ -243,8 +208,6 @@ public class MainMenuGui extends WastelandGui {
                     .replace("{skill}", skill.getKey()));
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Material parseMaterial(String name, Material fallback) {
         if (name == null) return fallback;
@@ -263,11 +226,6 @@ public class MainMenuGui extends WastelandGui {
         return new ItemBuilder(mat, 1, (short) data).name(name).build();
     }
 
-    /**
-     * Draw a 1-slot-thick border around the inventory edges. Only fills
-     * slots that are currently empty/null so existing skill buttons remain
-     * untouched if they happen to sit on the border.
-     */
     private void drawBorder(ItemStack border) {
         int size = inventory.getSize();
         int cols = 9;

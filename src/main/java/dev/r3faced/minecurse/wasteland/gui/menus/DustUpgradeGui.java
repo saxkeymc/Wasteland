@@ -14,16 +14,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Dust Upgrade GUI — Minecadia-style dark theme with &2 green accents.
- * <p>
- * Layout: 4x9 (36 slots)
- * Slot 4:  Tool info (current upgrade level)
- * Slot 13: Dust balance
- * Slot 22: Upgrade button
- * Slot 31: Close
- * Slots 19-22 are NOT used for indicators — kept clean.
- */
 public class DustUpgradeGui extends WastelandGui {
 
     private final SkillType skill;
@@ -47,11 +37,9 @@ public class DustUpgradeGui extends WastelandGui {
         String title = MessageUtil.colorize("&8" + skillName + " Tool Upgrade");
         createInventory(title, 36);
 
-        // Fill with dark glass.
         ItemStack darkPane = new ItemBuilder(Material.STAINED_GLASS_PANE, 1, (short) 15).name(" ").build();
         fill(darkPane);
 
-        // ── Tool info (slot 4) ──────────────────────────────────────────────
         Material toolMat = getToolMaterial(skill);
         List<String> toolLore = new ArrayList<>();
         toolLore.add(MessageUtil.colorize(""));
@@ -68,7 +56,6 @@ public class DustUpgradeGui extends WastelandGui {
                 .hideFlags()
                 .build());
 
-        // ── Dust balance (slot 13) ──────────────────────────────────────────
         setItem(13, new ItemBuilder(Material.SUGAR)
                 .name(MessageUtil.colorize("&2&lDust"))
                 .lore(
@@ -77,7 +64,6 @@ public class DustUpgradeGui extends WastelandGui {
                 )
                 .build());
 
-        // ── Upgrade button (slot 22) ────────────────────────────────────────
         if (maxed) {
             setItem(22, new ItemBuilder(Material.BARRIER)
                     .name(MessageUtil.colorize("&c&lMaxed"))
@@ -107,7 +93,6 @@ public class DustUpgradeGui extends WastelandGui {
                     .build());
         }
 
-        // ── Close (slot 31) ─────────────────────────────────────────────────
         setItem(31, new ItemBuilder(Material.ARROW)
                 .name(MessageUtil.colorize("&c&lClose"))
                 .build());

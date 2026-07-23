@@ -22,10 +22,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Main entry point for the Wasteland plugin.
- * Manages all sub-systems: data, skills, tiers, tools, GUIs.
- */
 public final class WastelandPlugin extends JavaPlugin {
 
     private static WastelandPlugin instance;
@@ -53,7 +49,6 @@ public final class WastelandPlugin extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        // Save default config files
         saveDefaultConfig();
         saveResource("messages.yml", false);
         saveResource("skills.yml", false);
@@ -64,11 +59,9 @@ public final class WastelandPlugin extends JavaPlugin {
         saveResource("help.yml", false);
         saveResource("commands.yml", false);
 
-        // Initialize config manager
         configManager = new ConfigManager(this);
         configManager.loadAll();
 
-        // Initialize tier-lock manager (reads tier-locked-blocks from config)
         tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
         armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
         startDateManager = new dev.r3faced.minecurse.wasteland.managers.StartDateManager(this);
@@ -76,7 +69,6 @@ public final class WastelandPlugin extends JavaPlugin {
         fakeBlockManager = new dev.r3faced.minecurse.wasteland.managers.FakeBlockManager();
         pvpZoneManager = new dev.r3faced.minecurse.wasteland.managers.PvpZoneManager(this);
 
-        // Initialize data manager (YAML or MySQL)
         String storageType = configManager.getMainConfig().getString("storage.type", "YAML").toUpperCase();
         if (storageType.equals("MYSQL")) {
             dataManager = new MySQLDataManager(this);
@@ -85,23 +77,19 @@ public final class WastelandPlugin extends JavaPlugin {
         }
         dataManager.init();
 
-        // Initialize managers
         skillManager = new SkillManager(this);
         tierManager = new TierManager(this);
         toolManager = new ToolManager(this);
         teleportManager = new dev.r3faced.minecurse.wasteland.managers.TeleportManager(this);
         wastelandWorldManager = new dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager(this);
 
-        // Publish the public API before commands/listeners can trigger gameplay.
         api = new WastelandApiImpl(this);
         WastelandProvider.register(api);
         Bukkit.getServicesManager().register(WastelandApi.class, api, this, ServicePriority.Normal);
 
-        // Register command
         getCommand("wasteland").setExecutor(new WastelandCommand(this));
         getCommand("wasteland").setTabCompleter(new WastelandCommand(this));
 
-        // Register skill switch commands.
         dev.r3faced.minecurse.wasteland.commands.SkillSwitchCommand skillSwitch =
                 new dev.r3faced.minecurse.wasteland.commands.SkillSwitchCommand(this);
         getCommand("mining").setExecutor(skillSwitch);
@@ -109,7 +97,6 @@ public final class WastelandPlugin extends JavaPlugin {
         getCommand("farming").setExecutor(skillSwitch);
         getCommand("fishing").setExecutor(skillSwitch);
 
-        // Register listeners
         Bukkit.getPluginManager().registerEvents(new GuiListener(this), this);
         miningListener = new MiningListener(this);
         Bukkit.getPluginManager().registerEvents(miningListener, this);
@@ -130,14 +117,11 @@ public final class WastelandPlugin extends JavaPlugin {
         commandWhitelistListener = new dev.r3faced.minecurse.wasteland.listeners.CommandWhitelistListener(this);
         Bukkit.getPluginManager().registerEvents(commandWhitelistListener, this);
 
-        // Start the periodic playtime tracker (every 60 seconds)
         playtimeTask = new dev.r3faced.minecurse.wasteland.managers.PlaytimeTask(this);
         playtimeTask.start();
 
-        // Start the XP bar display task (every 0.5 seconds)
         new dev.r3faced.minecurse.wasteland.managers.XpBarTask(this).start();
 
-        // Register PlaceholderAPI expansion if available
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new WastelandExpansion(this).canRegister();
             getLogger().info("Hooked into PlaceholderAPI.");
@@ -153,17 +137,10 @@ public final class WastelandPlugin extends JavaPlugin {
             WastelandProvider.unregister(api);
         }
 
-        // Cancel the playtime tracker so it doesn't fire mid-shutdown.
         if (playtimeTask != null) {
             try { playtimeTask.cancel(); } catch (IllegalStateException ignored) {}
         }
 
-        // Save all online player data SYNCHRONOUSLY on shutdown.
-        // We deliberately bypass the async scheduler path here because Bukkit
-        // throws IllegalPluginAccessException when a plugin attempts to register
-        // a new task while disabled. Going through savePlayerSync() guarantees
-        // every cached record is flushed to disk before the JVM exits, with
-        // zero chance of unsaved data or scheduler errors.
         if (dataManager != null) {
             try {
                 Bukkit.getOnlinePlayers().forEach(p -> dataManager.savePlayerSync(p.getUniqueId()));
@@ -179,11 +156,7 @@ public final class WastelandPlugin extends JavaPlugin {
         getLogger().info("Wasteland has been disabled.");
     }
 
-    /**
-     * Reloads all configuration files and re-initializes managers.
-     */
     public void reload() {
-        // Save all online player data synchronously before reload.
         if (dataManager != null) {
             Bukkit.getOnlinePlayers().forEach(p -> dataManager.savePlayerSync(p.getUniqueId()));
         }
@@ -206,10 +179,6 @@ public final class WastelandPlugin extends JavaPlugin {
         }
     }
 
-    /**
-     * Lazy-loaded teleport manager. Initialised on first access so that
-     * {@link #reload()} works even if the manager has not been created yet.
-     */
     public dev.r3faced.minecurse.wasteland.managers.TeleportManager getTeleportManager() {
         if (teleportManager == null) {
             teleportManager = new dev.r3faced.minecurse.wasteland.managers.TeleportManager(this);
@@ -217,11 +186,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return teleportManager;
     }
 
-    /**
-     * Lazy-loaded Wasteland-world manager. Used by PlaytimeTask and
-     * WorldChangeListener to decide whether a player is currently
-     * accumulating playtime.
-     */
     public dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager getWastelandWorldManager() {
         if (wastelandWorldManager == null) {
             wastelandWorldManager = new dev.r3faced.minecurse.wasteland.managers.WastelandWorldManager(this);
@@ -229,7 +193,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return wastelandWorldManager;
     }
 
-    /** Returns the singleton PreviewRewardEditor instance. */
     public dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor getPreviewRewardEditor() {
         if (previewRewardEditor == null) {
             previewRewardEditor = new dev.r3faced.minecurse.wasteland.editor.PreviewRewardEditor(this);
@@ -237,7 +200,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return previewRewardEditor;
     }
 
-    /** Returns the tier-lock manager (handles tier-locked blocks for all skills). */
     public dev.r3faced.minecurse.wasteland.managers.TierLockManager getTierLockManager() {
         if (tierLockManager == null) {
             tierLockManager = new dev.r3faced.minecurse.wasteland.managers.TierLockManager(this);
@@ -245,7 +207,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return tierLockManager;
     }
 
-    /** Returns the Wasteland armor manager. */
     public dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager getArmorManager() {
         if (armorManager == null) {
             armorManager = new dev.r3faced.minecurse.wasteland.managers.WastelandArmorManager(this);
@@ -253,7 +214,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return armorManager;
     }
 
-    /** Returns the start date manager (day-based tier progression). */
     public dev.r3faced.minecurse.wasteland.managers.StartDateManager getStartDateManager() {
         if (startDateManager == null) {
             startDateManager = new dev.r3faced.minecurse.wasteland.managers.StartDateManager(this);
@@ -261,7 +221,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return startDateManager;
     }
 
-    /** Returns the dust manager (tool upgrade currency). */
     public dev.r3faced.minecurse.wasteland.managers.DustManager getDustManager() {
         if (dustManager == null) {
             dustManager = new dev.r3faced.minecurse.wasteland.managers.DustManager(this);
@@ -269,7 +228,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return dustManager;
     }
 
-    /** Returns the fake block manager (tracks per-player bedrock visuals). */
     public dev.r3faced.minecurse.wasteland.managers.FakeBlockManager getFakeBlockManager() {
         if (fakeBlockManager == null) {
             fakeBlockManager = new dev.r3faced.minecurse.wasteland.managers.FakeBlockManager();
@@ -277,7 +235,6 @@ public final class WastelandPlugin extends JavaPlugin {
         return fakeBlockManager;
     }
 
-    /** Returns the PvP zone manager. */
     public dev.r3faced.minecurse.wasteland.managers.PvpZoneManager getPvpZoneManager() {
         if (pvpZoneManager == null) {
             pvpZoneManager = new dev.r3faced.minecurse.wasteland.managers.PvpZoneManager(this);

@@ -12,17 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Tier browser menu showing all 5 tiers as colored glass panes.
- * <p>
- * There is only ONE shared tier progression per player, so this menu
- * does not take a SkillType parameter. Clicking a tier opens the reward
- * list for that tier if the player has unlocked it; otherwise a
- * configurable unlock-failed message is sent listing which skills
- * still need leveling.
- * <p>
- * Opened primarily via /wasteland tiers.
- */
 public class TierMenuGui extends WastelandGui {
 
     public TierMenuGui(WastelandPlugin plugin, Player player) {
@@ -50,7 +39,6 @@ public class TierMenuGui extends WastelandGui {
             setItem(slot, glass);
         }
 
-        // Back button (returns to main menu)
         int backSlot = cfg.getInt("tier-menu.back.slot", 22);
         Material backMat = parseMaterial(cfg.getString("tier-menu.back.material", "ARROW"), Material.ARROW);
         String backName = MessageUtil.colorize(cfg.getString("tier-menu.back.name", "&7\u00ab Back"));
@@ -63,7 +51,6 @@ public class TierMenuGui extends WastelandGui {
         String material = tiersCfg.getString("tiers." + tier + ".glass-color", "STAINED_GLASS_PANE");
         int glassData = tiersCfg.getInt("tiers." + tier + ".glass-data", 0);
         int required = plugin.getTierManager().getRequiredLevel(tier);
-        // Tier is "unlocked" only if EVERY skill has reached the required level.
         boolean unlocked = plugin.getTierManager().meetsRequirements(data, tier);
         boolean claimed  = data.hasClaimedTier(tier);
 
@@ -94,10 +81,6 @@ public class TierMenuGui extends WastelandGui {
 
         for (int tier = 1; tier <= TierManager.TIER_COUNT; tier++) {
             int tierSlot = cfg.getInt("tier-menu.tier-slots." + tier, 10 + tier);
-            // Both LEFT CLICK and RIGHT CLICK perform the same action:
-            // open that tier's reward preview GUI.
-            // Players can view ANY tier's rewards regardless of whether
-            // they've unlocked it — no message is sent.
             if (slot == tierSlot) {
                 new RewardPageMenuGui(plugin, player, tier, 0).open();
                 return;
@@ -108,8 +91,6 @@ public class TierMenuGui extends WastelandGui {
             new MainMenuGui(plugin, player).open();
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Material parseMaterial(String name, Material fallback) {
         if (name == null) return fallback;

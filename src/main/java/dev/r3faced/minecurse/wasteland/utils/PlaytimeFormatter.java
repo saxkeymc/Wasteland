@@ -3,20 +3,10 @@ package dev.r3faced.minecurse.wasteland.utils;
 import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import org.bukkit.configuration.file.FileConfiguration;
 
-/**
- * Formats a duration in seconds into a human-readable string based on
- * the configurable template in config.yml.
- * <p>
- * Default template: "{days}d {hours}h {minutes}m"
- * Available tokens: {days}, {hours}, {minutes}, {seconds}, {total_hours}
- */
 public final class PlaytimeFormatter {
 
     private PlaytimeFormatter() {}
 
-    /**
-     * Format the given playtime (in seconds) using the configured template.
-     */
     public static String format(WastelandPlugin plugin, long seconds) {
         if (seconds < 0) seconds = 0;
         FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
@@ -36,7 +26,6 @@ public final class PlaytimeFormatter {
                 .replace("{seconds}",      String.valueOf(secs))
                 .replace("{total_hours}",  String.valueOf(totalHours));
 
-        // Optionally remove zero-valued day/hour/minute parts for compactness.
         if (stripEmpty) {
             out = out.replaceAll("(?<=^|\\s)0d\\s*", "")
                      .replaceAll("(?<=^|\\s)0h\\s*", "")

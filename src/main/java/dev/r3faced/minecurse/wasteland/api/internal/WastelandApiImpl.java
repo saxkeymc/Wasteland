@@ -35,9 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Default implementation of the public Wasteland API.
- */
 public class WastelandApiImpl implements WastelandApi {
 
     private final WastelandPlugin plugin;

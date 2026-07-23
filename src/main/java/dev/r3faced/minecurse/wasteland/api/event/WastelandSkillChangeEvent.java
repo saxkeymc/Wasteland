@@ -6,9 +6,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-/**
- * Fired after a skill's XP and/or level changes.
- */
 public class WastelandSkillChangeEvent extends Event {
 
     private static final HandlerList HANDLERS = new HandlerList();

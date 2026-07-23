@@ -7,9 +7,6 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-/**
- * Fired before a stored reward is added to a player's virtual reward backpack.
- */
 public class WastelandStoredRewardAddEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();
@@ -42,9 +39,6 @@ public class WastelandStoredRewardAddEvent extends Event implements Cancellable 
         this.reward = reward;
     }
 
-    /**
-     * Returns the tier that produced this reward, or -1 for API/custom rewards.
-     */
     public int getTier() {
         return tier;
     }

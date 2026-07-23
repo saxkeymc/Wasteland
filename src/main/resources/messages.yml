@@ -1,16 +1,3 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Messages Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# All plugin messages are configurable here. Placeholders:
-#   {prefix}   — the prefix defined above
-#   {player}   — target player name
-#   {skill}    — skill name (mining, chopping, farming, fishing)
-#   {tier}     — tier number
-#   {level}    — level number
-#   {amount}   — xp amount
-#   {input}    — invalid input the user typed
-# ════════════════════════════════════════════════════════════════════════════
-
 prefix: "&2&lW&a&la&2&ls&a&lt&2&le&a&lL&2&la&a&ln&2&ld &8\u2022 &f"
 
 no-permission: "{prefix}&cYou do not have permission to do that."
@@ -22,21 +9,11 @@ invalid-tier: "{prefix}&cInvalid tier. Valid tiers: &e1-{max}&c."
 plugin-reloaded: "{prefix}&aPlugin reloaded successfully."
 
 skill:
-  # Sent when a skill levels up. Placeholders: {skill}, {level}
   level-up: "{prefix}&aYour &e{skill} &askill reached &2Level {level}&a!"
-  # Tier unlock is now SHARED across all skills (no {skill} placeholder).
   tier-unlock: "{prefix}&aYou unlocked &2Tier {tier}&a! New rewards have been added to your storage. Use &2/wasteland claim &ato claim them."
-  # XP-gained message — set to empty ("") to disable the spammy per-block message.
   xp-gained: ""
   max-level: "{prefix}&cYou have already reached the maximum level for &e{skill}&c."
 
-# ── Tier-Locked Block Messages ───────────────────────────────────────────────
-# Sent when a player tries to break a block they don't have the tier for.
-# Placeholders:
-#   {block}       — the block name (e.g. "Diamond Ore")
-#   {tier}        — the tier required to break this block
-#   {player_tier} — the player's current shared tier
-#   {skill}       — the skill name (mining, woodcutting, farming, fishing)
 block:
   tier-locked: "{prefix}&cYou need &4Tier {tier} &cto break &4{block}&c! You are currently at &4Tier {player_tier}&c."
 
@@ -45,25 +22,12 @@ tool:
   already-have: ""
 
 rewards:
-  # No {skill} placeholder — tiers are shared.
   claimed: "{prefix}&aClaimed rewards for &2Tier {tier}&a!"
   already-claimed: "{prefix}&cYou have already claimed this tier."
   none-available: "{prefix}&cYou have no available rewards to claim."
-  # Sent when a tier unlocks and rewards are added to the player's backpack.
   added-to-storage: "{prefix}&a&2{count} &anew reward(s) have been added to your storage! Use &2/wasteland claim &ato claim them."
-  # Sent when a player claims a single reward from the backpack GUI.
   claimed-single: "{prefix}&aYou have claimed a reward from your storage!"
 
-# ── Tier Requirement Messages ────────────────────────────────────────────────
-# Sent when a player tries to view/claim a tier they haven't unlocked yet.
-# Placeholders:
-#   {tier}                — the tier number
-#   {required}            — the required level for each skill
-#   {mining_status}       — formatted status line for Mining
-#   {woodcutting_status}  — formatted status line for Chopping
-#   {farming_status}      — formatted status line for Farming
-#   {fishing_status}      — formatted status line for Fishing
-#   {current}             — current skill level (used in the status templates)
 tier:
   unlock-failed:
     - "{prefix}&cYou have not unlocked &4Tier {tier} &cyet!"
@@ -79,31 +43,24 @@ tier:
   requirement-met: "&a\u2714 Level {current}"
   requirement-not-met: "&c\u2718 Level {current}/{required}"
 
-# ── Teleport messages ────────────────────────────────────────────────────────
 teleport:
   teleported: "{prefix}&aTeleporting to the &e{skill} &aarea..."
   not-configured: "{prefix}&cThis area has not been configured yet."
 
-# ── Playtime messages ────────────────────────────────────────────────────────
 playtime:
   view: "{prefix}&aYour Wasteland Playtime: &e{playtime}&a."
 
-# ── Admin messages ───────────────────────────────────────────────────────────
 admin:
   gave-tool: "{prefix}&aGave &e{player} &athe &2{skill} &aOmni Tool."
   set-level: "{prefix}&aSet &e{player}&a's &2{skill} &alevel to &e{level}&a."
   added-xp: "{prefix}&aAdded &e{amount} &a{skill} XP to &e{player}&a."
   removed-xp: "{prefix}&aRemoved &e{amount} &a{skill} XP from &e{player}&a."
-  # No {skill} placeholder — tier is shared.
   set-tier: "{prefix}&aSet &e{player}&a's tier to &e{tier}&a."
   reset-player: "{prefix}&aReset all Wasteland data for &e{player}&a."
-  # Sent when /wasteland reset all is run without "confirm" — prompts the admin.
   reset-all-confirm: "{prefix}&cWARNING: This will reset &4ALL &cplayer data! Run &4/wasteland reset all confirm &cto proceed."
-  # Sent after a successful /wasteland reset all confirm. {count} = number of players reset.
   reset-all-complete: "{prefix}&aReset Wasteland data for &2{count} &aplayer(s)."
   set-teleport: "{prefix}&aSet the &e{skill} &askill teleport destination to your current location."
 
-# ── GUI labels ───────────────────────────────────────────────────────────────
 gui:
   close: "&cClose"
   back: "&7\u00ab Back"

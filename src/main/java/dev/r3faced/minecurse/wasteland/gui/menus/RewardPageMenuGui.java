@@ -16,25 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Reward preview GUI for a specific tier.
- * <p>
- * Dynamic sizing based on reward count:
- * <ul>
- *   <li>1-9 rewards → 1 row (9 slots). Close button at slot 8 (last slot).</li>
- *   <li>10-18 rewards → 2 rows (18 slots). Close button at slot 17.</li>
- *   <li>19-27 rewards → 3 rows (27 slots). Close button at slot 26.</li>
- *   <li>...up to 5 rows (45 slots). If more than 45 rewards, pagination kicks in.</li>
- * </ul>
- * <p>
- * For 4+ rows, the close button is placed in the bottom-middle slot.
- * For 1-3 rows, the close button is at the last slot of the last row.
- * <p>
- * No messages are sent when clicking. Players can view ANY tier's
- * rewards regardless of whether they've unlocked it.
- * <p>
- * Commands are NEVER shown — only the display items.
- */
 public class RewardPageMenuGui extends WastelandGui {
 
     private final int tier;
@@ -56,7 +37,6 @@ public class RewardPageMenuGui extends WastelandGui {
         List<TierReward> rewards = plugin.getTierManager().getRewards(tier);
         int totalRewards = rewards.size();
 
-        // Calculate pagination — max 45 rewards per page (5 rows × 9).
         int maxPerPage = 45;
         int totalPages = Math.max(1, (int) Math.ceil((double) totalRewards / maxPerPage));
         int currentPage = Math.min(page, totalPages - 1);
@@ -65,39 +45,31 @@ public class RewardPageMenuGui extends WastelandGui {
         int start = currentPage * maxPerPage;
         int rewardsThisPage = Math.min(maxPerPage, totalRewards - start);
 
-        // Calculate dynamic inventory size.
         int rows;
         boolean needsNavRow = totalPages > 1;
         if (needsNavRow) {
-            // With pagination: 5 reward rows + 1 nav row = 6 rows (54 slots)
             rows = 6;
         } else {
-            // Without pagination: rows = ceil(rewardsThisPage / 9), min 1
             rows = Math.max(1, (int) Math.ceil(rewardsThisPage / 9.0));
-            // If there are 0 rewards, still show 1 row with a close button.
             if (rows == 0) rows = 1;
         }
         int size = rows * 9;
 
-        // Title: just the tier display name + " Rewards"
         String title = MessageUtil.colorize(displayName + " &7Rewards");
         createInventory(title, size);
 
-        // Fill reward slots — start at slot 0, fill left-to-right.
         rewardSlots = new ArrayList<>();
         for (int i = 0; i < rewardsThisPage && (start + i) < rewards.size(); i++) {
             TierReward reward = rewards.get(start + i);
             int slot = i;
             rewardSlots.add(slot);
 
-            // Build the display item with enchants + flags.
             List<String> lore = new ArrayList<>(reward.getDisplayLore());
             ItemStack rewardItem = new ItemBuilder(reward.getDisplayMaterial(), 1, reward.getDisplayData())
                     .name(reward.getDisplayName())
                     .lore(lore)
                     .build();
 
-            // Apply enchantments and item flags.
             ItemMeta meta = rewardItem.getItemMeta();
             if (meta != null) {
                 if (reward.getDisplayEnchants() != null) {
@@ -123,32 +95,25 @@ public class RewardPageMenuGui extends WastelandGui {
             setItem(slot, rewardItem);
         }
 
-        // ── Close button ─────────────────────────────────────────────────────
-        // For 1-3 rows: close button at the last slot of the last row.
-        // For 4+ rows: close button at the bottom-middle slot.
-        // For 6 rows (pagination): close button at slot 49 (bottom-middle of nav row).
         int closeSlot;
         if (needsNavRow) {
-            closeSlot = 49; // Bottom-middle of the 6th row
+            closeSlot = 49;
         } else if (rows >= 4) {
-            closeSlot = (rows * 9) - 5; // Bottom-middle slot
+            closeSlot = (rows * 9) - 5;
         } else {
-            closeSlot = (rows * 9) - 1; // Last slot of last row
+            closeSlot = (rows * 9) - 1;
         }
 
         setItem(closeSlot, new ItemBuilder(Material.ARROW)
                 .name(MessageUtil.colorize("&c&lClose"))
                 .build());
 
-        // ── Navigation buttons (only if pagination is needed) ────────────────
         if (needsNavRow) {
-            // Previous page button (slot 45)
             if (currentPage > 0) {
                 setItem(45, new ItemBuilder(Material.ARROW)
                         .name(MessageUtil.colorize("&7\u00ab Previous Page"))
                         .build());
             }
-            // Next page button (slot 53)
             if (currentPage < totalPages - 1) {
                 setItem(53, new ItemBuilder(Material.ARROW)
                         .name(MessageUtil.colorize("&aNext Page &7\u00bb"))
@@ -156,7 +121,6 @@ public class RewardPageMenuGui extends WastelandGui {
             }
         }
 
-        // Empty state
         if (totalRewards == 0) {
             setItem(0, new ItemBuilder(Material.BARRIER)
                     .name(MessageUtil.colorize("&7No rewards configured for this tier."))
@@ -171,7 +135,6 @@ public class RewardPageMenuGui extends WastelandGui {
         int size = inventory.getSize();
         int rows = size / 9;
 
-        // Check if this is a navigation click — no message sent.
         boolean needsNavRow = rows == 6;
         if (needsNavRow) {
             if (slot == 45 && page > 0) {
@@ -183,12 +146,10 @@ public class RewardPageMenuGui extends WastelandGui {
                 return;
             }
             if (slot == 49) {
-                // Close button → go back to tier menu
                 new TierMenuGui(plugin, player).open();
                 return;
             }
         } else {
-            // Non-paginated: check close button position
             int closeSlot;
             if (rows >= 4) {
                 closeSlot = (rows * 9) - 5;
@@ -201,7 +162,5 @@ public class RewardPageMenuGui extends WastelandGui {
             }
         }
 
-        // Reward slots — no action (preview only, no claiming here).
-        // This GUI is just for viewing rewards, not claiming them.
     }
 }

@@ -15,13 +15,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Skill detail menu showing level, XP, tier, and a progress bar.
- * Opened when clicking a skill in the main menu.
- * <p>
- * The "Close" button returns the player to the Main Wasteland GUI rather
- * than closing the inventory.
- */
 public class SkillMenuGui extends WastelandGui {
 
     private final SkillType skill;
@@ -43,13 +36,11 @@ public class SkillMenuGui extends WastelandGui {
         int size = cfg.getInt("skill-menu.size", 54);
         createInventory(title, size);
 
-        // Border + filler
         ItemStack border = buildFiller(cfg, "skill-menu.border-item", Material.STAINED_GLASS_PANE, (short) 15);
         ItemStack filler = buildFiller(cfg, "skill-menu.fill-item",   Material.STAINED_GLASS_PANE, (short) 7);
         fill(filler);
         drawBorder(border);
 
-        // Level display
         int levelSlot = cfg.getInt("skill-menu.slots.level-display.slot", 13);
         Material levelMat = parseMaterial(cfg.getString("skill-menu.slots.level-display.material", "EXP_BOTTLE"), Material.EXP_BOTTLE);
         String levelName = MessageUtil.colorize(cfg.getString("skill-menu.slots.level-display.name", "&a&lSkill Level"));
@@ -59,7 +50,6 @@ public class SkillMenuGui extends WastelandGui {
                 cfg.getStringList("skill-menu.slots.level-display.lore"), data, cap, nextXp);
         setItem(levelSlot, new ItemBuilder(levelMat).name(levelName).lore(levelLore).build());
 
-        // Progress bar
         int progressSlot = cfg.getInt("skill-menu.slots.progress-bar.slot", 22);
         Material progressMat = parseMaterial(cfg.getString("skill-menu.slots.progress-bar.material", "PAPER"), Material.PAPER);
         String progressName = MessageUtil.colorize(cfg.getString("skill-menu.slots.progress-bar.name", "&7Progress"));
@@ -69,13 +59,11 @@ public class SkillMenuGui extends WastelandGui {
         progressLore.add(MessageUtil.colorize("&7" + data.getXp(skill) + " / " + nextXp + " XP"));
         setItem(progressSlot, new ItemBuilder(progressMat).name(progressName).lore(progressLore).build());
 
-        // Back button (returns to main menu)
         int backSlot = cfg.getInt("skill-menu.slots.back.slot", 45);
         Material backMat = parseMaterial(cfg.getString("skill-menu.slots.back.material", "ARROW"), Material.ARROW);
         String backName = MessageUtil.colorize(cfg.getString("skill-menu.slots.back.name", "&7\u00ab Back"));
         setItem(backSlot, new ItemBuilder(backMat).name(backName).build());
 
-        // View Tiers
         int tiersSlot = cfg.getInt("skill-menu.slots.tiers.slot", 49);
         Material tiersMat = parseMaterial(cfg.getString("skill-menu.slots.tiers.material", "NETHER_STAR"), Material.NETHER_STAR);
         String tiersName = MessageUtil.colorize(cfg.getString("skill-menu.slots.tiers.name", "&e&lView Tiers"));
@@ -88,15 +76,12 @@ public class SkillMenuGui extends WastelandGui {
         FileConfiguration cfg = plugin.getConfigManager().getGui();
         int slot = event.getSlot();
 
-        // Both Back and Close buttons return to the Main Wasteland GUI.
         if (slot == cfg.getInt("skill-menu.slots.back.slot", 45)) {
             new MainMenuGui(plugin, player).open();
         } else if (slot == cfg.getInt("skill-menu.slots.tiers.slot", 49)) {
             new TierMenuGui(plugin, player).open();
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private List<String> applyPlaceholders(List<String> raw, PlayerData data, int cap, long nextXp) {
         List<String> result = new ArrayList<>();

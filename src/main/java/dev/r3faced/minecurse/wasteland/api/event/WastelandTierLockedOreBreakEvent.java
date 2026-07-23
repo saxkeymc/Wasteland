@@ -7,11 +7,6 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-/**
- * Fired before Wasteland blocks a player from breaking a tier-locked ore.
- *
- * <p>Cancel this event to bypass the tier lock for the current break.</p>
- */
 public class WastelandTierLockedOreBreakEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();

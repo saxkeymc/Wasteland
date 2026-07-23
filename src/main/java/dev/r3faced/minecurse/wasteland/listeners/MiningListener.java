@@ -16,20 +16,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Listens for block break events in the mining world.
- * <p>
- * Three responsibilities:
- * <ol>
- *   <li><strong>Tier-locked blocks</strong> — delegates to
- *       {@link dev.r3faced.minecurse.wasteland.managers.TierLockManager}.</li>
- *   <li><strong>XP awarding</strong> — when the player holds the Mining Omni
- *       Tool and breaks a non-locked block that yields XP, XP is awarded.</li>
- *   <li><strong>Random money drops</strong> — when mining, there's a random
- *       chance to receive money ($5,000–$7,000 by default) via console
- *       command. Configurable in config.yml under mining-money-drops.</li>
- * </ol>
- */
 public class MiningListener implements Listener {
 
     private final WastelandPlugin plugin;
@@ -38,10 +24,6 @@ public class MiningListener implements Listener {
         this.plugin = plugin;
     }
 
-    /**
-     * Tier-lock check — runs at HIGHEST priority so it can cancel the break
-     * before the MONITOR handler awards XP / money.
-     */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onOreBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -52,17 +34,6 @@ public class MiningListener implements Listener {
         plugin.getTierLockManager().handleBlockBreak(event, SkillType.MINING);
     }
 
-    /**
-     * XP awarding + random money drops — runs at MONITOR priority, only if
-     * the break was not cancelled by the tier-lock check.
-     * <p>
-     * Cancels the event (so the actual block isn't destroyed server-side)
-     * and sends a fake BEDROCK visual to the player who broke it. Other
-     * players still see the original ore. After 6 seconds, the visual
-     * is restored.
-     * <p>
-     * Only ORES can be mined — non-ore blocks are cancelled entirely.
-     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
@@ -77,34 +48,25 @@ public class MiningListener implements Listener {
         String blockType = event.getBlock().getType().name();
         int xp = plugin.getSkillManager().getXpForBlock(SkillType.MINING, blockType);
 
-        // Only allow mining ORES — cancel non-ore blocks entirely.
         if (xp <= 0 || !isOre(event.getBlock().getType())) {
             event.setCancelled(true);
             return;
         }
 
-        // Check if this block is on fake-bedrock cooldown for this player.
-        // If yes, cancel — the player can't break it again until 6s cooldown.
         if (plugin.getFakeBlockManager().isFakeBedrock(player, event.getBlock().getLocation())) {
             event.setCancelled(true);
             return;
         }
 
-        // CANCEL the event so the actual block isn't destroyed server-side.
         event.setCancelled(true);
 
         plugin.getSkillManager().awardXp(player, SkillType.MINING, xp, WastelandXpCause.BLOCK_BREAK, blockType);
 
-        // Award Dust.
         int dustAmount = plugin.getDustManager().getDefaultDustPerAction(SkillType.MINING);
         plugin.getDustManager().awardDust(player, dustAmount);
 
-        // Random money drop.
         tryRollMoneyDrop(player);
 
-        // Send a FAKE BEDROCK block change ONLY to the player who broke it.
-        // DELAYED by 1 tick to avoid being overwritten by the server's
-        // block-update packet on event cancellation.
         final org.bukkit.Location blockLoc = event.getBlock().getLocation();
         final Player p = player;
         final Material origMat = event.getBlock().getType();
@@ -113,7 +75,6 @@ public class MiningListener implements Listener {
             plugin.getFakeBlockManager().addFakeBlock(p, blockLoc, origMat);
         }, 1L);
 
-        // After 6 seconds, restore the visual for this player.
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (p.isOnline()) {
                 p.sendBlockChange(blockLoc, origMat, (byte) 0);
@@ -122,7 +83,6 @@ public class MiningListener implements Listener {
         }, 121L);
     }
 
-    /** Check if a material is an ore. */
     private boolean isOre(Material mat) {
         switch (mat) {
             case COAL_ORE:
@@ -140,11 +100,6 @@ public class MiningListener implements Listener {
         }
     }
 
-    /**
-     * Roll for a random money drop. If successful, executes the configured
-     * console command (e.g. "eco give %player% 5000") with a random amount
-     * between min-amount and max-amount.
-     */
     private void tryRollMoneyDrop(Player player) {
         FileConfiguration cfg = plugin.getConfigManager().getMainConfig();
         if (!cfg.getBoolean("mining-money-drops.enabled", true)) return;
@@ -166,10 +121,8 @@ public class MiningListener implements Listener {
             return;
         }
 
-        // Send the configurable message.
         String msgTemplate = cfg.getString("mining-money-drops.message",
                 "{prefix}&aYou found &2${amount} &awhile mining!");
-        // Get the prefix from messages.yml
         String prefix = plugin.getConfigManager().getMessages().getString("prefix", "");
         prefix = MessageUtil.colorize(prefix);
         String msg = MessageUtil.colorize(msgTemplate

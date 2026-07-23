@@ -1,31 +1,4 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Enchants Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# Custom enchants available in the /wasteland armorsets GUI.
-# Players can drag these enchant "books" onto their armor pieces.
-#
-# Enchant types:
-#   VANILLA    — Standard Bukkit enchantment (e.g. PROTECTION_ENVIRONMENTAL)
-#   CUSTOM     — CurseEnchants/EnchantmentAPI enchantment (requires those plugins)
-#
-# All items are automatically white-scrolled (won't break on enchant failure).
-#
-# Format:
-# enchants:
-#   <enchant_id>:
-#     name: "&bAbyss IV"
-#     type: VANILLA  # or CUSTOM
-#     vanilla-enchant: DAMAGE_ALL  # only for VANILLA type
-#     custom-enchant: "Abyss"      # only for CUSTOM type
-#     level: 4
-#     material: ENCHANTED_BOOK
-#     lore:
-#       - "&7Applies Abyss IV to your armor."
-#     max-level: 4
-# ════════════════════════════════════════════════════════════════════════════
-
 enchants:
-  # ── Vanilla Enchants ──────────────────────────────────────────────────────
   protection:
     name: "&bProtection IV"
     type: VANILLA
@@ -66,10 +39,6 @@ enchants:
       - "&7Applies Fire Aspect II to your sword."
     max-level: 2
 
-  # ── Custom Enchants (require CurseEnchants/EnchantmentAPI) ────────────────
-  # These will only work if CurseEnchants and EnchantmentAPI plugins are
-  # installed on the server. If they're not installed, the enchant books
-  # will still appear in the GUI but won't apply the custom enchant.
   abyss:
     name: "&5Abyss IV"
     type: CUSTOM
@@ -163,8 +132,5 @@ enchants:
     max-level: 1
     pvp-only: true  # This enchant only works in PvP zones
 
-# ── Settings ────────────────────────────────────────────────────────────────
 settings:
-  # All items are automatically white-scrolled (protected from breaking
-  # on enchant failure).
   auto-white-scroll: true

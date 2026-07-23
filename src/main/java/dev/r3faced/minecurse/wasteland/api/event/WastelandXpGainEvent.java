@@ -7,10 +7,6 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-/**
- * Fired before Wasteland XP is applied. Other plugins may cancel this event
- * or change the amount to support boosters, masks, and custom restrictions.
- */
 public class WastelandXpGainEvent extends Event implements Cancellable {
 
     private static final HandlerList HANDLERS = new HandlerList();
@@ -56,9 +52,6 @@ public class WastelandXpGainEvent extends Event implements Cancellable {
         return cause;
     }
 
-    /**
-     * Optional source string, such as a block material name or a custom mask id.
-     */
     public String getSource() {
         return source;
     }

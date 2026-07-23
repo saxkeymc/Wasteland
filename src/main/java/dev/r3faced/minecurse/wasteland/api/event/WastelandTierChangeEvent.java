@@ -5,9 +5,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-/**
- * Fired after a player's shared tier changes.
- */
 public class WastelandTierChangeEvent extends Event {
 
     private static final HandlerList HANDLERS = new HandlerList();

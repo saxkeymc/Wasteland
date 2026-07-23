@@ -4,25 +4,6 @@ import dev.r3faced.minecurse.wasteland.WastelandPlugin;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 
-/**
- * Manages PvP zones in Wasteland worlds.
- * <p>
- * A PvP zone is a cuboid area where:
- * <ul>
- *   <li>Players CAN damage each other (PvP enabled).</li>
- *   <li>Custom enchants CAN proc.</li>
- *   <li>There is NO height limit — PvP works at any Y level.</li>
- * </ul>
- * <p>
- * Outside the PvP zone:
- * <ul>
- *   <li>No PvP (cancelled by WastelandWorldProtectionListener).</li>
- *   <li>No custom enchant procs (cancelled by EnchantCancelListener).</li>
- * </ul>
- * <p>
- * If a player falls below Y=90 in a Wasteland world, they are teleported
- * back to where they were.
- */
 public class PvpZoneManager {
 
     private final WastelandPlugin plugin;
@@ -44,13 +25,11 @@ public class PvpZoneManager {
         }
     }
 
-    /** Set position 1 of the PvP zone. */
     public void setPos1(Location loc) {
         this.pos1 = loc;
         saveZone();
     }
 
-    /** Set position 2 of the PvP zone. */
     public void setPos2(Location loc) {
         this.pos2 = loc;
         saveZone();
@@ -66,15 +45,10 @@ public class PvpZoneManager {
         }
     }
 
-    /** Returns true if a PvP zone has been set. */
     public boolean isZoneSet() {
         return zoneSet;
     }
 
-    /**
-     * Check if a location is inside the PvP zone.
-     * Ignores Y level — PvP works at any height within the zone.
-     */
     public boolean isInPvpZone(Location loc) {
         if (!zoneSet || pos1 == null || pos2 == null) return false;
         if (!loc.getWorld().equals(pos1.getWorld())) return false;
@@ -88,9 +62,7 @@ public class PvpZoneManager {
                loc.getZ() >= minZ && loc.getZ() <= maxZ;
     }
 
-    /** Returns pos1 for display. */
     public Location getPos1() { return pos1; }
 
-    /** Returns pos2 for display. */
     public Location getPos2() { return pos2; }
 }

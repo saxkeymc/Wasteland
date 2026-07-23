@@ -1,11 +1,3 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Tools Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# Omni tools are given automatically when entering a Wasteland world.
-# They are removed when leaving. All enchants are HIDDEN.
-# Lore uses quotes from real historical figures.
-# ════════════════════════════════════════════════════════════════════════════
-
 tools:
   mining:
     material: DIAMOND_PICKAXE

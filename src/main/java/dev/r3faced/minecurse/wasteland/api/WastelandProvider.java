@@ -1,13 +1,5 @@
 package dev.r3faced.minecurse.wasteland.api;
 
-/**
- * Static access point for plugins that depend on Wasteland.
- *
- * <pre>
- * WastelandApi api = WastelandProvider.get();
- * api.addXp(player, SkillType.MINING, 50, WastelandXpCause.CUSTOM, "my-mask");
- * </pre>
- */
 public final class WastelandProvider {
 
     private static WastelandApi api;

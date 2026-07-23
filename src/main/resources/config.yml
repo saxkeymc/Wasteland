@@ -1,7 +1,3 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Main Configuration
-# ════════════════════════════════════════════════════════════════════════════
-
 storage:
   type: YAML
   mysql:
@@ -29,53 +25,24 @@ worlds:
     enabled: true
     world: "wasteland"
 
-# ── Wasteland Worlds ─────────────────────────────────────────────────────────
-# All skills use the same world. Players teleport to different spots within it.
 wasteland-worlds:
   - wasteland
 
-# ── Playtime Tracking ────────────────────────────────────────────────────────
-# Tracks total time players spend in the Wasteland system.
-# Format tokens: {days}, {hours}, {minutes}, {seconds}, {total_hours}
-# strip-empty-parts removes leading "0d", "0h", etc. for compact display.
 playtime:
   format: "{days}d {hours}h {minutes}m"
   strip-empty-parts: true
 
-# ── Tier-Locked Blocks (All Worlds) ──────────────────────────────────────────
-# In each skill's world, certain blocks require the player to have reached
-# a specific shared tier before they can be broken. If a player tries to
-# break a locked block without the required tier, the break is cancelled
-# and a configurable message is sent (the block stays as-is, no bedrock).
-#
-# If the player HAS the tier, the break is cancelled, the block turns to
-# BEDROCK, the player gets XP + drops manually, and the block regenerates
-# after 6 seconds.
-#
-# The tier here is the SHARED tier (unlocked when all 4 skills reach the
-# required level), NOT the per-skill level.
-#
-# Material names must match Bukkit 1.8 Material enum values.
-# Remove an entry or set its tier to 0 to disable the lock for that block.
 tier-locked-blocks:
-  # Mining world — ores
   mining:
     COAL_ORE: 1
     IRON_ORE: 2
     GOLD_ORE: 3
     EMERALD_ORE: 4
     DIAMOND_ORE: 5
-  # Woodcutting world — logs (example: higher-tier logs require higher tier)
   woodcutting: {}
-  # Farming world — crops (example: nether wart requires tier 2)
   farming: {}
-  # Fishing world — (no blocks to lock, but kept for consistency)
   fishing: {}
 
-# ── Random Money Drops (Mining World) ────────────────────────────────────────
-# When mining blocks in the mining world, there's a random chance to receive
-# money directly. The amount is random between min and max (inclusive).
-# The money is given via console command: eco give %player% <amount>
 mining-money-drops:
   enabled: true
   chance: 5.0          # % chance per block break (0-100)
@@ -86,15 +53,5 @@ mining-money-drops:
 
 debug: false
 
-# ── Start Date (set by /wasteland start) ─────────────────────────────────────
-# When /wasteland start is run, the current timestamp is recorded here.
-# Each tier becomes available on consecutive days:
-#   Day 0 = Tier 1, Day 1 = Tier 2, Day 2 = Tier 3, etc.
 start-date:
   timestamp: 0
-
-# ── Dust System ──────────────────────────────────────────────────────────────
-# Dust is earned from mining, chopping, farming, and fishing.
-# It's used to upgrade Omni Tools, which is required to mine at higher tiers.
-# Upgrade costs: 500, 1000, 1500, 2000 dust (for upgrades 1-4).
-# Dust per action: Mining=10, Fishing=15, Chopping=7, Farming=5

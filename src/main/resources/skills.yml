@@ -1,13 +1,3 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Skills Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# XP hierarchy (most → least):
-#   1. Fishing  (most XP per action)
-#   2. Mining   (2nd best)
-#   3. Chopping (3rd best)
-#   4. Farming  (least XP)
-# ════════════════════════════════════════════════════════════════════════════
-
 mining:
   level-cap: 50
   display-name: "&7Mining"

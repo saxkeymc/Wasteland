@@ -20,20 +20,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Stores player data in individual YAML files under plugins/Wasteland/data/playerdata/.
- * <p>
- * Saves are dispatched asynchronously via Bukkit's scheduler when the plugin
- * is enabled. When the plugin is disabling (onDisable / shutdown), saves are
- * performed synchronously on the calling thread to avoid
- * {@code IllegalPluginAccessException}.
- */
 public class YamlDataManager implements DataManager {
 
     private final WastelandPlugin plugin;
     private final File playerDataDir;
 
-    /** In-memory cache of loaded player data. */
     private final Map<UUID, PlayerData> cache = new ConcurrentHashMap<>();
 
     public YamlDataManager(WastelandPlugin plugin) {
@@ -125,8 +116,6 @@ public class YamlDataManager implements DataManager {
         cache.clear();
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────────────
-
     private File getFile(UUID uuid) {
         return new File(playerDataDir, uuid.toString() + ".yml");
     }
@@ -147,28 +136,22 @@ public class YamlDataManager implements DataManager {
             data.setXp(skill, yaml.getLong("skills." + key + ".xp", 0L));
         }
 
-        // Single shared tier
         data.setTier(yaml.getInt("tier", 1));
 
-        // Claimed tier rewards (key format: "tier_N")
         Set<String> claimed = new HashSet<>(yaml.getStringList("claimed-tiers"));
         data.setClaimedTiers(claimed);
 
-        // Playtime (seconds)
         data.setPlaytimeSeconds(yaml.getLong("playtime-seconds", 0L));
 
-        // Player settings
         data.setSettingSeePlayers(yaml.getBoolean("settings.see-players", true));
         data.setSettingXpNoises(yaml.getBoolean("settings.xp-noises", true));
         data.setSettingXpBarDisplay(yaml.getBoolean("settings.xp-bar-display", true));
 
-        // Dust + tool upgrades
         data.setDust(yaml.getInt("dust", 0));
         for (dev.r3faced.minecurse.wasteland.model.SkillType skill : dev.r3faced.minecurse.wasteland.model.SkillType.values()) {
             data.setToolUpgradeLevel(skill, yaml.getInt("tool-upgrades." + skill.getKey(), 0));
         }
 
-        // Backpack items
         if (yaml.isList("backpack")) {
             for (Object obj : yaml.getList("backpack")) {
                 if (obj instanceof org.bukkit.inventory.ItemStack) {
@@ -177,7 +160,6 @@ public class YamlDataManager implements DataManager {
             }
         }
 
-        // Stored rewards (virtual backpack)
         if (yaml.isList("stored-rewards")) {
             for (Map<?, ?> entry : yaml.getMapList("stored-rewards")) {
                 try {
@@ -199,7 +181,6 @@ public class YamlDataManager implements DataManager {
                     }
                     data.addStoredReward(new StoredReward(mat, dataVal, name, lore, commands));
                 } catch (Exception ignored) {
-                    // Skip malformed entries gracefully.
                 }
             }
         }
@@ -221,21 +202,17 @@ public class YamlDataManager implements DataManager {
         yaml.set("claimed-tiers", Arrays.asList(data.getClaimedTiers().toArray(new String[0])));
         yaml.set("playtime-seconds", data.getPlaytimeSeconds());
 
-        // Player settings
         yaml.set("settings.see-players", data.isSettingSeePlayers());
         yaml.set("settings.xp-noises", data.isSettingXpNoises());
         yaml.set("settings.xp-bar-display", data.isSettingXpBarDisplay());
 
-        // Dust + tool upgrades
         yaml.set("dust", data.getDust());
         for (dev.r3faced.minecurse.wasteland.model.SkillType skill : dev.r3faced.minecurse.wasteland.model.SkillType.values()) {
             yaml.set("tool-upgrades." + skill.getKey(), data.getToolUpgradeLevel(skill));
         }
 
-        // Backpack items
         yaml.set("backpack", data.getBackpackItems());
 
-        // Stored rewards (virtual backpack) — serialize as a list of maps.
         List<Map<String, Object>> rewardsOut = new ArrayList<>();
         for (StoredReward r : data.getStoredRewards()) {
             Map<String, Object> entry = new java.util.LinkedHashMap<>();

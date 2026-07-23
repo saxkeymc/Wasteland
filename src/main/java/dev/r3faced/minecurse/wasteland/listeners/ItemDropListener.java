@@ -7,10 +7,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerDropItemEvent;
 
-/**
- * Prevents players from dropping items in Wasteland worlds.
- * All drops are cancelled silently.
- */
 public class ItemDropListener implements Listener {
 
     private final WastelandPlugin plugin;

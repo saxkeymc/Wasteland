@@ -1,27 +1,17 @@
-# ════════════════════════════════════════════════════════════════════════════
-# Wasteland — Help GUI Configuration
-# ════════════════════════════════════════════════════════════════════════════
-# Opened via /wasteland help.
-# Everything below is fully configurable.
-# ════════════════════════════════════════════════════════════════════════════
-
 help-menu:
   title: "&7Wasteland Guide"
   size: 27
 
-  # Outer border
   border-item:
     material: STAINED_GLASS_PANE
     data: 15
     name: " "
 
-  # Inner filler
   fill-item:
     material: STAINED_GLASS_PANE
     data: 7
     name: " "
 
-  # Guide Book
   book:
     slot: 13
     material: BOOK
@@ -53,7 +43,6 @@ help-menu:
       - ""
       - "&fGood luck out there, &2&n{player}&f!"
 
-  # Close Button
   close:
     slot: 22
     material: BARRIER

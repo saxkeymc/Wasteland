@@ -24,19 +24,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * MySQL storage backend for Wasteland player data.
- * <p>
- * Uses HikariCP for connection pooling. Async saves are dispatched via
- * Bukkit's scheduler when the plugin is enabled; during shutdown saves
- * are performed synchronously to avoid IllegalPluginAccessException.
- */
 public class MySQLDataManager implements DataManager {
 
     private final WastelandPlugin plugin;
     private HikariDataSource dataSource;
 
-    /** In-memory cache so repeated reads don't hit the database. */
     private final Map<UUID, PlayerData> cache = new ConcurrentHashMap<>();
 
     public MySQLDataManager(WastelandPlugin plugin) {
@@ -68,8 +60,6 @@ public class MySQLDataManager implements DataManager {
     }
 
     private void createTables() {
-        // Single shared tier + playtime-seconds; no per-skill tier columns,
-        // no total_rewards_claimed column (rewards are random per claim).
         String sql = "CREATE TABLE IF NOT EXISTS wasteland_players ("
                 + "uuid VARCHAR(36) NOT NULL PRIMARY KEY,"
                 + "mining_level INT NOT NULL DEFAULT 0,"
@@ -96,7 +86,6 @@ public class MySQLDataManager implements DataManager {
             plugin.getLogger().severe("Failed to create MySQL tables: " + e.getMessage());
         }
 
-        // Graceful upgrade for existing tables: add new columns if missing.
         String[] alters = {
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS tier INT NOT NULL DEFAULT 1",
             "ALTER TABLE wasteland_players ADD COLUMN IF NOT EXISTS claimed_tiers TEXT",
@@ -111,7 +100,6 @@ public class MySQLDataManager implements DataManager {
                  PreparedStatement stmt = conn.prepareStatement(alter)) {
                 stmt.execute();
             } catch (SQLException ignored) {
-                // Some MySQL versions don't support ADD COLUMN IF NOT EXISTS; ignore.
             }
         }
     }
@@ -196,8 +184,6 @@ public class MySQLDataManager implements DataManager {
         }
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────────────
-
     private PlayerData loadFromDatabase(UUID uuid) {
         PlayerData data = new PlayerData(uuid);
 
@@ -221,15 +207,10 @@ public class MySQLDataManager implements DataManager {
                 }
                 try { data.setPlaytimeSeconds(rs.getLong("playtime_seconds")); } catch (SQLException ignored) {}
 
-                // Player settings
                 try { data.setSettingSeePlayers(rs.getBoolean("settings_see_players")); } catch (SQLException ignored) {}
                 try { data.setSettingXpNoises(rs.getBoolean("settings_xp_noises")); } catch (SQLException ignored) {}
                 try { data.setSettingXpBarDisplay(rs.getBoolean("settings_xp_bar_display")); } catch (SQLException ignored) {}
 
-                // Stored rewards (virtual backpack) — stored as a pipe-delimited
-                // string in the stored_rewards TEXT column. Format per entry:
-                //   MATERIAL|data|name|lore1;;lore2;;lore3|cmd1;;cmd2;;cmd3
-                // Entries are separated by "||". This avoids needing a JSON lib.
                 try {
                     String rewardsRaw = rs.getString("stored_rewards");
                     if (rewardsRaw != null && !rewardsRaw.isEmpty()) {
@@ -295,12 +276,6 @@ public class MySQLDataManager implements DataManager {
         }
     }
 
-    /**
-     * Serialize the player's stored rewards into a single TEXT-friendly string.
-     * Format per entry: MATERIAL|data|name|lore1;;lore2|cmd1;;cmd2
-     * Entries separated by "||". Pipe characters inside lore/commands are
-     * replaced with a Unicode lookalike to avoid breaking the format.
-     */
     private String serializeRewards(PlayerData data) {
         StringBuilder sb = new StringBuilder();
         for (StoredReward r : data.getStoredRewards()) {
@@ -314,7 +289,6 @@ public class MySQLDataManager implements DataManager {
         return sb.toString();
     }
 
-    /** Deserialize the pipe-delimited reward string and populate the player's data. */
     private void deserializeRewards(PlayerData data, String raw) {
         if (raw == null || raw.isEmpty()) return;
         String[] entries = raw.split("\\|\\|");
@@ -332,7 +306,6 @@ public class MySQLDataManager implements DataManager {
                 List<String> commands = splitEscaped(parts[4]);
                 data.addStoredReward(new StoredReward(mat, dataVal, name, lore, commands));
             } catch (Exception ignored) {
-                // Skip malformed entries.
             }
         }
     }

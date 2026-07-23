@@ -6,9 +6,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-/**
- * Fired after a Wasteland skill gains a level through XP.
- */
 public class WastelandSkillLevelUpEvent extends Event {
 
     private static final HandlerList HANDLERS = new HandlerList();
