@@ -38,7 +38,7 @@
     </repositories>
 
     <dependencies>
-        <!-- Spigot API 1.8.8 -->
+        
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -46,7 +46,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- PlaceholderAPI -->
+        
         <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
@@ -54,7 +54,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- MySQL Connector -->
+        
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -62,7 +62,7 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- HikariCP for connection pooling -->
+        
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
